@@ -19,9 +19,12 @@ function clone_config() {
 
 function dependencies() {
  	$BREW install node
+	$BREW install --cask font-jetbrains-mono-nerd-font
 	nvim
 }
 
 install_neovim
 clone_config
 dependencies
+
+echo -e "Now dependency installed. You may need to: \n\t1. Select jetbrains-mono as your terminal font."
