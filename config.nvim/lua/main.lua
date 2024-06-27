@@ -124,9 +124,22 @@ require("lazy").setup({
     lazy = false,
 },
 {
-    'windwp/nvim-autopairs',
-    event = "InsertEnter",
-    opts = {}
+	'windwp/nvim-autopairs',
+	config = function()
+		require("nvim-autopairs").setup{
+			event = { "BufReadPre", "BufNewFile" },
+			opts = {
+				enable_check_bracket_line = false, -- Don't add pairs if it already has a close pair in the same line
+				ignored_next_char = "[%w%.]", -- will ignore alphanumeric and `.` symbol
+				check_ts = true, -- use treesitter to check for a pair.
+				ts_config = {
+				  lua = { "string" }, -- it will not add pair on that treesitter node
+				  javascript = { "template_string" },
+				  java = false, -- don't check treesitter on java
+				},
+			},
+		}
+	end
 },
 {
     'nvim-lualine/lualine.nvim',
@@ -134,6 +147,30 @@ require("lazy").setup({
     opts = {
         theme = 'dracula-nvim'
     }
+},
+{
+    "nvim-telescope/telescope-file-browser.nvim",
+    dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+	config = function() 
+		require("telescope").setup {
+		  extensions = {
+			file_browser = {
+			  theme = "ivy",
+			  -- disables netrw and use telescope-file-browser in its place
+			  hijack_netrw = true,
+			  mappings = {
+				["i"] = {
+				  -- your custom insert mode mappings
+				},
+				["n"] = {
+				  -- your custom normal mode mappings
+				},
+			  },
+			},
+		  },
+		  require("telescope").load_extension "file_browser"
+		}
+	end
 },
 {
     "nvim-treesitter/nvim-treesitter",
@@ -211,28 +248,28 @@ require("lazy").setup({
 {
     "junegunn/rainbow_parentheses.vim"
 },
-{
-    "nvim-tree/nvim-tree.lua",
-    version = "*",
-    lazy = false,
-    dependencies = {
-        "nvim-tree/nvim-web-devicons",
-    },
-    config = function()
-      require("nvim-tree").setup {
-      view = {
-        width = 30,
-      },
-      renderer = {
-        group_empty = true,
-      },
-      filters = {
-        dotfiles = true,
-      },
-      on_attach = my_on_attach
-    }
-    end,
-},
+--{
+    --"nvim-tree/nvim-tree.lua",
+    --version = "*",
+    --lazy = false,
+    --dependencies = {
+        --"nvim-tree/nvim-web-devicons",
+    --},
+    --config = function()
+      --require("nvim-tree").setup {
+      --view = {
+        --width = 30,
+      --},
+      --renderer = {
+        --group_empty = true,
+      --},
+      --filters = {
+        --dotfiles = true,
+      --},
+      --on_attach = my_on_attach
+    --}
+    --end,
+--},
 {
 	"hrsh7th/nvim-cmp",
 	dependencies = {
@@ -440,6 +477,80 @@ require("lazy").setup({
   --},
 --}
 	end
+},
+{
+	"rstacruz/vim-closer"
+},
+{
+  "kdheepak/lazygit.nvim",
+  cmd = {
+    "LazyGit",
+    "LazyGitConfig",
+    "LazyGitCurrentFile",
+    "LazyGitFilter",
+    "LazyGitFilterCurrentFile",
+  },
+  -- optional for floating window border decoration
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+  },
+  -- setting the keybinding for LazyGit with 'keys' is recommended in
+  -- order to load the plugin when the command is run for the first time
+  keys = {
+    { "<leader>gg", "<cmd>LazyGit<cr>", desc = "LazyGit" }
+  }
+},
+{
+	"stevearc/aerial.nvim",
+	config = function()
+	require("aerial").setup{
+		backends = { "treesitter", "lsp", "markdown", "asciidoc", "man" },
+		-- optionally use on_attach to set keymaps when aerial has attached to a buffer
+		on_attach = function(bufnr)
+			-- Jump forwards/backwards with '{' and '}'
+			vim.keymap.set("n", "K", "<cmd>AerialPrev<CR>", { buffer = bufnr })
+			vim.keymap.set("n", "J", "<cmd>AerialNext<CR>", { buffer = bufnr })
+		end,
+		require("telescope").setup{
+		  extensions = {
+			aerial = {
+			  -- Display symbols as <root>.<parent>.<symbol>
+			  show_nesting = {
+				["_"] = false, -- This key will be the default
+				json = true, -- You can set the option for specific filetypes
+				yaml = true,
+			  },
+			},
+		  },
+		}
+	}
+	end
+},
+{
+	"pocco81/auto-save.nvim"
+},
+{
+	"nvim-treesitter/nvim-treesitter-refactor",
+	config = function() 
+		require('nvim-treesitter.configs').setup {
+		  refactor = {
+			navigation = {
+			  enable = true,
+			  -- Assign keymaps to false to disable them, e.g. `goto_definition = false`.
+			  keymaps = {
+				--goto_definition = "gnd",
+				--list_definitions = "gnD",
+				--list_definitions_toc = "gO",
+				goto_next_usage = "<c-J>",
+				goto_previous_usage = "<c-K>",
+			  },
+			},
+		  },
+		}
+	end
+},
+{
+	"ray-x/go.nvim"
 }
 })
 

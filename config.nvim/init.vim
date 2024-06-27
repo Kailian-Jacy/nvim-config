@@ -1,5 +1,8 @@
 lua require("main")
 
+""" Get the rull path
+""" 1 <C-g>
+
 """ Main Configurations
 filetype plugin indent on
 set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
@@ -135,8 +138,13 @@ set termguicolors
 """ 
 """ " Core
 let mapleader = " "
-nmap <silent> <leader>e :NvimTreeToggle<CR>
-nmap <silent> <leader><leader> :HopWord<CR>
+map <silent> <leader>e :NvimTreeToggle<CR>
+
+""" Hopping
+nnoremap <silent> <leader><leader> :HopWord<CR>
+nnoremap <silent> <leader>j :HopVerticalAC<CR>
+nnoremap <silent> <leader>k :HopVerticalBC<CR>
+
 vnoremap <silent> <leader>/ :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap \ <leader>q
 """ nmap <leader>r :so ~/.config/nvim/init.vim<CR>
@@ -149,8 +157,11 @@ vnoremap <silent> <leader>/ :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap <leader>l :Limelight!!<CR>
 """ xmap <leader>l :Limelight!!<CR>
 """ nmap <silent> <leader><leader> :noh<CR>
-nmap <silent> <Tab><Tab> :bnext<CR>
-nmap <silent> <S-Tab> :bprevious<CR>
+
+""" H and L are switching between tabs.
+"nmap <silent> <Tab><Tab> :bnext<CR>
+"nmap <silent> <S-Tab> :bprevious<CR>
+"
 """ nmap <leader>$s <C-w>s<C-w>j:terminal<CR>:set nonumber<CR><S-a>
 """ nmap <leader>$v <C-w>v<C-w>l:terminal<CR>:set nonumber<CR><S-a>
 """ 
@@ -163,13 +174,23 @@ nmap <silent> <S-Tab> :bprevious<CR>
 """ 
 
 """ Telescope mappings
-nnoremap <leader>ff <cmd>Telescope find_files<cr>
-nnoremap <leader>ft <cmd>Telescope oldfiles<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+vnoremap <leader>fg "zy:Telescope live_grep default_text=<C-r>z<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>fc <cmd>Telescope command_history<cr>
 nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
+vnoremap <leader>f/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
+nnoremap <leader>ls <cmd>Telescope aerial<cr>
+
+""" Copy Pasting
+nnoremap <leader>yy "+yy
+nnoremap <leader>y  "+y
+vnoremap <leader>y  "+y
+nnoremap <leader>p "+p
+nnoremap <leader>P "+P
+vnoremap <leader>p "+p
+vnoremap <leader>P "+P
 
 """ List all.
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
@@ -177,15 +198,26 @@ nnoremap <leader>fm <cmd>Telescope marks<cr>
 
 """ Finding in language
 nnoremap <leader>fs <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
+vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
+vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
 nnoremap gi <cmd>Telescope lsp_implementations<cr>
+vnoremap <leader>gi "zy:Telescope lsp_implementations default_text=<C-r>z<cr>
 nnoremap gd <cmd>Telescope lsp_definitions<cr>
+vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 
 """ Git related
 nnoremap <leader>gc <cmd>Telescope git_commits<cr>
 nnoremap <leader>gb <cmd>Telescope git_branches<cr>
+nnoremap <leader>df <cmd>Gitsigns  diffthis<cr>
+nnoremap <leader>gd <cmd>Gitsigns  preview_hunk<cr>
 nnoremap <leader>gs <cmd>Telescope git_stash<cr>
 nnoremap <leader>tr <cmd>Telescope treesitter<cr>
+
+""" file browser
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
+nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
 
 """ Debugging related
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
@@ -194,6 +226,10 @@ nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 
 """ Control
 nnoremap ZA :wqa<cr>
+
+""" Navivage through Functions
+nnoremap J [m<cr>
+nnoremap K ]m<cr>
 
 set statusline+=%{get(b:,'gitsigns_status','')}
 hi TreesitterContextBottom gui=underline guisp=Grey

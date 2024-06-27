@@ -19,6 +19,7 @@ function clone_config() {
 
 function dependencies() {
  	$BREW install node
+ 	$BREW install lazygit
 	$BREW install --cask font-jetbrains-mono-nerd-font
 	nvim
 }
