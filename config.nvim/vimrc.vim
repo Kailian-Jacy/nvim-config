@@ -1,10 +1,12 @@
-lua require("main")
+""" lua require("main")
 
 """ Get the rull path
 """ 1 <C-g>
 
 """ Main Configurations
 filetype plugin indent on
+" tab
+set expandtab
 set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
 "set expandtab
 set incsearch ignorecase smartcase hlsearch
@@ -22,6 +24,8 @@ set title
 """ Only highlight the current line number
 set cursorline
 set cursorlineopt=number
+set linebreak
+set smoothscroll
 autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
 
 """ Filetype-Specific Configurations
@@ -40,13 +44,13 @@ autocmd FileType markdown setlocal shiftwidth=2 tabstop=2 softtabstop=2
 autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 
 " Functions and autocmds to run whenever changing colorschemes
-function! TransparentBackground()
-    highlight Normal guibg=NONE ctermbg=NONE
-    highlight LineNr guibg=NONE ctermbg=NONE
-    set fillchars+=vert:\│
-    highlight WinSeparator gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
-    highlight VertSplit gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
-endfunction
+""" function! TransparentBackground()
+"""     highlight Normal guibg=NONE ctermbg=NONE
+"""     highlight LineNr guibg=NONE ctermbg=NONE
+"""     set fillchars+=vert:\│
+"""     highlight WinSeparator gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
+"""     highlight VertSplit gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
+""" endfunction
 
 " Use these colors for Pmenu, CmpPmenusBorder and TelescopeBorder when using dracula colorscheme
 function! DraculaTweaks()
@@ -182,6 +186,8 @@ nnoremap <leader>fc <cmd>Telescope command_history<cr>
 nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
 vnoremap <leader>f/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
 nnoremap <leader>ls <cmd>Telescope aerial<cr>
+nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr>
+nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
 """ Copy Pasting
 nnoremap <leader>yy "+yy
@@ -207,14 +213,15 @@ nnoremap gd <cmd>Telescope lsp_definitions<cr>
 vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 
 """ Git related
+nnoremap <leader>gg <cmd>LazyGit <cr>
 nnoremap <leader>gc <cmd>Telescope git_commits<cr>
 nnoremap <leader>gb <cmd>Telescope git_branches<cr>
 nnoremap <leader>df <cmd>Gitsigns  diffthis<cr>
 nnoremap <leader>gd <cmd>Gitsigns  preview_hunk<cr>
 nnoremap <leader>gs <cmd>Telescope git_stash<cr>
-nnoremap <leader>tr <cmd>Telescope treesitter<cr>
-
-""" file browser
+""" nnoremap <leader>tr <cmd>Telescope treesitter<cr>
+ 
+""" """ file browser
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
@@ -228,8 +235,8 @@ nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap ZA :wqa<cr>
 
 """ Navivage through Functions
-nnoremap J [m<cr>
-nnoremap K ]m<cr>
+nnoremap J <cmd>AerialPrev<CR>
+nnoremap K <cmd>AerialNext<CR>
 
 set statusline+=%{get(b:,'gitsigns_status','')}
 hi TreesitterContextBottom gui=underline guisp=Grey
