@@ -3,7 +3,15 @@ return {
         "Mofiqul/dracula.nvim",
     },
     {
-        "kien/rainbow_parentheses.vim",
+        "nvim-treesitter/nvim-treesitter",
+        dependencies = { "HiPhish/rainbow-delimiters.nvim" },
+        opts = function(_, opts)
+            opts.rainbow = {
+                enable = true,
+                query = "rainbow-delimiters",
+                strategy = require("rainbow-delimiters").strategy.global,
+            }
+        end,
     },
     {
         "folke/noice.nvim",
