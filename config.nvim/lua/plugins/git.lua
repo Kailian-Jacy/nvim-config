@@ -46,6 +46,9 @@ return {
     },
     {
         "kdheepak/lazygit.nvim",
+        config = function()
+            require("lazygit").setup()
+        end,
         cmd = {
             "LazyGit",
             "LazyGitConfig",
@@ -63,7 +66,7 @@ return {
         --   { "<leader>gg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
         -- },
     },
-    {
-        "tpope/vim-fugitive",
-    },
+    --{
+    --"tpope/vim-fugitive",
+    --},
 }

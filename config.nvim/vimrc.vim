@@ -197,8 +197,8 @@ nnoremap <leader>p "+p
 nnoremap <leader>P "+P
 vnoremap <leader>p "+p
 vnoremap <leader>P "+P
-
 """ List all.
+
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
 nnoremap <leader>fm <cmd>Telescope marks<cr>
 
@@ -238,7 +238,7 @@ nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 """ Control
 nnoremap ZA :wqa<cr>
 
-""" Navivage through Functions
+""" Navigate 
 nnoremap J <cmd>AerialPrev<CR>
 nnoremap K <cmd>AerialNext<CR>
 

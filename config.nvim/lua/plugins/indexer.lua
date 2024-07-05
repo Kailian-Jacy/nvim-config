@@ -27,7 +27,7 @@ return {
         "stevearc/aerial.nvim",
         config = function()
             require("aerial").setup({
-                backends = { "treesitter", "lsp", "markdown", "asciidoc", "man" },
+                backends = { "lsp", "treesitter", "markdown", "asciidoc", "man" },
                 -- optionally use on_attach to set keymaps when aerial has attached to a buffer
                 require("telescope").setup({
                     extensions = {
@@ -42,6 +42,15 @@ return {
                     },
                 }),
             })
+        end,
+    },
+    {
+        "gorbit99/codewindow.nvim",
+        version = "*",
+        config = function()
+            local codewindow = require("codewindow")
+            codewindow.setup()
+            codewindow.apply_default_keybinds()
         end,
     },
 }
