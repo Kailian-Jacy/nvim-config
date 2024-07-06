@@ -242,5 +242,11 @@ nnoremap ZA :wqa<cr>
 nnoremap J <cmd>AerialPrev<CR>
 nnoremap K <cmd>AerialNext<CR>
 
+""" Moving lines 
+nnoremap <silent> <esc>k :move-2<CR>==
+nnoremap <silent> <esc>j :move+<CR>==
+vnoremap <silent> <esc>j :m '>+1<cr>gv=gv
+vnoremap <silent> <esc>k :m '<-2<cr>gv=gv
+
 set statusline+=%{get(b:,'gitsigns_status','')}
 hi TreesitterContextBottom gui=underline guisp=Grey
