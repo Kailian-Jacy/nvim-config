@@ -185,7 +185,6 @@ nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>fc <cmd>Telescope command_history<cr>
 nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
 vnoremap <leader>f/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>ls <cmd>Telescope aerial<cr>
 nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr>
 nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
@@ -197,12 +196,13 @@ nnoremap <leader>p "+p
 nnoremap <leader>P "+P
 vnoremap <leader>p "+p
 vnoremap <leader>P "+P
-""" List all.
 
+""" List all.
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
 nnoremap <leader>fm <cmd>Telescope marks<cr>
 
 """ Finding in language
+nnoremap <leader>ls <cmd>Telescope aerial<cr>
 nnoremap <leader>fs <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
 vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
@@ -211,6 +211,7 @@ nnoremap gi <cmd>Telescope lsp_implementations<cr>
 vnoremap <leader>gi "zy:Telescope lsp_implementations default_text=<C-r>z<cr>
 nnoremap gd <cmd>Telescope lsp_definitions<cr>
 vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
+nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
 
 """ Git related
 nnoremap <leader>gg <cmd>LazyGit <cr>
@@ -239,14 +240,14 @@ nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap ZA :wqa<cr>
 
 """ Navigate 
-nnoremap J <cmd>AerialPrev<CR>
-nnoremap K <cmd>AerialNext<CR>
+nnoremap K <cmd>AerialPrev<CR>
+nnoremap J <cmd>AerialNext<CR>
 
 """ Moving lines 
-nnoremap <silent> <esc>k :move-2<CR>==
-nnoremap <silent> <esc>j :move+<CR>==
-vnoremap <silent> <esc>j :m '>+1<cr>gv=gv
-vnoremap <silent> <esc>k :m '<-2<cr>gv=gv
+"nnoremap <silent> <esc>k :move-2<CR>==
+"nnoremap <silent> <esc>j :move+<CR>==
+"vnoremap <silent> <esc>j :m '>+1<cr>gv=gv
+"vnoremap <silent> <esc>k :m '<-2<cr>gv=gv
 
 set statusline+=%{get(b:,'gitsigns_status','')}
 hi TreesitterContextBottom gui=underline guisp=Grey

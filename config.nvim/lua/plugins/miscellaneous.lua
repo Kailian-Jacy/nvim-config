@@ -102,6 +102,7 @@ return {
 		-- change some options
 		opts = {
 			defaults = {
+                wrap_results = true,
 				layout_strategy = "vertical",
 				layout_config = { prompt_position = "top" },
 				sorting_strategy = "ascending",
@@ -118,7 +119,11 @@ return {
 						"%.vcxproj",
 						"Session.vim",
 				},
-			},
+                mappings = {
+                    i = { ["<c-t>"] = require("trouble.sources.telescope").open },
+                    n = { ["<c-t>"] = require("trouble.sources.telescope").open },
+                }
+			}
 		},
 	},
 

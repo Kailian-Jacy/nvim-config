@@ -3,3 +3,4 @@
 -- Add any additional keymaps here
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
 vim.keymap.set("n", "<leader>s", "<cmd>w<CR>")
+vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
