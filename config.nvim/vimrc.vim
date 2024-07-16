@@ -178,14 +178,16 @@ vnoremap <silent> <leader>/ :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ 
 
 """ Telescope mappings
-nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-vnoremap <leader>fg "zy:Telescope live_grep default_text=<C-r>z<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-nnoremap <leader>fc <cmd>Telescope command_history<cr>
+""" nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>:
 nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
 vnoremap <leader>f/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr>
+nnoremap <leader>f? <cmd>Telescope live_grep<cr>
+vnoremap <leader>f? "zy:Telescope live_grep default_text=<C-r>z<cr>
+
+""" Diagnostics
+nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
 nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
 """ Copy Pasting
@@ -203,8 +205,8 @@ nnoremap <leader>fm <cmd>Telescope marks<cr>
 
 """ Finding in language
 nnoremap <leader>ls <cmd>Telescope aerial<cr>
-nnoremap <leader>fs <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
-vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
+nnoremap <leader>lS <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
+vnoremap <leader>lS "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
 vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
 nnoremap gi <cmd>Telescope lsp_implementations<cr>
@@ -215,15 +217,15 @@ nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
 
 """ Git related
 nnoremap <leader>gg <cmd>LazyGit <cr>
-nnoremap <leader>gc <cmd>Telescope git_commits<cr>
-nnoremap <leader>gb <cmd>Telescope git_branches<cr>
-nnoremap <leader>gs <cmd>Telescope git_stash<cr>
+"nnoremap <leader>gc <cmd>Telescope git_commits<cr>  """ Deprecated. Lazygit.
+"nnoremap <leader>gb <cmd>Telescope git_branches<cr>
+"nnoremap <leader>gs <cmd>Telescope git_stash<cr>
 
-nnoremap <leader>hd <cmd>Gitsigns  diffthis<cr>
-nnoremap <leader>hp <cmd>Gitsigns  preview_hunk<cr>
-nnoremap <leader>hb <cmd>Gitsigns  toggle_current_line_blame<cr>
-nnoremap <leader>hr <cmd>Gitsigns  reset_hunk<cr>
-nnoremap <leader>hR <cmd>Gitsigns  reset_buffer<cr>
+nnoremap <leader>hp <cmd>Gitsigns preview_hunk<cr>
+nnoremap <leader>hP <cmd>Gitsigns diffthis<cr>
+nnoremap <leader>hb <cmd>Gitsigns toggle_current_line_blame<cr>
+nnoremap <leader>hr <cmd>Gitsigns reset_hunk<cr>
+nnoremap <leader>hR <cmd>Gitsigns reset_buffer<cr>
 """ nnoremap <leader>tr <cmd>Telescope treesitter<cr>
  
 """ """ file browser
@@ -238,10 +240,11 @@ nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 
 """ Control
 nnoremap ZA :wqa<cr>
+nnoremap <silent> <leader><Enter> <cmd>lua vim.lsp.buf.format()<cr>
 
 """ Navigate 
-nnoremap K <cmd>AerialPrev<CR>
 nnoremap J <cmd>AerialNext<CR>
+nnoremap K <cmd>AerialPrev<CR>
 
 """ Moving lines 
 "nnoremap <silent> <esc>k :move-2<CR>==

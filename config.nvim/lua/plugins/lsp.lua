@@ -11,7 +11,22 @@ return {
             },
         },
     },
-
+    {
+        "neovim/nvim-lspconfig",
+        opts = function(_, opts)
+            local keys = require("lazyvim.plugins.lsp.keymaps").get()
+            keys[#keys + 1] = { "K", false }
+            return opts
+        end,
+    },
+    {
+        "mfussenegger/nvim-lint",
+        config = function()
+            require("lint").linters_by_ft = {
+                markdown = { "vale" },
+            }
+        end,
+    },
     -- add tsserver and setup with typescript.nvim instead of lspconfig
     --{
     --"neovim/nvim-lspconfig",
@@ -47,13 +62,4 @@ return {
     --},
     --},
     --},
-
-    {
-        "neovim/nvim-lspconfig",
-        opts = function(_, opts)
-            local keys = require("lazyvim.plugins.lsp.keymaps").get()
-            keys[#keys + 1] = { "K", false }
-            return opts
-        end,
-    },
 }
