@@ -149,7 +149,7 @@ nnoremap <silent> <leader><leader> :HopWord<CR>
 nnoremap <silent> <leader>j :HopVerticalAC<CR>
 nnoremap <silent> <leader>k :HopVerticalBC<CR>
 
-vnoremap <silent> <leader>/ :call nerdcommenter#Comment('x', 'toggle')<CR>
+vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap \ <leader>q
 """ nmap <leader>r :so ~/.config/nvim/init.vim<CR>
 """ nmap <leader>t :call TrimWhitespace()<CR>
@@ -177,18 +177,19 @@ vnoremap <silent> <leader>/ :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ autocmd Filetype solidity nmap <leader>p :0,$!npx prettier %<CR>
 """ 
 
-""" Telescope mappings
-nnoremap <leader>fb <cmd>Telescope buffers<cr>
-nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-""" nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>:
-nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
-vnoremap <leader>f/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>f? <cmd>Telescope live_grep<cr>
-vnoremap <leader>f? "zy:Telescope live_grep default_text=<C-r>z<cr>
+""" Text matching in workspace and current buffer.
+""" nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>: and <leader>sc
+nnoremap / <cmd>Telescope current_buffer_fuzzy_find<cr>
+vnoremap / "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
+nnoremap <leader>/ <cmd>Telescope live_grep<cr>
+vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
+
+vnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
+vnoremap <leader>lt <cmd>TodoTelescope <cr>
 
 """ Diagnostics
-nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
-nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
+nnoremap <leader>fe <cmd>Telescope diagnostics severity=1<cr> 
+nnoremap <leader>fw <cmd>Telescope diagnostics severity=2<cr>
 
 """ Copy Pasting
 nnoremap <leader>yy "+yy
@@ -199,14 +200,17 @@ nnoremap <leader>P "+P
 vnoremap <leader>p "+p
 vnoremap <leader>P "+P
 
-""" List all.
+""" List all jump list and marks.
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
 nnoremap <leader>fm <cmd>Telescope marks<cr>
 
-""" Finding in language
+""" reference and jumping
+nnoremap <leader>lb <cmd>Telescope buffers<cr>
+nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+
 nnoremap <leader>ls <cmd>Telescope aerial<cr>
-nnoremap <leader>lS <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
-vnoremap <leader>lS "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
+nnoremap <leader>fs <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
+vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
 vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
 nnoremap gi <cmd>Telescope lsp_implementations<cr>
@@ -245,6 +249,11 @@ nnoremap <silent> <leader><Enter> <cmd>lua vim.lsp.buf.format()<cr>
 """ Navigate 
 nnoremap J <cmd>AerialNext<CR>
 nnoremap K <cmd>AerialPrev<CR>
+
+""" Noise history report.
+""" <leader>snt noice telescope<cr>
+""" <leader>snl last noice<cr>
+""" <leader>sna all noice<cr>
 
 """ Moving lines 
 "nnoremap <silent> <esc>k :move-2<CR>==
