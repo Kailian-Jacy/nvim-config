@@ -18,7 +18,7 @@ function clone_config() {
 
 function dependencies() {
  	brew install node
- 	brew install lazygit
+ 	brew install lazygit xsel
 	brew install --cask font-jetbrains-mono-nerd-font
 	nvim
 }

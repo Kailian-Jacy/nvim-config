@@ -7,3 +7,10 @@ vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, 
 
 vim.keymap.del("n", "<leader>l")
 vim.keymap.del("n", "<leader>L")
+
+vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
+    expr = true,
+    replace_keycodes = false
+})
+vim.g.copilot_no_tab_map = true
+

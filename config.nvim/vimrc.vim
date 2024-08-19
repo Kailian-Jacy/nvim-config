@@ -184,8 +184,10 @@ vnoremap / "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
 nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 
-vnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
-vnoremap <leader>lt <cmd>TodoTelescope <cr>
+nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
+nnoremap <leader>lt <cmd>TodoTelescope <cr>
+
+nnoremap <leader>fk <cmd>Telescope keymaps<cr>
 
 """ Diagnostics
 nnoremap <leader>fe <cmd>Telescope diagnostics severity=1<cr> 
@@ -193,12 +195,7 @@ nnoremap <leader>fw <cmd>Telescope diagnostics severity=2<cr>
 
 """ Copy Pasting
 nnoremap <leader>yy "+yy
-nnoremap <leader>y  "+y
 vnoremap <leader>y  "+y
-nnoremap <leader>p "+p
-nnoremap <leader>P "+P
-vnoremap <leader>p "+p
-vnoremap <leader>P "+P
 
 """ List all jump list and marks.
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
@@ -238,13 +235,25 @@ nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
 
 """ Debugging related
-nnoremap <leader>df <cmd>Telescope dap frames<cr>
+nnoremap <leader>dd <cmd>Telescope dap commands<cr>
+nnoremap <leader>dc <cmd>Telescope dap configurations<cr>
 nnoremap <leader>db <cmd>Telescope dap list_breakpoints<cr>
-nnoremap <leader>dv <cmd>Telescope dap variables<cr>
+nnoremap <leader>dl <cmd>Telescope dap variables<cr>
+nnoremap <leader>df <cmd>Telescope dap frames<cr>
 
 """ Control
+function! s:format_and_goimports()
+  " Format the code
+  lua vim.lsp.buf.format()
+
+  " Check if it's Golang code
+  if &filetype == 'go'
+    " Call goimports
+    lua require('go.format').goimports()
+  endif
+endfunction
 nnoremap ZA :wqa<cr>
-nnoremap <silent> <leader><Enter> <cmd>lua vim.lsp.buf.format()<cr>
+nnoremap <silent> <leader><Enter> :call <SID>format_and_goimports()<CR>
 
 """ Navigate 
 nnoremap J <cmd>AerialNext<CR>

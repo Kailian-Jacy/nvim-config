@@ -1,5 +1,5 @@
 return {
-    {
+    --[[{
         "nvim-treesitter/nvim-treesitter",
         opts = {
             ensure_installed = { "go", "gomod", "gowork", "gosum" },
@@ -134,7 +134,7 @@ return {
             })
             return opts
         end,
-    },
+    },]]
     {
         "ray-x/go.nvim",
         dependencies = { -- optional packages
