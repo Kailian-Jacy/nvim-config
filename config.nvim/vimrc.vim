@@ -148,6 +148,9 @@ map <silent> <leader>e :NvimTreeToggle<CR>
 nnoremap <silent> <leader><leader> :HopWord<CR>
 nnoremap <silent> <leader>j :HopVerticalAC<CR>
 nnoremap <silent> <leader>k :HopVerticalBC<CR>
+vnoremap <silent> <leader><leader> :HopWord<CR>
+vnoremap <silent> <leader>j :HopVerticalAC<CR>
+vnoremap <silent> <leader>k :HopVerticalBC<CR>
 
 vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap \ <leader>q
@@ -179,10 +182,10 @@ vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 
 """ Text matching in workspace and current buffer.
 """ nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>: and <leader>sc
-nnoremap / <cmd>Telescope current_buffer_fuzzy_find<cr>
-vnoremap / "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>/ <cmd>Telescope live_grep<cr>
-vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
+nnoremap <leader>/ <cmd>Telescope current_buffer_fuzzy_find<cr>
+vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
+nnoremap <leader>f/ <cmd>Telescope live_grep<cr>
+vnoremap <leader>f/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 
 nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
 nnoremap <leader>lt <cmd>TodoTelescope <cr>
