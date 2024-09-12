@@ -27,18 +27,5 @@ return {
         config = function()
             require('telescope').load_extension('dap')
         end
-    },
-    {
-        "mfussenegger/nvim-dap-python",
-        config = function()
-            require('dap-python').setup('python3')
-            table.insert(require('dap').configurations.python, {
-                type = 'debugpy',
-                request = 'launch',
-                name = 'Python Debug Current File',
-                program = '${file}',
-                stopOnEntry = true,
-            })
-        end
     }
 }
