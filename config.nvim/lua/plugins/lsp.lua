@@ -1,13 +1,10 @@
 return {
-    -- add pyright to lspconfig
     {
         "neovim/nvim-lspconfig",
         ---@class PluginLspOpts
         opts = {
             ---@type lspconfig.options
             servers = {
-                -- pyright will be automatically installed with mason and loaded with lspconfig
-                pyright = {},
             },
         },
     },
@@ -27,6 +24,29 @@ return {
             }
         end,
     },
+    {
+        "stevearc/conform.nvim",
+        keys = {
+            {
+                "<leader><Enter>",
+                function()
+                    require("conform").format({ formatters = { "injected" }, timeout_ms = 3000 })
+                end,
+                mode = { "n", "v" },
+                desc = "Format Injected Langs",
+            },
+        },
+        formatters_by_ft = {
+            -- Conform will run multiple formatters sequentially
+            -- You can customize some of the format options for the filetype (:help conform.format)
+            lua = { "stylua" },
+            python = { "ruff" },
+            golang = { "goimport", "gopls" },
+            rust = { "rustfmt", lsp_format = "fallback" },
+            -- Conform will run the first available formatter
+        },
+        format_on_save = false,
+    }
     -- add tsserver and setup with typescript.nvim instead of lspconfig
     --{
     --"neovim/nvim-lspconfig",

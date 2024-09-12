@@ -182,10 +182,11 @@ vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 
 """ Text matching in workspace and current buffer.
 """ nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>: and <leader>sc
-nnoremap <leader>/ <cmd>Telescope current_buffer_fuzzy_find<cr>
-vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>f/ <cmd>Telescope live_grep<cr>
-vnoremap <leader>f/ "zy:Telescope live_grep default_text=<C-r>z<cr>
+
+""" nnoremap <leader>/ <cmd>Telescope current_buffer_fuzzy_find<cr>
+""" vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
+nnoremap <leader>/ <cmd>Telescope live_grep<cr>
+vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 
 nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
 nnoremap <leader>lt <cmd>TodoTelescope <cr>
@@ -245,18 +246,7 @@ nnoremap <leader>dl <cmd>Telescope dap variables<cr>
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
 
 """ Control
-function! s:format_and_goimports()
-  " Format the code
-  lua vim.lsp.buf.format()
-
-  " Check if it's Golang code
-  if &filetype == 'go'
-    " Call goimports
-    lua require('go.format').goimports()
-  endif
-endfunction
 nnoremap ZA :wqa<cr>
-nnoremap <silent> <leader><Enter> :call <SID>format_and_goimports()<CR>
 
 """ Navigate 
 nnoremap J <cmd>AerialNext<CR>

@@ -44,7 +44,7 @@ return {
             })
         end,
     },
-    {
+    --[[{
         "gorbit99/codewindow.nvim",
         version = "*",
         config = function()
@@ -52,5 +52,5 @@ return {
             codewindow.setup()
             codewindow.apply_default_keybinds()
         end,
-    },
+    },]]
 }
