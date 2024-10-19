@@ -1,6 +1,9 @@
 return {
     {
         "Mofiqul/dracula.nvim",
+        config = function ()
+            vim.g.dracula_colors = { border = "white" }
+        end
     },
     {
         "nvim-treesitter/nvim-treesitter",

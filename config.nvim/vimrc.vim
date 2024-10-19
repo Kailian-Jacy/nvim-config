@@ -11,7 +11,10 @@ set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
 "set expandtab
 set incsearch ignorecase smartcase hlsearch
 set wildmode=longest,list,full wildmenu
-set ruler laststatus=2 showcmd showmode
+
+""" not showing bottom line.
+set cmdheight=0 noshowmode noruler noshowcmd laststatus=0
+""" set laststatus=0 showcmd showmode
 set showbreak=↪\
 set list listchars=tab:→\ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨
 set fillchars+=vert:\ 
@@ -26,7 +29,12 @@ set cursorline
 set cursorlineopt=number
 set linebreak
 set smoothscroll
+
+highlight WinSeparator guifg=#565f89
+set fillchars="diff:╱,eob: ,fold: ,foldclose:,foldopen:,foldsep: "
+
 autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
+set termguicolors
 
 """ Filetype-Specific Configurations
 
@@ -34,10 +42,6 @@ autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
 autocmd FileType html setlocal shiftwidth=2 tabstop=2 softtabstop=2
 autocmd FileType css setlocal shiftwidth=2 tabstop=2 softtabstop=2
 autocmd FileType xml setlocal shiftwidth=2 tabstop=2 softtabstop=2
-autocmd FileType htmldjango setlocal shiftwidth=2 tabstop=2 softtabstop=2
-autocmd FileType htmldjango inoremap {{ {{  }}<left><left><left>
-autocmd FileType htmldjango inoremap {% {%  %}<left><left><left>
-autocmd FileType htmldjango inoremap {# {#  #}<left><left><left>
 
 " Markdown and Journal
 autocmd FileType markdown setlocal shiftwidth=2 tabstop=2 softtabstop=2
@@ -69,7 +73,6 @@ augroup MyColors
     "autocmd ColorScheme * call TransparentBackground() " uncomment if you are using a translucent terminal and you want nvim to use that
 augroup END
 
-set termguicolors
 
 """ Core plugin configuration (vim)
 
@@ -142,7 +145,6 @@ set termguicolors
 """ 
 """ " Core
 let mapleader = " "
-map <silent> <leader>e :NvimTreeToggle<CR>
 
 """ Hopping
 nnoremap <silent> <leader><leader> :HopWord<CR>
@@ -191,11 +193,12 @@ vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
 nnoremap <leader>lt <cmd>TodoTelescope <cr>
 
-nnoremap <leader>fk <cmd>Telescope keymaps<cr>
+""" keymap finding has been replaced with <leader>sk
+""" nnoremap <leader>fk <cmd>Telescope keymaps<cr>
 
 """ Diagnostics
-nnoremap <leader>fe <cmd>Telescope diagnostics severity=1<cr> 
-nnoremap <leader>fw <cmd>Telescope diagnostics severity=2<cr>
+nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
+nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
 """ Copy Pasting
 nnoremap <leader>yy "+yy
@@ -236,13 +239,14 @@ nnoremap <leader>hR <cmd>Gitsigns reset_buffer<cr>
 """ """ file browser
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
+nnoremap <leader>fE <cmd>Telescope file_browser path=%:p:h select_buffer=true no_ignore=true<cr>
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
 
 """ Debugging related
-nnoremap <leader>dd <cmd>Telescope dap commands<cr>
-nnoremap <leader>dc <cmd>Telescope dap configurations<cr>
-nnoremap <leader>db <cmd>Telescope dap list_breakpoints<cr>
-nnoremap <leader>dl <cmd>Telescope dap variables<cr>
+nnoremap <leader>Dd <cmd>Telescope dap commands<cr>
+nnoremap <leader>Df <cmd>Telescope dap configurations<cr>
+nnoremap <leader>Db <cmd>Telescope dap list_breakpoints<cr>
+nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
 
 """ Control
@@ -263,5 +267,3 @@ nnoremap K <cmd>AerialPrev<CR>
 "vnoremap <silent> <esc>j :m '>+1<cr>gv=gv
 "vnoremap <silent> <esc>k :m '<-2<cr>gv=gv
 
-set statusline+=%{get(b:,'gitsigns_status','')}
-hi TreesitterContextBottom gui=underline guisp=Grey
