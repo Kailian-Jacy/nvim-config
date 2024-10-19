@@ -30,20 +30,22 @@ return {
                 'EndOfBuffer',
             },
             -- table: additional groups that should be cleared
-            extra_groups = {},
+            extra_groups = {
+                    "CmpNormal"
+                },
             -- table: groups you don't want to clear
             exclude_groups = {},
             -- function: code to be executed after highlight groups are cleared
             -- Also the user event "TransparentClear" will be triggered
             on_clear = function() end,
             })
-            -- require("transparent").clear_prefix("Telescope")
+            require("transparent").clear_prefix("Telescope")
         end
     },
-        --[[{
+    {
         "folke/noice.nvim",
         config = function()
-            require("lualine").setup({
+            --[[require("lualine").setup({
                 sections = {
                     lualine_x = {
                         {
@@ -54,8 +56,14 @@ return {
                     },
                 },
             })
+            ]]--
             require("noice").setup({
                 views = {
+                    mini = {
+                        win_options = {
+                            winblend = 0
+                        }
+                    },
                     cmdline_popup = {
                         position = {
                             row = 5,
@@ -66,6 +74,7 @@ return {
                             height = "auto",
                         },
                     },
+                    --[[
                     popupmenu = {
                         relative = "editor",
                         position = {
@@ -83,12 +92,11 @@ return {
                         win_options = {
                             winhighlight = { Normal = "Normal", FloatBorder = "DiagnosticInfo" },
                         },
-                    },
+                    },]]
                 },
             })
         end,
     },
-]]
     -- the opts function can also be used to change the default opts:
     {
         "nvim-lualine/lualine.nvim",
