@@ -19,8 +19,8 @@ return {
         "echasnovski/mini.starter",
         enabled = false,
     },
-    {
+    --[[{
         "nvim-lualine/lualine.nvim",
         enabled = false,
-    },
+    },]]
 }

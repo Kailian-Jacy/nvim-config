@@ -34,6 +34,7 @@ return {
             -- Also the user event "TransparentClear" will be triggered
             on_clear = function() end,
             })
+            -- require("transparent").clear_prefix("Telescope")
         end
     },
         --[[{
@@ -84,12 +85,12 @@ return {
             })
         end,
     },
-
+]]
     -- the opts function can also be used to change the default opts:
     {
         "nvim-lualine/lualine.nvim",
         event = "VeryLazy",
-        opts = function(_, opts)
+        --[[opts = function(_, opts)
             local trouble = require("trouble")
             local symbols = trouble.statusline({
                 mode = "lsp_document_symbols",
@@ -105,7 +106,53 @@ return {
                 symbols.get,
                 cond = symbols.has,
             })
-        end,
+        end,]]
+        config = function()
+           local theme = {
+                inactive = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                },
+                visual = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                },
+                replace = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                },
+                normal = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                },
+                insert = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                },
+                command = {
+                    a = { fg = nil, bg = nil },
+                    b = { fg = nil, bg = nil },
+                    c = { fg = nil, bg = nil },
+                }
+           };
+           require("lualine").setup({
+                options = {
+                    theme = theme
+                },
+                sections = {
+                    lualine_a = {},
+                    lualine_b = {},
+                    lualine_c = {},
+                    lualine_x = {},
+                    lualine_y = {},
+                    lualine_z = {{'filename', path=1}}
+                }
+            })
+        end
     },
-]]
 }
