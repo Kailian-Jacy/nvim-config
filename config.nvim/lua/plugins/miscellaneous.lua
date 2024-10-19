@@ -24,38 +24,34 @@ return {
         opts = { use_diagnostic_signs = true },
     },
 
-    -- disable trouble
-    -- { "folke/trouble.nvim", enabled = false },
-
-    -- override nvim-cmp and add cmp-emoji
+    -- override nvim-cmp
     {
         "hrsh7th/nvim-cmp",
-        dependencies = { "hrsh7th/cmp-emoji" },
-        opts = function(_, opts)
-            table.insert(opts.sources, { name = "emoji" })
-
-            local cmp = require("cmp")
+        config = function()
             local has_words_before = function()
                 unpack = unpack or table.unpack
                 local line, col = unpack(vim.api.nvim_win_get_cursor(0))
                 return col ~= 0 and
-                    vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
+                    vim.api.nv(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
             end
-            return {
+            local cmp = require("cmp")
+            require("cmp").setup({
                 auto_brackets = {}, -- configure any filetype to auto add brackets
                 completion = {
                     completeopt = "menu,menuone,noinsert" .. (true and "" or ",noselect"),
                 },
                 window = {
-                    completion = cmp.config.window.bordered(),
+                    completion = {
+                        border = 'rounded',
+                        winhighlight = 'NormalFloat:TelescopeNormal,FloatBorder:TelescopeBorder',
+                    },
                     documentation = {
                         border = 'rounded',
-                        winhighlight = 'Normal:TelescopeNormal,FloatBorder:TelescopeBorder',
+                        winhighlight = 'NormalFloat:TelescopeNormal,FloatBorder:TelescopeBorder',
                     }
                 },
                 mapping = cmp.mapping.preset.insert {
-                    ['kk'] = cmp.mapping.confirm({ -- <TAB>
-                        -- behavior = cmp.ConfirmBehavior.Replace,  -- if active, replaces succeeding text
+                    ['kk'] = cmp.mapping.confirm({
                         behavior = cmp.ConfirmBehavior.Replace,
                         select = true,
                     }),
@@ -90,6 +86,7 @@ return {
                     { name = "nvim_lua" }, { name = "path" },
                 },
                 sorting = {
+                    priority_weight = 100,
                     comparators = {
                         cmp.config.compare.offset,
                         cmp.config.compare.exact,
@@ -99,7 +96,28 @@ return {
                         cmp.config.compare.kind,
                     },
                 },
-            }
+                matching = {
+                    disallow_fuzzy_matching = false,
+                    disallow_fullfuzzy_matching = false,
+                    disallow_partial_fuzzy_matching = false,
+                    disallow_partial_matching = false,
+                    disallow_prefix_unmatching = false,
+                    disallow_symbol_nonprefix_matching = false
+                }
+            });
+            cmp.setup.cmdline({ '/', '?' }, {
+                sources = {
+                    { name = 'buffer' }
+                }
+            });
+            -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+            cmp.setup.cmdline(':', {
+                sources = cmp.config.sources({
+                    { name = 'path' }
+                }, {
+                    { name = 'cmdline' }
+                }),
+            });
         end,
     },
 
