@@ -29,5 +29,8 @@ return {
                 },
             }
         end
+    },
+    {
+        "lukas-reineke/cmp-under-comparator"
     }
 }

@@ -46,12 +46,15 @@ return {
                 completion = {
                     completeopt = "menu,menuone,noinsert" .. (true and "" or ",noselect"),
                 },
+                window = {
+                    completion = cmp.config.window.bordered(),
+                    documentation = {
+                        border = 'rounded',
+                        winhighlight = 'Normal:TelescopeNormal,FloatBorder:TelescopeBorder',
+                    }
+                },
                 mapping = cmp.mapping.preset.insert {
-                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-                    ['<C-Space>'] = cmp.mapping.complete(),
-                    ['<C-e>'] = cmp.mapping.abort(),
-                    ['<CR>'] = cmp.mapping.confirm({ -- <TAB>
+                    ['kk'] = cmp.mapping.confirm({ -- <TAB>
                         -- behavior = cmp.ConfirmBehavior.Replace,  -- if active, replaces succeeding text
                         behavior = cmp.ConfirmBehavior.Replace,
                         select = true,
@@ -79,10 +82,22 @@ return {
                     {
                         name = "cmp_tabnine",
                         group_index = 1,
-                        priority = 100,
                     },
-                    { name = 'buffer' }, { name = 'nvim_lsp' },
+                    {
+                        name = 'nvim_lsp',
+                    },
+                    { name = 'buffer' },
                     { name = "nvim_lua" }, { name = "path" },
+                },
+                sorting = {
+                    comparators = {
+                        cmp.config.compare.offset,
+                        cmp.config.compare.exact,
+                        cmp.config.compare.score,
+                        cmp.config.compare.recently_used,
+                        require("cmp-under-comparator").under,
+                        cmp.config.compare.kind,
+                    },
                 },
             }
         end,
@@ -159,12 +174,7 @@ return {
     {
         "williamboman/mason.nvim",
         opts = {
-            ensure_installed = {
-                "stylua",
-                "shellcheck",
-                "shfmt",
-                "flake8",
-            },
+            ensure_installed = {}
         },
     },
 
@@ -245,25 +255,6 @@ return {
         dependencies = { { 'nvim-tree/nvim-web-devicons' } }
     },
     {
-        "hrsh7th/cmp-cmdline",
-        config = function()
-            local cmp = require("cmp")
-            cmp.setup.cmdline(':', {
-                mapping = cmp.mapping.preset.cmdline(),
-                sources = cmp.config.sources({
-                    { name = 'path' }
-                }, {
-                    {
-                        name = 'cmdline',
-                        option = {
-                            ignore_cmds = { 'Man', '!' }
-                        }
-                    }
-                })
-            })
-        end
-    },
-    {
         "okuuva/auto-save.nvim",
         config = function()
             require("auto-save").setup {
@@ -272,12 +263,6 @@ return {
                 },
             }
         end,
-    },
-    --[[{
-        "github/copilot.vim"
-    },]]
-    {
-        "copilot.vim",
     },
     {
         'ojroques/nvim-osc52'
@@ -297,7 +282,7 @@ return {
             "nvim-tree/nvim-web-devicons",
         },
         opts = {
-            lang = "rust",
+            lang = "python3",
             cn = {
                 enabled = true,
                 translator = true,
