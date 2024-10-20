@@ -12,3 +12,10 @@ vim.api.nvim_create_autocmd({ "BufWritePost" }, {
         require("lint").try_lint("cspell")
     end,
 })
+-- dap close float window on esc
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "dap-float",
+    callback = function()
+        vim.api.nvim_buf_set_keymap(0, "n", "<esc>", "<cmd>close!<CR>", { noremap = true, silent = true })
+    end
+})
