@@ -53,28 +53,19 @@ return {
                     }
                 },
                 mapping = cmp.mapping.preset.insert {
+                    ['<CR>'] = cmp.mapping.confirm({
+                        behavior = cmp.ConfirmBehavior.Replace,
+                        select = true,
+                    }),
                     ['jj'] = cmp.mapping.confirm({
                         behavior = cmp.ConfirmBehavior.Replace,
                         select = true,
                     }),
-                    ['<Tab>'] = function(fallback)
-                        if not cmp.select_next_item() then
-                            if vim.bo.buftype ~= 'prompt' and has_words_before() then
-                                cmp.complete()
-                            else
-                                fallback()
-                            end
-                        end
-                    end,
-                    ['<S-Tab>'] = function(fallback)
-                        if not cmp.select_prev_item() then
-                            if vim.bo.buftype ~= 'prompt' and has_words_before() then
-                                cmp.complete()
-                            else
-                                fallback()
-                            end
-                        end
-                    end,
+                    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+                    ["<Tab>"] = cmp.mapping.select_next_item(),
+                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    -- ['<esc>'] = cmp.mapping.abort()
                 },
                 sources = {
                     {
@@ -108,12 +99,14 @@ return {
                 }
             });
             cmp.setup.cmdline({ '/', '?' }, {
+                mapping = cmp.mapping.preset.cmdline(),
                 sources = {
                     { name = 'buffer' }
                 }
             });
             -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
             cmp.setup.cmdline(':', {
+                mapping = cmp.mapping.preset.cmdline(),
                 sources = cmp.config.sources({
                     { name = 'path' }
                 }, {

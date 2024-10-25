@@ -1,6 +1,16 @@
 return {
     {
         "Mofiqul/dracula.nvim",
+        config = function ()
+            require("dracula").setup({
+                colors = {
+                    selection = "#2E236C",
+                    visual = "#2E236C",
+                },
+                transparent_bg = true,
+                italic_comment = true,
+            })
+        end
     },
     {
         "nvim-treesitter/nvim-treesitter",

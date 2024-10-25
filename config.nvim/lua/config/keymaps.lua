@@ -26,6 +26,9 @@ vim.keymap.set('i', '<C-J>', 'copilot#Accept("\\<CR>")', {
 })
 vim.g.copilot_no_tab_map = true
 
+-- telescope based:
+vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
+
 -- Mapping and unmapping during debugging.
 vim.g.nvim_dap_noui_backup_keymap = {}
 
