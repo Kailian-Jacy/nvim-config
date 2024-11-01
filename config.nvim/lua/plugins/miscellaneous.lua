@@ -227,7 +227,7 @@ return {
         end
     },
 
-    {
+    --[[{
         'nvimdev/dashboard-nvim',
         event = 'VimEnter',
         config = function()
@@ -266,7 +266,7 @@ return {
             }
         end,
         dependencies = { { 'nvim-tree/nvim-web-devicons' } }
-    },
+    },]]
     {
         "okuuva/auto-save.nvim",
         config = function()
@@ -305,5 +305,15 @@ return {
                 non_standalone = true,
             }
         },
+    },
+    {
+        'LukasPietzschmann/telescope-tabs',
+        config = function()
+            require('telescope').load_extension 'telescope-tabs'
+            require('telescope-tabs').setup {
+                -- Your custom config :^)
+            }
+        end,
+        dependencies = { 'nvim-telescope/telescope.nvim' },
     }
 }

@@ -26,26 +26,20 @@ return {
     },
     {
         "stevearc/conform.nvim",
-        keys = {
-            {
-                "<leader><Enter>",
-                function()
-                    require("conform").format({ formatters = { "injected" }, timeout_ms = 3000 })
-                end,
-                mode = { "n", "v" },
-                desc = "Format Injected Langs",
-            },
-        },
         formatters_by_ft = {
             -- Conform will run multiple formatters sequentially
             -- You can customize some of the format options for the filetype (:help conform.format)
             lua = { "stylua" },
             python = { "ruff" },
-            golang = { "goimport", "gopls" },
+            golang = { "goimports", "gopls" },
             rust = { "rustfmt", lsp_format = "fallback" },
             -- Conform will run the first available formatter
         },
         format_on_save = false,
+        -- Conform will notify you when a formatter errors
+        notify_on_error = true,
+        -- Conform will notify you when no formatters are available for the buffer
+        notify_no_formatters = true,
     }
     -- add tsserver and setup with typescript.nvim instead of lspconfig
     --{

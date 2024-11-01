@@ -19,3 +19,9 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.api.nvim_buf_set_keymap(0, "n", "<esc>", "<cmd>close!<CR>", { noremap = true, silent = true })
     end
 })
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "dap-float",
+    callback = function()
+        vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>close!<CR>", { noremap = true, silent = true })
+    end
+})

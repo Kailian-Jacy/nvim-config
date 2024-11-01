@@ -4,11 +4,22 @@ return {
         config = function ()
             require("dracula").setup({
                 colors = {
-                    selection = "#2E236C",
-                    visual = "#2E236C",
+                    -- selection = "#0F3460",
+                    selection = "#2D4263",
+                    visual = "#2D4263",
+                    bg = ""
                 },
                 transparent_bg = true,
                 italic_comment = true,
+                overrides = {
+                    Pmenu = { bg = "#363948" },
+                    PmenuSbar = { bg = "#363948" },
+                    -- Completion/documentation Pmenu border color when using bordered windows
+                    CmpPmenuBorder = { link = "NonText" },
+                    -- Telescope borders
+                    TelescopeBorder = { link = "Constant" },
+                    WinSeparator = { fg = "#565f89" },
+                }
             })
         end
     },

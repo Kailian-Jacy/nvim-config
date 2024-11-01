@@ -4,7 +4,7 @@
 
 local function map(mode, lhs, rhs, opts) 
     local options = { noremap=true, silent=true }
-    if opts then 
+    if opts then
         options = vim.tbl_extend('force', options, opts)
     end
     vim.api.nvim_set_keymap(mode, lhs, rhs, options)
@@ -28,6 +28,10 @@ vim.g.copilot_no_tab_map = true
 
 -- telescope based:
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
+
+-- conform formatting
+vim.keymap.set("n", "<leader><Enter>", require("conform").format, { noremap = true, silent = true })
 
 -- Mapping and unmapping during debugging.
 vim.g.nvim_dap_noui_backup_keymap = {}
@@ -54,8 +58,8 @@ NoUIKeyMap = function()
     ['C'] = { f = require('dap').run_to_cursor, desc = 'run_to_cursor' },
     ['b'] = { f = require('dap').toggle_breakpoint, desc = 'toggle_breakpoint' },
     ['P'] = { f = require('dap').pause, desc = 'pause' },
+    ['p'] = { f = require('dap.ui.widgets').hover, m = { 'n', 'v' }, desc = 'hover' },
   }
-  keys['p'] = { f = require('dap.ui.widgets').hover, m = { 'n', 'v' }, desc = 'hover' }
   for key, value in pairs(keys) do
     local mode, keymap = key:match("([^|]*)|?(.*)")
     if type(value) == "string" then
