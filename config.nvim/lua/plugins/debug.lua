@@ -4,8 +4,20 @@ return {
         keys = {
             -- { "<leader>d", "", desc = "+debug", mode = {"n", "v"} },
             -- break points.
-            { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Toggle Breakpoint" },
-            { "<leader>dB", function() require("dap").set_breakpoint(vim.fn.input('Breakpoint condition: ')) end, desc = "Breakpoint Condition" },
+            {
+                "<leader>db",
+                function()
+                    require("dap").toggle_breakpoint()
+                end,
+                desc = "Toggle Breakpoint",
+            },
+            {
+                "<leader>dB",
+                function()
+                    require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+                end,
+                desc = "Breakpoint Condition",
+            },
             -- running control
             --[[{ "<leader>dc", function() require("dap").continue() end, desc = "Continue" },
             { "<leader>dC", function() require("dap").run_to_cursor() end, desc = "Run to Cursor" },
@@ -18,27 +30,46 @@ return {
             --[[{ "<leader>dj", function() require("dap").down() end, desc = "Down" },
             { "<leader>dk", function() require("dap").up() end, desc = "Up" },]]
             -- starting.
-            { "<leader>Dl", function() require("dap").run_last() end, desc = "Run Last" },
+            {
+                "<leader>Dl",
+                function()
+                    require("dap").run_last()
+                end,
+                desc = "Run Last",
+            },
             -- { "<leader>Da", function() require("dap").continue({ before = get_args }) end, desc = "Run with Args" },
-            -- 
-            { "<leader>dr", function() require("dap").repl.toggle() end, desc = "Toggle REPL" },
-            { "<leader>ds", function() require("dap").session() end, desc = "Session" },
+            --
+            {
+                "<leader>dr",
+                function()
+                    require("dap").repl.toggle()
+                end,
+                desc = "Toggle REPL",
+            },
+            {
+                "<leader>ds",
+                function()
+                    require("dap").session()
+                end,
+                desc = "Session",
+            },
             -- { "<leader>dw", function() require("dap.ui.widgets").hover() end, desc = "Widgets" },
         },
         config = function()
-            local dap = require('dap')
+            local dap = require("dap")
             -- setup keymap before debug session begins.
-            dap.listeners.before['event_initialized']['nvim-dap-noui'] = function(_, _)
-                vim.print('Debug Session intialized ')
+            dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
+                vim.print("Debug Session intialized ")
                 NoUIKeyMap()
             end
             -- unmap keymap after that.
-            dap.listeners.before['event_terminated']['nvim-dap-noui'] = function(_, _)
-                vim.print('Debug Session terminated.')
+            dap.listeners.before["event_terminated"]["nvim-dap-noui"] = function(_, _)
+                vim.print("Debug Session terminated.")
                 NoUIUnmap()
             end
-            -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui'] 
-        end
+            -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
+            -- Setup windows location and side when debugging with terminal:
+        end,
     },
     --[[{
         "rcarriga/nvim-dap-ui",
@@ -47,9 +78,10 @@ return {
         }
     },]]
     {
-        "nvim-telescope/telescope-dap.nvim",
+        -- "nvim-telescope/telescope-dap.nvim",
+        "Kailian-Jacy/telescope-dap.nvim",
         config = function()
-            require('telescope').load_extension('dap')
-        end
-    }
+            require("telescope").load_extension("dap")
+        end,
+    },
 }
