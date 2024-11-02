@@ -1,18 +1,24 @@
 return {
     {
+        "williamboman/mason.nvim",
+        opts = {
+            ensure_installed = {}
+        },
+    },
+    {
         "mfussenegger/nvim-dap",
         keys = {
             -- { "<leader>d", "", desc = "+debug", mode = {"n", "v"} },
             -- break points.
             {
-                "<leader>db",
+                "<leader>xb",
                 function()
                     require("dap").toggle_breakpoint()
                 end,
                 desc = "Toggle Breakpoint",
             },
             {
-                "<leader>dB",
+                "<leader>xB",
                 function()
                     require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
                 end,
@@ -38,7 +44,7 @@ return {
                 desc = "Run Last",
             },
             -- { "<leader>Da", function() require("dap").continue({ before = get_args }) end, desc = "Run with Args" },
-            --
+            -- To be moved to telescope in the future.
             {
                 "<leader>dr",
                 function()

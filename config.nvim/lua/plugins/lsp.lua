@@ -4,8 +4,7 @@ return {
         ---@class PluginLspOpts
         opts = {
             ---@type lspconfig.options
-            servers = {
-            },
+            servers = {},
         },
     },
     {
@@ -14,10 +13,10 @@ return {
             local lspconfig = require("lspconfig")
             local keys = require("lazyvim.plugins.lsp.keymaps").get()
             keys[#keys + 1] = { "K", false }
-            lspconfig.marksman.setup{
+            lspconfig.marksman.setup({
                 on_attach = lspconfig.marksman.LspOnAttach,
                 capabilities = lspconfig.marksman.LspCapabilities,
-            }
+            })
             return opts
         end,
     },
@@ -45,7 +44,7 @@ return {
         notify_on_error = true,
         -- Conform will notify you when no formatters are available for the buffer
         notify_no_formatters = true,
-    }
+    },
     -- add tsserver and setup with typescript.nvim instead of lspconfig
     --{
     --"neovim/nvim-lspconfig",
