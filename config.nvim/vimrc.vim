@@ -5,6 +5,7 @@
 
 """ Main Configurations
 filetype plugin indent on
+set autochdir
 " tab
 set expandtab
 set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
