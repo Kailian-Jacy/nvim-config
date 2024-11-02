@@ -11,8 +11,13 @@ return {
     {
         "neovim/nvim-lspconfig",
         opts = function(_, opts)
+            local lspconfig = require("lspconfig")
             local keys = require("lazyvim.plugins.lsp.keymaps").get()
             keys[#keys + 1] = { "K", false }
+            lspconfig.marksman.setup{
+                on_attach = lspconfig.marksman.LspOnAttach,
+                capabilities = lspconfig.marksman.LspCapabilities,
+            }
             return opts
         end,
     },
