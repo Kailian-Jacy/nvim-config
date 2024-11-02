@@ -1,27 +1,28 @@
 return {
     {
         "Mofiqul/dracula.nvim",
-        config = function ()
+        config = function()
             require("dracula").setup({
                 colors = {
                     -- selection = "#0F3460",
                     selection = "#2D4263",
                     visual = "#2D4263",
-                    bg = ""
+                    bg = "",
                 },
                 transparent_bg = true,
                 italic_comment = true,
                 overrides = {
-                    Pmenu = { bg = "#363948" },
-                    PmenuSbar = { bg = "#363948" },
                     -- Completion/documentation Pmenu border color when using bordered windows
-                    CmpPmenuBorder = { link = "NonText" },
+                    Pmenu = { bg = "" },
+                    PmenuSbar = { bg = "" },
+                    CmpPmenuBorder = { link = "Comment" },
+                    CompeDocumentationBorder = { link = "Comment" },
                     -- Telescope borders
                     TelescopeBorder = { link = "Constant" },
                     WinSeparator = { fg = "#565f89" },
-                }
+                },
             })
-        end
+        end,
     },
     {
         "nvim-treesitter/nvim-treesitter",
@@ -39,28 +40,48 @@ return {
         config = function()
             -- Optional, you don't have to run setup.
             require("transparent").setup({
-            -- table: default groups
-            groups = {
-                'Normal', 'NormalNC', 'Comment', 'Constant', 'Special', 'Identifier',
-                'Statement', 'PreProc', 'Type', 'Underlined', 'Todo', 'String', 'Function',
-                'Conditional', 'Repeat', 'Operator', 'Structure', 'LineNr', 'NonText',
-                'SignColumn', 'CursorLine', 'CursorLineNr', 'StatusLine', 'StatusLineNC',
-                'EndOfBuffer',
-            },
-            -- table: additional groups that should be cleared
-            extra_groups = {},
-            -- table: groups you don't want to clear
-            exclude_groups = {
+                -- table: default groups
+                groups = {
+                    "Normal",
+                    "NormalNC",
+                    "Comment",
+                    "Constant",
+                    "Special",
+                    "Identifier",
+                    "Statement",
+                    "PreProc",
+                    "Type",
+                    "Underlined",
+                    "Todo",
+                    "String",
+                    "Function",
+                    "Conditional",
+                    "Repeat",
+                    "Operator",
+                    "Structure",
+                    "LineNr",
+                    "NonText",
+                    "SignColumn",
+                    "CursorLine",
+                    "CursorLineNr",
+                    "StatusLine",
+                    "StatusLineNC",
+                    "EndOfBuffer",
+                },
+                -- table: additional groups that should be cleared
+                extra_groups = {},
+                -- table: groups you don't want to clear
+                exclude_groups = {
                     "TelescopeSelection",
                     "TelescopeMultiSelection",
-                    "TelescopePreviewLine"
+                    "TelescopePreviewLine",
                 },
-            -- function: code to be executed after highlight groups are cleared
-            -- Also the user event "TransparentClear" will be triggered
-            on_clear = function() end,
+                -- function: code to be executed after highlight groups are cleared
+                -- Also the user event "TransparentClear" will be triggered
+                on_clear = function() end,
             })
             require("transparent").clear_prefix("Telescope")
-        end
+        end,
     },
     {
         "folke/noice.nvim",
@@ -76,13 +97,14 @@ return {
                     },
                 },
             })
-            ]]--
+            ]]
+            --
             require("noice").setup({
                 views = {
                     mini = {
                         win_options = {
-                            winblend = 0
-                        }
+                            winblend = 0,
+                        },
                     },
                     cmdline_popup = {
                         position = {
@@ -139,7 +161,7 @@ return {
             })
         end,]]
         config = function()
-           local theme = {
+            local theme = {
                 inactive = {
                     a = { fg = nil, bg = nil },
                     b = { fg = nil, bg = nil },
@@ -169,11 +191,11 @@ return {
                     a = { fg = nil, bg = nil },
                     b = { fg = nil, bg = nil },
                     c = { fg = nil, bg = nil },
-                }
-           };
-           require("lualine").setup({
+                },
+            }
+            require("lualine").setup({
                 options = {
-                    theme = theme
+                    theme = theme,
                 },
                 sections = {
                     lualine_a = {},
@@ -181,9 +203,9 @@ return {
                     lualine_c = {},
                     lualine_x = {},
                     lualine_y = {},
-                    lualine_z = {{'filename', path=1}}
-                }
+                    lualine_z = { { "filename", path = 1 } },
+                },
             })
-        end
+        end,
     },
 }

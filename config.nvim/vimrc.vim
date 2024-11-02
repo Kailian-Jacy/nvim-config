@@ -17,7 +17,6 @@ set cmdheight=0 noshowmode noruler noshowcmd laststatus=0
 """ set laststatus=0 showcmd showmode
 set showbreak=↪\
 set list listchars=tab:→\ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨
-set fillchars+=vert:\ 
 set wrap breakindent
 set encoding=utf-8
 set textwidth=0
@@ -31,7 +30,7 @@ set linebreak
 set smoothscroll
 
 highlight WinSeparator guifg=#565f89
-set fillchars="diff:╱,eob: ,fold: ,foldclose:,foldopen:,foldsep: "
+set fillchars="diff:╱,eob: ,fold: ,foldclose:,foldopen:,foldsep: ,vert:\ "
 
 autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
 set termguicolors
@@ -55,24 +54,6 @@ autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 """     highlight WinSeparator gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
 """     highlight VertSplit gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
 """ endfunction
-
-" Use these colors for Pmenu, CmpPmenusBorder and TelescopeBorder when using dracula colorscheme
-function! DraculaTweaks()
-    " Pmenu colors when not using bordered windows
-    highlight Pmenu guibg=#363948
-    highlight PmenuSbar guibg=#363948
-    " Completion/documentation Pmenu border color when using bordered windows
-    highlight link CmpPmenuBorder NonText
-    " Telescope borders
-    highlight link TelescopeBorder Constant
-endfunction
-
-augroup MyColors
-    autocmd!
-    autocmd ColorScheme dracula call DraculaTweaks()
-    "autocmd ColorScheme * call TransparentBackground() " uncomment if you are using a translucent terminal and you want nvim to use that
-augroup END
-
 
 """ Core plugin configuration (vim)
 
@@ -143,8 +124,6 @@ augroup END
 """ 
 """ """ Custom Mappings (vim) (lua custom mappings are within individual lua config files)
 """ 
-""" " Core
-let mapleader = " "
 
 """ Hopping
 nnoremap <silent> <leader><leader> :HopWord<CR>
@@ -189,6 +168,7 @@ vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
 nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
+vnoremap <leader>? "zy:Telescope live_grep default_text=<C-r>z<cr>
 
 nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
 nnoremap <leader>lt <cmd>TodoTelescope <cr>
@@ -243,9 +223,9 @@ nnoremap <leader>fE <cmd>Telescope file_browser path=%:p:h select_buffer=true no
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
 
 """ Debugging related
-nnoremap <leader>Dd <cmd>Telescope dap commands<cr>
-nnoremap <leader>Df <cmd>Telescope dap configurations<cr>
-nnoremap <leader>Db <cmd>Telescope dap list_breakpoints<cr>
+nnoremap <leader>sd <cmd>Telescope dap commands<cr>
+nnoremap <leader>df <cmd>Telescope dap configurations<cr>
+nnoremap <leader>db <cmd>Telescope dap list_breakpoints<cr>
 nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
 
