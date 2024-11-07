@@ -30,8 +30,8 @@ vim.g.copilot_no_tab_map = true
 -- telescope based:
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<Tab><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true })
-vim.keymap.set("n", "<Tab><S-Tab>", "<cmd>bprev<cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader><H>", "<cmd>bnext<cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader><L>", "<cmd>bprev<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>fp", "<cmd>CdProject <CR>", { noremap = true, silent = true })
 
 -- conform formatting
