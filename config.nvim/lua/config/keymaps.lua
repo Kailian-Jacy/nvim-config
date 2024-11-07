@@ -20,6 +20,7 @@ vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, 
 vim.keymap.del("n", "<leader>l")
 vim.keymap.del("n", "<leader>L")
 
+-- copilot mapping
 vim.keymap.set("i", "<C-J>", 'copilot#Accept("\\<CR>")', {
     expr = true,
     replace_keycodes = false,
@@ -29,14 +30,15 @@ vim.g.copilot_no_tab_map = true
 -- telescope based:
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<Tab><Tab>", "<cmd>bnext<cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<Tab><S-Tab>", "<cmd>bprev<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>fp", "<cmd>CdProject <CR>", { noremap = true, silent = true })
 
+-- conform formatting
 function TriggerFormatForCurrentBuf()
     require("conform").format()
     vim.print("@conform.format")
 end
-
--- conform formatting
 vim.keymap.set("n", "<leader><Enter>", TriggerFormatForCurrentBuf, { noremap = true, silent = true })
 
 -- Mapping and unmapping during debugging.

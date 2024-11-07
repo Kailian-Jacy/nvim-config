@@ -15,13 +15,17 @@ return {
         version = false, -- set this if you want to always pull the latest change
         opts = {
             ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-            provider = "openai", -- Recommend using Claude
-            auto_suggestions_provider = "openai", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
-            openai = {
-                endpoint = "https://chatapi.midjourney-vip.cn/v1",
-                model = "gpt-4o-mini",
-                temperature = 0,
+            provider = "azure", -- Recommend using Claude
+            auto_suggestions_provider = "copilot", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
+            azure = {
+                endpoint = "https://openai-vlaa-westus.openai.azure.com/",
+                deployment = "gpt-4o-0806-nofilter",
+                model = "gpt-4o-0806-nofilter",
+                api_version = "2024-02-15-preview",
+                timeout = 30000,
+                temperature = 0.7,
                 max_tokens = 4096,
+                ["local"] = false,
             },
             behaviour = {
                 auto_suggestions = false, -- Experimental stage
