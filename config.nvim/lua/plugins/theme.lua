@@ -83,6 +83,9 @@ return {
             require("transparent").clear_prefix("Telescope")
         end,
     },
+    --[[{
+        "j-hui/fidget.nvim",
+    },]]
     {
         "folke/noice.nvim",
         config = function()
