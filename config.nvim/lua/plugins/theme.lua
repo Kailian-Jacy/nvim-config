@@ -201,7 +201,7 @@ return {
                     theme = theme,
                 },
                 sections = {
-                    lualine_a = {},
+                    lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
                     lualine_b = {},
                     lualine_c = {},
                     lualine_x = {},

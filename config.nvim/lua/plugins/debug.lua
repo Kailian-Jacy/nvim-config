@@ -66,10 +66,12 @@ return {
             -- setup keymap before debug session begins.
             dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
                 vim.print("Debug Session intialized ")
+                vim.g.is_debugging = "Debugging"
                 NoUIKeyMap()
             end
             -- unmap keymap after that.
             dap.listeners.before["event_terminated"]["nvim-dap-noui"] = function(_, _)
+                vim.g.is_debugging = ""
                 vim.print("Debug Session terminated.")
                 NoUIUnmap()
             end
