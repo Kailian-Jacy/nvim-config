@@ -32,8 +32,6 @@ vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true,
 vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader><H>", "<cmd>bnext<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader><L>", "<cmd>bprev<cr>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>fp", "<cmd>CdProject <CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>fP", "<cmd>LCdProject <CR>", { noremap = true, silent = true })
 
 -- conform formatting
 function TriggerFormatForCurrentBuf()

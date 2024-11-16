@@ -22,10 +22,20 @@ return {
     {
         "windwp/nvim-ts-autotag",
         enabled = false,
+    },
     {
         "folke/ts-comments.nvim",
         enabled = false,
-    }
+    },
+    {
+        "folke/flash.nvim",
+        enabled = false,
+    },
+    {
+        -- It's a visual mode selection enhancer. 
+        -- Go back for it when actually needed.
+        "echasnovski/mini.ai",
+        enabled = false,
     }
     --[[{
         "nvim-lualine/lualine.nvim",

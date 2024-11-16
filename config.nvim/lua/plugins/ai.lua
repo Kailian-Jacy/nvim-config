@@ -1,13 +1,13 @@
 -- AI completions.
 return {
     -- from ai store.
-    --[[{
-        "github/copilot.vim"
-    },]]
-    -- tencent copilot (gongfeng).
     {
-        "copilot.vim",
+        "github/copilot.vim"
     },
+    -- tencent copilot (gongfeng).
+    --[[{
+        "copilot.vim",
+    },]]
     {
         "yetone/avante.nvim",
         event = "VeryLazy",

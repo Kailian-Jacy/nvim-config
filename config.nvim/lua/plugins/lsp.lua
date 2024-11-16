@@ -33,7 +33,7 @@ return {
         formatters_by_ft = {
             -- Conform will run multiple formatters sequentially
             -- You can customize some of the format options for the filetype (:help conform.format)
-            lua = { "stylua" },
+            lua = { "luaformatter" },
             python = { "ruff" },
             golang = { "goimports", "gopls" },
             rust = { "rustfmt", lsp_format = "fallback" },
