@@ -12,16 +12,23 @@ end
 
 vim.g.mapleader = " "
 
+-- Cursor wandering around
+vim.keymap.set({"n", "v", "i"}, "<C-J>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({"n", "v", "i"}, "<C-H>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({"n", "v", "i"}, "<C-L>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({"n", "v", "i"}, "<C-K>", "<C-W>k", { noremap = true, silent = true })
+
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap = true, silent = true })
 
 -- disable lazyim default keymaps.
 vim.keymap.del("n", "<leader>l")
 vim.keymap.del("n", "<leader>L")
 
 -- copilot mapping
-vim.keymap.set("i", "<C-J>", 'copilot#Accept("\\<CR>")', {
+vim.keymap.set("i", "jj", 'copilot#Accept("\\<CR>")', {
     expr = true,
     replace_keycodes = false,
 })

@@ -30,3 +30,10 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>close!<CR>", { noremap = true, silent = true })
     end
 })
+
+-- Custom Simple Commands.
+-- LuaCommand scripts.
+vim.api.nvim_create_user_command("Lcmd", function()
+    vim.cmd("new")
+    vim.cmd("setfiletype lua")
+end, {})
