@@ -127,12 +127,12 @@ autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 """ 
 
 """ Hopping
-nnoremap <silent> <leader><leader> :HopWord<CR>
-nnoremap <silent> <leader>j :HopVerticalAC<CR>
-nnoremap <silent> <leader>k :HopVerticalBC<CR>
-vnoremap <silent> <leader><leader> :HopWord<CR>
-vnoremap <silent> <leader>j :HopVerticalAC<CR>
-vnoremap <silent> <leader>k :HopVerticalBC<CR>
+"nnoremap <silent> <leader><leader> :HopWord<CR>
+"nnoremap <silent> <leader>j :HopVerticalAC<CR>
+"nnoremap <silent> <leader>k :HopVerticalBC<CR>
+"vnoremap <silent> <leader><leader> :HopWord<CR>
+"vnoremap <silent> <leader>j :HopVerticalAC<CR>
+"vnoremap <silent> <leader>k :HopVerticalBC<CR>
 
 vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap \ <leader>q
