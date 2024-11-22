@@ -202,14 +202,16 @@ return {
         },
         sections = {
           -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
-          lualine_a = {{
+          -- Replaced with <C-G> mapping to show context.
+          --[[lualine_a = {{
             function()
               return require("nvim-navic").get_location()
             end,
             cond = function()
               return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
             end,
-          }}, -- Used to display is Debugging information.
+          }}, -- Used to display is Debugging information.]]
+          lualine_a = {},
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},

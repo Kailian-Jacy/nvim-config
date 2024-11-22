@@ -47,6 +47,11 @@ function TriggerFormatForCurrentBuf()
 end
 vim.keymap.set("n", "<leader><Enter>", TriggerFormatForCurrentBuf, { noremap = true, silent = true })
 
+-- context display
+vim.keymap.set({"n", "i", "x"}, "<C-G>", function ()
+  vim.print(require("nvim-navic").get_location())
+end)
+
 -- Mapping and unmapping during debugging.
 vim.g.nvim_dap_noui_backup_keymap = {}
 
