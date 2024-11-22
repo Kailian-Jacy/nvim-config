@@ -62,3 +62,6 @@ vim.diagnostic.config {
     prefix = '',
   },
 }
+
+-- disable barbecue (Context) showing atop of the window
+require("barbecue.ui").toggle(false)

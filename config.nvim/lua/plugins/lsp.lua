@@ -45,6 +45,18 @@ return {
     -- Conform will notify you when no formatters are available for the buffer
     notify_no_formatters = true,
   },
+  {
+    "utilyre/barbecue.nvim",
+    name = "barbecue",
+    version = "*",
+    dependencies = {
+      "SmiteshP/nvim-navic",
+      "nvim-tree/nvim-web-devicons", -- optional dependency
+    },
+    opts = {
+      -- configurations go here
+    },
+  }
   -- add tsserver and setup with typescript.nvim instead of lspconfig
   --{
   --"neovim/nvim-lspconfig",

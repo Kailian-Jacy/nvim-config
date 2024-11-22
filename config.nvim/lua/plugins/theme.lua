@@ -201,7 +201,15 @@ return {
           theme = theme,
         },
         sections = {
-          lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
+          -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
+          lualine_a = {{
+            function()
+              return require("nvim-navic").get_location()
+            end,
+            cond = function()
+              return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
+            end,
+          }}, -- Used to display is Debugging information.
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},
