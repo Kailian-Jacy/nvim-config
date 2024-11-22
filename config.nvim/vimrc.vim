@@ -165,7 +165,7 @@ vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ Text matching in workspace and current buffer.
 """ nnoremap <leader>fc <cmd>Telescope command_history<cr> """ update: replaced with <leader>: and <leader>sc
 
-""" nnoremap <leader>/ <cmd>Telescope current_buffer_fuzzy_find<cr>
+""" nnoremap <leader>/ <cmd>Telescope current_bufer_fuzzy_find<cr>
 """ vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
 nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
@@ -187,7 +187,7 @@ vnoremap <leader>y  "+y
 
 """ List all jump list and marks.
 nnoremap <leader>fj <cmd>Telescope jumplist<cr>
-nnoremap <leader>fm <cmd>Telescope marks<cr>
+" nnoremap <leader>fm <cmd>Telescope marks<cr>
 
 """ reference and jumping
 nnoremap <leader>lb <cmd>Telescope buffers<cr>
@@ -222,6 +222,8 @@ nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
 nnoremap <leader>fE <cmd>Telescope file_browser path=%:p:h select_buffer=true no_ignore=true<cr>
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
+nnoremap <leader>ee <cmd>Telescope file_browser select_buffer=true<cr>
+nnoremap <leader>eE <cmd>Telescope file_browser select_buffer=true no_ignore=true<cr>
 
 """ Debugging related
 nnoremap <leader>sd <cmd>Telescope dap commands<cr>
