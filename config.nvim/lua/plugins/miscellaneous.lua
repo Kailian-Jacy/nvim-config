@@ -165,7 +165,7 @@ return {
                     "Session.vim",
                 },
                 mappings = {
-                    i = { ["<c-t>"] = require("trouble.sources.telescope").open },
+                    i = { ["<c-t>"] = require("trouble.sources.telescope").open},
                     n = { ["<c-t>"] = require("trouble.sources.telescope").open },
                 }
             }
@@ -333,6 +333,49 @@ return {
         end
     },
     {
-        'm4xshen/autoclose.nvim'
+      "cohama/lexima.vim"
+    },
+    {
+        -- with lazy.nvim
+        "Kailian-Jacy/bookmarks.nvim",
+        -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
+        dependencies = {
+            {"nvim-telescope/telescope.nvim"},
+            {"stevearc/dressing.nvim"} -- optional: to have the same UI shown in the GIF
+        },
+        config = function ()
+            local cmd = require("bookmarks.adapter.commands").commands
+            vim.keymap.set({ "n", "v" }, "<leader>mm", "<cmd>BookmarksMark<cr>", { desc = "Mark current line into active BookmarkList." })
+            --[[vim.keymap.set({ "n", "v" }, "<leader>mM", "<cmd>", { desc = "Create new bookmark lists." })]]
+            vim.keymap.set({ "n", "v" }, "<leader>fm", cmd[4].callback, { desc = "All bookmarks." })
+            vim.keymap.set({ "n", "v" }, "<leader>fM", cmd[2].callback, { desc = "Select active bookmark list." })
+        end
+    },
+    {
+        "FotiadisM/tabset.nvim",
+        config = function()
+            require("tabset").setup({
+                defaults = {
+                    tabwidth = 4,
+                    expandtab = true
+                },
+                languages = {
+                    go = {
+                        tabwidth = 4,
+                        expandtab = true,
+                    },
+                    lua = {
+                        tabwidth = 2,
+                        expandtab = true,
+                    },
+                    {
+                        filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact", "json", "yaml" },
+                        config = {
+                            tabwidth = 2
+                        }
+                    }
+                }
+            })
+        end
     }
 }
