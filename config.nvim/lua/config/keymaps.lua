@@ -20,6 +20,10 @@ vim.keymap.set({"n", "v", "i"}, "<C-K>", "<C-W>k", { noremap = true, silent = tr
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
+vim.keymap.set("n", "<leader>/", require("telescope").extensions.live_grep_args.live_grep_args, { noremap = true })
+vim.keymap.set("v", "<leader>/", require("telescope-live-grep-args.shortcuts").grep_visual_selection, { noremap = true })
+-- nnoremap <leader>/ <cmd>Telescope live_grep<cr>
+-- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap = true, silent = true })
 
