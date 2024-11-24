@@ -73,10 +73,16 @@ return {
             behavior = cmp.ConfirmBehavior.Replace,
             select = true,
           }),
-          ['jj'] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = true,
-          }),
+          ['jj'] = function ()
+            if cmp.visible() and cmp.get_selected_index() then
+              cmp.mapping.confirm({
+              behavior = cmp.ConfirmBehavior.Replace,
+              select = true,
+            })
+            else
+              vim.fn["copilot#Accept"]("<CR>")
+            end
+            end,
           ["<S-Tab>"] = cmp.mapping.select_prev_item(),
           ["<Tab>"] = cmp.mapping.select_next_item(),
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
