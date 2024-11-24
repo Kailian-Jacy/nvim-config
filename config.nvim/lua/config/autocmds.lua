@@ -45,6 +45,18 @@ vim.api.nvim_create_user_command("Lhcmd", function()
   vim.cmd("new")
   vim.cmd("setfiletype lua")
 end, {})
+vim.api.nvim_create_user_command("Term", function()
+  vim.cmd("new")
+  vim.cmd("term")
+end, {})
+vim.api.nvim_create_user_command("Termv", function()
+  vim.cmd("vnew")
+  vim.cmd("term")
+end, {})
+vim.api.nvim_create_user_command("Termh", function()
+  vim.cmd("new")
+  vim.cmd("term")
+end, {})
 
 -- Diagnostics configuration
 vim.diagnostic.config {
