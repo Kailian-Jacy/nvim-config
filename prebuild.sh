@@ -47,10 +47,12 @@ function clone_config() {
 
 function dependencies() {
 
+    $INSTALLER install $ENSURE lua5.3 liblua5.3-dev
+
     if [[ "$(uname)" == "Darwin" ]]; then
         # macOS
         $INSTALLER install $ENSURE node
-        $INSTALLER install $ENSURE lazygit
+        $INSTALLER install $ENSURE lazygit luarocks
     elif [[ "$(uname)" == "Linux" ]]; then
         # Linux
         $INSTALLER install $ENSURE nodejs
@@ -62,6 +64,19 @@ function dependencies() {
             rm lazygit.tar.gz lazygit
         }
         check_before_install lazygit install_lazygit
+
+        # these lua-related configuration are not fully correct. Mason still complains.
+        function install_lua_rocks() {
+            $INSTALLER install $ENSURE build-essential libreadline-dev unzip
+            local LUAROCKVERSION=3.11.1
+            curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-$LUAROCKVERSION.tar.gz
+            tar -zxf luarocks-$LUAROCKVERSION.tar.gz
+            cd luarocks-$LUAROCKVERSION
+            ./configure --with-lua-include=/usr/include
+            make
+            sudo make install
+        }
+        check_before_install lua install_lua_rocks
 
     fi
 
