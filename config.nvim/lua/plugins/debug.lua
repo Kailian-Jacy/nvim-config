@@ -2,7 +2,57 @@ return {
   {
     "williamboman/mason.nvim",
     opts = {
-      ensure_installed = {}
+      ensure_installed = {
+        -- rust
+        --[["bacon",]]
+        -- install rust-analyzer manually and link to there.
+        -- cpp
+        "checkmake",
+        "clang-format",
+        "clangd",
+        "cmakelint",
+        "codelldb",
+        "cpplint",
+        "cpptools",
+        -- python
+        --[["debugpy",
+        "black",
+        "delve",
+        "pyright",
+        "ruff",]]
+        -- docker
+        --[["hadolint",
+        "docker-compose-language-service docker_compose_language_service",
+        "dockerfile-language-server dockerls",]]
+        -- golang
+        "gofumpt",
+        "goimports",
+        "gomodifytags",
+        "gopls",
+        "impl",
+        -- json
+        --[["jsonlint",]]
+        -- lua
+        "lua-language-server",
+        "luacheck",
+        "stylua",
+        "luaformatter",
+        -- markdown
+        "markdown-toc",
+        "markdownlint-cli2",
+        "marksman",
+        -- shell
+        "shfmt",
+        -- sql
+        --[["sql-formatter",
+        "sqlfluff",]]
+        -- toml
+        "taplo",
+        -- tex
+        --[["texlab",]]
+        -- yaml
+        "yaml-language-server",
+      },
     },
   },
   {
