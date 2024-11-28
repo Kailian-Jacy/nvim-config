@@ -12,13 +12,15 @@ end
 
 vim.g.mapleader = " "
 
+-- Git related
+vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})
+
 -- message history display
 vim.keymap.set({ "n", "v" }, "<leader>snh", function()
-  local long_string = vim.inspect(vim.api.nvim_get_all_options_info()) -- example (5000+ lines)
   vim.cmd([[ new ]])
   vim.cmd([[ resize ]] .. math.floor(vim.o.lines * 0.3))
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(long_string, "\n"))
   vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>bdelete!<CR>", { noremap = true, silent = true })
+  vim.cmd([[put =execute('messages')]])
 end)
 
 -- Cursor wandering around
