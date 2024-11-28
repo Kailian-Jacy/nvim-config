@@ -54,7 +54,7 @@ return {
       require("cmp").setup({
         auto_brackets = {}, -- configure any filetype to auto add brackets
         completion = {
-          completeopt = "menu,menuone,noinsert" .. (true and "" or ",noselect"),
+          completeopt = "menu,menuone,noinsert,noselect",
         },
         window = {
           completion = {
@@ -69,20 +69,27 @@ return {
           }
         },
         mapping = cmp.mapping.preset.insert {
+          -- dont't know why but it works.. No selection accept copilot;
+          ['jj'] = cmp.mapping.confirm({
+            behavior = cmp.ConfirmBehavior.Replace,
+            select = false,
+          }),
           ['<CR>'] = cmp.mapping.confirm({
             behavior = cmp.ConfirmBehavior.Replace,
-            select = true,
+            select = false,
           }),
-          ['jj'] = function ()
-            if cmp.visible() and cmp.get_selected_index() then
+          --[[['<CR>'] = function ()
+            if cmp.get_selected_index() then
+              vim.print("1")
               cmp.mapping.confirm({
-              behavior = cmp.ConfirmBehavior.Replace,
-              select = true,
-            })
+                behavior = cmp.ConfirmBehavior.Replace,
+                select = false,
+              })
             else
+              vim.print("2")
               vim.fn["copilot#Accept"]("<CR>")
             end
-            end,
+            end,]]
           ["<S-Tab>"] = cmp.mapping.select_prev_item(),
           ["<Tab>"] = cmp.mapping.select_next_item(),
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
