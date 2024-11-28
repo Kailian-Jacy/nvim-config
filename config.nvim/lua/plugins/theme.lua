@@ -88,6 +88,7 @@ return {
   },]]
   {
     "folke/noice.nvim",
+    enabled = false,
     config = function()
       --[[require("lualine").setup({
         sections = {
