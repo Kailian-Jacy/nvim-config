@@ -97,7 +97,7 @@ vim.api.nvim_create_autocmd("FileType", {
 -- So vim instance anywhere could sync to system clipboard. Including ssh remote.
 local copy = function()
   if vim.v.event.operator == 'y' then
-    require('osc52').copy_register('"')
+    require('vim.ui.clipboard.osc52').copy('"')
   end
 end
 
