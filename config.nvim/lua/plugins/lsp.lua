@@ -13,10 +13,22 @@ return {
       local lspconfig = require("lspconfig")
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "K", false }
+      -- markdown config.
       lspconfig.marksman.setup({
         on_attach = lspconfig.marksman.LspOnAttach,
         capabilities = lspconfig.marksman.LspCapabilities,
       })
+      -- lua config
+      lspconfig.lua_ls.setup{
+        settings = {
+          Lua = {
+            diagnostics = {
+              -- let lua interpreter recognize vim as global to disable warnings.
+              globals = {'vim'}
+            }
+          }
+        }
+      }
       return opts
     end,
   },
