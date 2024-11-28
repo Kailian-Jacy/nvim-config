@@ -51,6 +51,7 @@ function dependencies() {
         # macOS
         $INSTALLER install $ENSURE node
         $INSTALLER install $ENSURE lazygit
+        $INSTALLER install $ENSURE zoxide
     elif [[ "$(uname)" == "Linux" ]]; then
         # Linux
         $INSTALLER install $ENSURE nodejs
@@ -61,20 +62,31 @@ function dependencies() {
             sudo install lazygit -D -t /usr/local/bin/
             rm lazygit.tar.gz lazygit
         }
+        function install_zoxide() {
+            git clone https://github.com/ajeetdsouza/zoxide
+            cd zoxide && ./install.sh
+            echo "export PATH=$PATH:$HOME/.local/bin" >> $SHELL_DOT
+            source $SHELL_DOT
+            rm -dfr zoxide
+            eval "$(zoxide init bash)"
+        }
         check_before_install lazygit install_lazygit
-
     fi
 
-    $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep
+    $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep cmake
 
     function install_fzf() {
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install
     }
+    # Bug: Some times fzf says lib not found. manual installation works.
+    # cd ~/.local/share/nvim/lazy/telescope-fzf-native.nvim && make && cd -
     check_before_install fzf install_fzf
     rm -dfr ~/.config/nvim/pack/github/start/copilot.vim
     git clone https://github.com/github/copilot.vim.git \
-  ~/.config/nvim/pack/github/start/copilot.vim
+        ~/.config/nvim/pack/github/start/copilot.vim
+    # wget -P ~/.vim/pack/github/start/copilot.vim/dist/ https://copilot.aistore.sale/proxy.js
+    # echo "require('./proxy.js');" >>~/.vim/pack/github/start/copilot.vim/dist/language-server.js
 
     source $SHELL_DOT
     # $INSTALLER install --cask font-jetbrains-mono-nerd-font
