@@ -91,5 +91,17 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = before_open_hex,
 })
 
+-- OSC52 to sync remote to local.
+-- When yank triggered, it got wrapped by special chars, and iterm2 recognize it as
+-- signal to be synced to clipboard. 
+-- So vim instance anywhere could sync to system clipboard. Including ssh remote.
+local copy = function()
+  if vim.v.event.operator == 'y' then
+    require('osc52').copy_register('"')
+  end
+end
+
+vim.api.nvim_create_autocmd('TextYankPost', {callback = copy})
+
 -- disable barbecue (Context) showing atop of the window
 require("barbecue.ui").toggle(false)
