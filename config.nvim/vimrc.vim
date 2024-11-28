@@ -204,12 +204,6 @@ nnoremap gd <cmd>Telescope lsp_definitions<cr>
 vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
 
-""" Git related
-nnoremap <leader>gg <cmd>LazyGit <cr>
-"nnoremap <leader>gc <cmd>Telescope git_commits<cr>  """ Deprecated. Lazygit.
-"nnoremap <leader>gb <cmd>Telescope git_branches<cr>
-"nnoremap <leader>gs <cmd>Telescope git_stash<cr>
-
 nnoremap <leader>hp <cmd>Gitsigns preview_hunk<cr>
 nnoremap <leader>hP <cmd>Gitsigns diffthis<cr>
 nnoremap <leader>hb <cmd>Gitsigns toggle_current_line_blame<cr>

@@ -46,9 +46,9 @@ return {
   },
   {
     "kdheepak/lazygit.nvim",
-    config = function()
+    --[[config = function()
       require("lazygit").setup()
-    end,
+    end,]]
     cmd = {
       "LazyGit",
       "LazyGitConfig",
