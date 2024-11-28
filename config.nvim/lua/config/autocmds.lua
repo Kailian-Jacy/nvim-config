@@ -22,13 +22,13 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = "dap-float",
   callback = function()
     vim.api.nvim_buf_set_keymap(0, "n", "<esc>", "<cmd>close!<CR>", { noremap = true, silent = true })
-  end
+  end,
 })
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "dap-float",
   callback = function()
     vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>close!<CR>", { noremap = true, silent = true })
-  end
+  end,
 })
 
 -- Custom Simple Commands.
@@ -59,7 +59,7 @@ vim.api.nvim_create_user_command("Termh", function()
 end, {})
 
 -- Diagnostics configuration
-vim.diagnostic.config {
+vim.diagnostic.config({
   virtual_text = false,
   signs = true,
   underline = true,
@@ -67,13 +67,29 @@ vim.diagnostic.config {
   severity_sort = true,
   float = {
     focusable = false,
-    style = 'minimal',
-    border = 'rounded',
-    source = 'always',
-    header = '',
-    prefix = '',
+    style = "minimal",
+    border = "rounded",
+    source = "always",
+    header = "",
+    prefix = "",
   },
-}
+})
+
+-- Hex and binary autocmds.
+local before_open_hex = function()
+  require("hex").dump()
+end
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = { "*.bin", "*.o", "*.exe", "*.a" },
+  callback = function()
+    vim.cmd("setfiletype xxd")
+    before_open_hex()
+  end,
+})
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "xxd",
+  callback = before_open_hex,
+})
 
 -- disable barbecue (Context) showing atop of the window
 require("barbecue.ui").toggle(false)
