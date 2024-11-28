@@ -52,7 +52,8 @@ function dependencies() {
     if [[ "$(uname)" == "Darwin" ]]; then
         # macOS
         $INSTALLER install $ENSURE node
-        $INSTALLER install $ENSURE lazygit luarocks
+        $INSTALLER install $ENSURE lazygit
+        $INSTALLER install $ENSURE zoxide
     elif [[ "$(uname)" == "Linux" ]]; then
         # Linux
         $INSTALLER install $ENSURE nodejs
@@ -63,33 +64,31 @@ function dependencies() {
             sudo install lazygit -D -t /usr/local/bin/
             rm lazygit.tar.gz lazygit
         }
-        check_before_install lazygit install_lazygit
-
-        # these lua-related configuration are not fully correct. Mason still complains.
-        function install_lua_rocks() {
-            $INSTALLER install $ENSURE build-essential libreadline-dev unzip
-            local LUAROCKVERSION=3.11.1
-            curl -R -O https://luarocks.github.io/luarocks/releases/luarocks-$LUAROCKVERSION.tar.gz
-            tar -zxf luarocks-$LUAROCKVERSION.tar.gz
-            cd luarocks-$LUAROCKVERSION
-            ./configure --with-lua-include=/usr/include
-            make
-            sudo make install
+        function install_zoxide() {
+            git clone https://github.com/ajeetdsouza/zoxide
+            cd zoxide && ./install.sh
+            echo "export PATH=$PATH:$HOME/.local/bin" >> $SHELL_DOT
+            source $SHELL_DOT
+            rm -dfr zoxide
+            eval "$(zoxide init bash)"
         }
-        check_before_install lua install_lua_rocks
-
+        check_before_install lazygit install_lazygit
     fi
 
-    $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep
+    $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep cmake
 
     function install_fzf() {
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
         ~/.fzf/install
     }
+    # Bug: Some times fzf says lib not found. manual installation works.
+    # cd ~/.local/share/nvim/lazy/telescope-fzf-native.nvim && make && cd -
     check_before_install fzf install_fzf
     rm -dfr ~/.config/nvim/pack/github/start/copilot.vim
     git clone https://github.com/github/copilot.vim.git \
-  ~/.config/nvim/pack/github/start/copilot.vim
+        ~/.config/nvim/pack/github/start/copilot.vim
+    # wget -P ~/.vim/pack/github/start/copilot.vim/dist/ https://copilot.aistore.sale/proxy.js
+    # echo "require('./proxy.js');" >>~/.vim/pack/github/start/copilot.vim/dist/language-server.js
 
     source $SHELL_DOT
     # $INSTALLER install --cask font-jetbrains-mono-nerd-font
