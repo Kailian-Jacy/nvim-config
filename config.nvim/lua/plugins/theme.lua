@@ -211,7 +211,20 @@ return {
               return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
             end,
           }}, -- Used to display is Debugging information.]]
-          lualine_a = {},
+          lualine_a = {
+            {
+              function()
+                local sysname = vim.loop.os_uname().sysname
+                if sysname == "Darwin" then
+                  return "󰀵" -- Mac icon
+                elseif sysname == "Linux" then
+                  return "" -- Linux icon
+                else
+                  return "" -- Default case, no icon
+                end
+              end,
+            },
+          },
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},
