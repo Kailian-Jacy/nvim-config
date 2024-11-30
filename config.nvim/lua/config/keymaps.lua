@@ -12,6 +12,20 @@ end
 
 vim.g.mapleader = " "
 
+-- Keymap Line
+vim.keymap.set("n", "ZA", "q!", { noremap = true })
+
+-- Git related
+vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})
+
+-- message history display
+vim.keymap.set({ "n", "v" }, "<leader>snh", function()
+  vim.cmd([[ new ]])
+  vim.cmd([[ resize ]] .. math.floor(vim.o.lines * 0.3))
+  vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>bdelete!<CR>", { noremap = true, silent = true })
+  vim.cmd([[put =execute('messages')]])
+end)
+
 -- Cursor wandering around
 vim.keymap.set({"n", "v", "i"}, "<C-J>", "<C-W>j", { noremap = true, silent = true })
 vim.keymap.set({"n", "v", "i"}, "<C-H>", "<C-W>h", { noremap = true, silent = true })
@@ -36,6 +50,7 @@ vim.keymap.set("i", "jj", 'copilot#Accept("\\<CR>")', {
   expr = true,
   replace_keycodes = false,
 })
+vim.keymap.set('i', '<C-L>', '<Plug>(copilot-accept-line)')
 vim.g.copilot_no_tab_map = true
 
 -- telescope based:
