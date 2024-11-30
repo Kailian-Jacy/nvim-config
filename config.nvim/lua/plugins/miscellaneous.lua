@@ -333,9 +333,6 @@ return {
     end,
   },
   {
-    'ojroques/nvim-osc52'
-  },
-  {
     "kawre/leetcode.nvim",
     cmd = "Leet",
 

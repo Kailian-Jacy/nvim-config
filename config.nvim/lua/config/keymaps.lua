@@ -27,15 +27,20 @@ vim.keymap.set({ "n", "v" }, "<leader>snh", function()
 end)
 
 -- Cursor wandering around
-vim.keymap.set({"n", "v", "i"}, "<C-J>", "<C-W>j", { noremap = true, silent = true })
-vim.keymap.set({"n", "v", "i"}, "<C-H>", "<C-W>h", { noremap = true, silent = true })
-vim.keymap.set({"n", "v", "i"}, "<C-L>", "<C-W>l", { noremap = true, silent = true })
-vim.keymap.set({"n", "v", "i"}, "<C-K>", "<C-W>k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<C-W>k", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
 vim.keymap.set("n", "<leader>/", require("telescope").extensions.live_grep_args.live_grep_args, { noremap = true })
-vim.keymap.set("v", "<leader>/", require("telescope-live-grep-args.shortcuts").grep_visual_selection, { noremap = true })
+vim.keymap.set(
+  "v",
+  "<leader>/",
+  require("telescope-live-grep-args.shortcuts").grep_visual_selection,
+  { noremap = true }
+)
 -- nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 -- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
@@ -67,7 +72,7 @@ end
 vim.keymap.set("n", "<leader><Enter>", TriggerFormatForCurrentBuf, { noremap = true, silent = true })
 
 -- context display
-vim.keymap.set({"n", "i", "x"}, "<C-G>", function ()
+vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
   vim.print(require("nvim-navic").get_location())
 end)
 

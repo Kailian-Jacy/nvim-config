@@ -46,9 +46,9 @@ return {
   },
   {
     "kdheepak/lazygit.nvim",
-    config = function()
+    --[[config = function()
       require("lazygit").setup()
-    end,
+    end,]]
     cmd = {
       "LazyGit",
       "LazyGitConfig",
@@ -66,6 +66,12 @@ return {
     --   { "<leader>gg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
     -- },
   },
+  {
+    -- Give diff tab to nvim.
+    -- DiffviewOpen oldCommit..newCommit to perform diff. Left is old, and right is new.
+    "sindrets/diffview.nvim",
+    event = "VeryLazy",
+  }
   --{
   --"tpope/vim-fugitive",
   --},

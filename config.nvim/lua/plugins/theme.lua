@@ -20,6 +20,10 @@ return {
           -- Telescope borders
           TelescopeBorder = { link = "Constant" },
           WinSeparator = { fg = "#565f89" },
+          -- Message region separator
+          MsgSeparator = { bg = "" },
+          -- Diff color palette
+          DiffAdd = { bg = "#4a2f90" }
         },
       })
     end,
@@ -88,6 +92,7 @@ return {
   },]]
   {
     "folke/noice.nvim",
+    enabled = false,
     config = function()
       --[[require("lualine").setup({
         sections = {
@@ -211,7 +216,20 @@ return {
               return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
             end,
           }}, -- Used to display is Debugging information.]]
-          lualine_a = {},
+          lualine_a = {
+            {
+              function()
+                local sysname = vim.loop.os_uname().sysname
+                if sysname == "Darwin" then
+                  return "󰀵" -- Mac icon
+                elseif sysname == "Linux" then
+                  return "" -- Linux icon
+                else
+                  return "" -- Default case, no icon
+                end
+              end,
+            },
+          },
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},
