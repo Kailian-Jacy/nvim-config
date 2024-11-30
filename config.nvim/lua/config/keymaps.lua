@@ -13,7 +13,7 @@ end
 vim.g.mapleader = " "
 
 -- Keymap Line
-vim.keymap.set("n", "ZA", "q!", { noremap = true })
+vim.keymap.set("n", "ZA", "wqa", { noremap = true })
 
 -- Git related
 vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})

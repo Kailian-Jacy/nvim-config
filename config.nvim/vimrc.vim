@@ -226,9 +226,6 @@ nnoremap <leader>db <cmd>Telescope dap list_breakpoints<cr>
 nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
 
-""" Control
-nnoremap ZA :wqa<cr>
-
 """ Navigate 
 nnoremap J <cmd>AerialNext<CR>
 nnoremap K <cmd>AerialPrev<CR>
