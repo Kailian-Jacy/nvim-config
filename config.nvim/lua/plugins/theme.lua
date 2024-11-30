@@ -22,6 +22,8 @@ return {
           WinSeparator = { fg = "#565f89" },
           -- Message region separator
           MsgSeparator = { bg = "" },
+          -- Diff color palette
+          DiffAdd = { bg = "#4a2f90" }
         },
       })
     end,
