@@ -23,7 +23,13 @@ return {
           -- Message region separator
           MsgSeparator = { bg = "" },
           -- Diff color palette
-          DiffAdd = { bg = "#4a2f90" }
+          DiffAdd = { bg = "#4a2f90" },
+          -- Scrollbar handle
+        },
+      })
+      require("scrollbar").setup({
+        handle = {
+          color = "#2D4263",
         },
       })
     end,
@@ -89,10 +95,13 @@ return {
   },
   --[[{
     "j-hui/fidget.nvim",
+    config = function ()
+      require("fidget").setup({})
+    end
   },]]
   {
     "folke/noice.nvim",
-    enabled = false,
+    enabled = true,
     config = function()
       --[[require("lualine").setup({
         sections = {
@@ -108,6 +117,13 @@ return {
       ]]
       --
       require("noice").setup({
+        presets = {
+          bottom_search = true,
+          command_palette = false,
+        },
+        cmdline = {
+          view = "cmdline",
+        },
         views = {
           mini = {
             win_options = {
@@ -221,11 +237,11 @@ return {
               function()
                 local sysname = vim.loop.os_uname().sysname
                 if sysname == "Darwin" then
-                  return "󰀵" -- Mac icon
+                  return "{󰀵} => {}" -- Mac icon
                 elseif sysname == "Linux" then
-                  return "" -- Linux icon
+                  return "{} => {}" -- Linux icon
                 else
-                  return "" -- Default case, no icon
+                  return "{} => {}" -- Default case, no icon
                 end
               end,
             },
@@ -237,6 +253,14 @@ return {
           lualine_z = { { "filename", path = 1 } },
         },
       })
+    end,
+  },
+  {
+    "petertriho/nvim-scrollbar",
+    config = function()
+      require("scrollbar").setup()
+      require("gitsigns").setup()
+      require("scrollbar.handlers.gitsigns").setup()
     end,
   },
 }
