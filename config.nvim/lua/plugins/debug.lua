@@ -113,6 +113,14 @@ return {
     },
     config = function()
       local dap = require("dap")
+      -- Setting up rust debugger using codelldb.
+      -- As rustecean-vim said, use codelldb instead of raw lldb.
+      -- codelldb is a vscode plugin that enables type: "lldb" in launch.json
+      -- Failed to setup rust debugging configuration finally. Use :RustLsp debuggables to debug normal cargo project.
+      --    As post *https://github.com/mfussenegger/nvim-dap/discussions/671* said, no such thing as nvim-dap-rust,
+      --    It's maintained by rusteceanvim, but his doc seems to be outdated and causing error.
+      --    So problem about rust vscode compatibility seems unsolved.
+
       -- setup keymap before debug session begins.
       dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
         vim.print("Debug Session intialized ")
@@ -127,6 +135,20 @@ return {
       end
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
+
+      -- Setting up python debugger.
+      local pythonPath = function()
+        return require("venv-selector").python()
+      end
+      require("dap-python").setup(pythonPath())
+      table.insert(dap.configurations.python, {
+        type = "debugpy",
+        request = "launch",
+        name = "Python Debug Current File",
+        program = "${file}",
+        stopOnEntry = true,
+        console = "integratedTerminal",
+      })
     end,
   },
   --[[{

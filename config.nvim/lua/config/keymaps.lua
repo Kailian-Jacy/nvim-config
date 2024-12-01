@@ -13,7 +13,8 @@ end
 vim.g.mapleader = " "
 
 -- Keymap Line
-vim.keymap.set("n", "ZA", "wqa", { noremap = true })
+vim.keymap.set("n", "ZA", "<cmd>wqa<CR>", { noremap = true })
+-- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
 vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})

@@ -212,7 +212,8 @@ nnoremap <leader>hR <cmd>Gitsigns reset_buffer<cr>
 """ nnoremap <leader>tr <cmd>Telescope treesitter<cr>
  
 """ """ file browser
-nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>ff <cmd>Telescope find_files no_ignore=false<cr>
+nnoremap <leader>fF <cmd>Telescope find_files no_ignore=true<cr>
 nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
 nnoremap <leader>fE <cmd>Telescope file_browser path=%:p:h select_buffer=true no_ignore=true<cr>
 nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>

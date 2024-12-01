@@ -1,14 +1,6 @@
 return {
   {
     "neovim/nvim-lspconfig",
-    ---@class PluginLspOpts
-    opts = {
-      ---@type lspconfig.options
-      servers = {},
-    },
-  },
-  {
-    "neovim/nvim-lspconfig",
     opts = function(_, opts)
       local lspconfig = require("lspconfig")
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
