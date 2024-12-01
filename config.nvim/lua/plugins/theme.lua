@@ -236,12 +236,18 @@ return {
             {
               function()
                 local sysname = vim.loop.os_uname().sysname
+                local debug_sign = function()
+                  if vim.g.is_debugging then
+                    return "[DEB]"
+                  end
+                  return ""
+                end
                 if sysname == "Darwin" then
-                  return "{󰀵} => {}" -- Mac icon
+                  return "{󰀵} => {" .. debug_sign() .. "}" -- Mac icon
                 elseif sysname == "Linux" then
-                  return "{} => {}" -- Linux icon
+                  return "{} => {" .. debug_sign() .. "}" -- Linux icon
                 else
-                  return "{} => {}" -- Default case, no icon
+                  return "{} => {" .. debug_sign() .. "}" -- Default case, no icon
                 end
               end,
             },
