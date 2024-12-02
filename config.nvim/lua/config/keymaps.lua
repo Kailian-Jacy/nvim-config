@@ -64,9 +64,26 @@ vim.g.copilot_no_tab_map = true
 
 -- telescope based:
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
+
+-- buffer related
+vim.keymap.set("n", "<leader>bd", function()
+  if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
+    vim.notify("last buf", vim.log.levels.INFO)
+  elseif #vim.fn.getbufinfo({ bufloaded = true }) == 1 then
+    vim.cmd("tabclose")
+  else
+    vim.cmd("bdelete")
+  end
+end, { noremap = true, silent = true })
+
+-- Tab-related.
+vim.keymap.set("n", "<leader><tab>", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader><H>", "<cmd>bnext<cr>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader><L>", "<cmd>bprev<cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>l", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>h", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
 
 -- conform formatting
 function TriggerFormatForCurrentBuf()
