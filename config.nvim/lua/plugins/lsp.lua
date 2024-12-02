@@ -11,16 +11,16 @@ return {
         capabilities = lspconfig.marksman.LspCapabilities,
       })
       -- lua config
-      lspconfig.lua_ls.setup{
+      lspconfig.lua_ls.setup({
         settings = {
           Lua = {
             diagnostics = {
               -- let lua interpreter recognize vim as global to disable warnings.
-              globals = {'vim'}
-            }
-          }
-        }
-      }
+              globals = { "vim" },
+            },
+          },
+        },
+      })
       return opts
     end,
   },
@@ -60,7 +60,13 @@ return {
     opts = {
       -- configurations go here
     },
-  }
+  },
+  {
+    "smjonas/inc-rename.nvim",
+    config = function()
+      require("inc_rename").setup()
+    end,
+  },
   -- add tsserver and setup with typescript.nvim instead of lspconfig
   --{
   --"neovim/nvim-lspconfig",
