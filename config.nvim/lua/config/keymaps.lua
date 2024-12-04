@@ -14,9 +14,12 @@ vim.g.mapleader = " "
 
 -- Lsp replace name.
 vim.keymap.set("n", "<leader>rn", ":IncRename ")
+vim.keymap.set({"n", "i", "v"}, "<c-i>", "<c-i>")
 
 -- Keymap Line
-vim.keymap.set("n", "ZA", "<cmd>wqa<CR>", { noremap = true })
+vim.keymap.set("n", "ZA", function ()
+  vim.cmd [[ wqa ]]
+end , { noremap = true })
 -- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
