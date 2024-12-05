@@ -34,10 +34,10 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = t
 --end)
 
 -- Cursor wandering around
-vim.keymap.set({ "n", "v", "i" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<C-W>h", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<C-W>l", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<C-W>k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-j>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-h>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-l>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-k>", "<C-W>k", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
@@ -57,13 +57,8 @@ vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap 
 vim.keymap.del("n", "<leader>l")
 vim.keymap.del("n", "<leader>L")
 
--- copilot mapping
-vim.keymap.set("i", "jj", 'copilot#Accept("\\<CR>")', {
-  expr = true,
-  replace_keycodes = false,
-})
-vim.keymap.set('i', '<C-L>', '<Plug>(copilot-accept-line)')
-vim.g.copilot_no_tab_map = true
+-- copilot mapping: copilot mapping are all migrated to the configuration part of nvim-cmp.
+vim.g.copilot_no_maps = true
 
 -- telescope based:
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
