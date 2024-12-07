@@ -88,6 +88,14 @@ return {
           -- aligned with nvim screen shift and telescope previews shift.
           ['<C-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
           ['<C-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
+          -- cancel suggestion.
+          ['<C-c>'] = function(_)
+            if cmp.visible() and cmp.get_selected_entry() then
+              cmp.abort()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Clear'](), 'n', true)
+            end
+          end,
           ['<CR>'] = function(fallback)
             if cmp.visible() and cmp.get_selected_entry() then
               cmp.confirm()
