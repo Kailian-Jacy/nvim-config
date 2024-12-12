@@ -105,11 +105,25 @@ return {
             end
           end,
           -- it's very rare to require copilot to give multiple solutions. If it's not good enough, we'll use avante to generate ai response manually.
+          ['<Down>'] = function(_)
+            if cmp.visible() then 
+              cmp.select_next_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
+            end
+          end,
           ['<C-j>'] = function(_)
             if cmp.visible() then 
               cmp.select_next_item()
             else
               vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
+            end
+          end,
+          ['<Up>'] = function(_)
+            if cmp.visible() then 
+              cmp.select_prev_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Previous'](), 'n', true)
             end
           end,
           ['<C-k>'] = function(_)
@@ -428,7 +442,8 @@ return {
       vim.keymap.set({ "n", "v" }, "<leader>fM", cmd[2].callback, { desc = "Select active bookmark list." })
     end
   },
-  {
+  -- try to replace with vimrc autocmd settings.
+  --[[{
     "FotiadisM/tabset.nvim",
     config = function()
       require("tabset").setup({
@@ -437,16 +452,12 @@ return {
           expandtab = true
         },
         languages = {
-          --[[cpp = {
+          [>cpp = {
             tabwidth = 2,
             expandtab = true,
-          },]]
+          },<]
           go = {
             tabwidth = 4,
-            expandtab = true,
-          },
-          lua = {
-            tabwidth = 2,
             expandtab = true,
           },
           {
@@ -458,7 +469,7 @@ return {
         }
       })
     end
-  },
+  },]]
   {
   "levouh/tint.nvim",
   config = function ()

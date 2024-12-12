@@ -47,22 +47,23 @@ return {
       },
     },
     opts = {
-        formatters_by_ft = {
-          -- Conform will run multiple formatters sequentially
-          -- You can customize some of the format options for the filetype (:help conform.format)
-          lua = { "stylua" },
-          c = { "clang_format" },
-          cpp = { "clang_format" },
-          python = { "ruff" },
-          golang = { "goimports", "gopls" },
-          rust = { "rustfmt", lsp_format = "fallback" },
-          -- Conform will run the first available formatter
-        },
-        format_on_save = false,
-        -- Conform will notify you when a formatter errors
-        notify_on_error = true,
-        -- Conform will notify you when no formatters are available for the buffer
-        notify_no_formatters = true,
+      formatters_by_ft = {
+        -- Conform will run multiple formatters sequentially
+        -- You can customize some of the format options for the filetype (:help conform.format)
+        lua = { "stylua" },
+        c = { "clang-format" },
+        cpp = { "clang-format" },
+        python = { "ruff" },
+        golang = { "goimports", "gopls" },
+        rust = { "rustfmt", lsp_format = "fallback" },
+        json = { "fixjson" }
+        -- Conform will run the first available formatter
+      },
+      format_on_save = false,
+      -- Conform will notify you when a formatter errors
+      notify_on_error = true,
+      -- Conform will notify you when no formatters are available for the buffer
+      notify_no_formatters = true,
     },
   },
   {
@@ -80,7 +81,7 @@ return {
   {
     "smjonas/inc-rename.nvim",
     config = function()
-      require("inc_rename").setup()
+      require("inc_rename").setup({})
     end,
   },
   -- add tsserver and setup with typescript.nvim instead of lspconfig
