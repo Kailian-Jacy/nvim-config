@@ -12,6 +12,9 @@ end
 
 vim.g.mapleader = " "
 
+-- Do not move line with alt. Sometimes it's triggered by esc j/k
+vim.keymap.del({"n", "i", "v"}, "<M-k>")
+vim.keymap.del({"n", "i", "v"}, "<M-j>")
 -- Lsp replace name.
 vim.keymap.set("n", "<leader>rn", ":IncRename ")
 vim.keymap.set({"n", "i", "v"}, "<c-i>", "<c-i>")
