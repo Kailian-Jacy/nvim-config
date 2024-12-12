@@ -88,13 +88,6 @@ vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, 
 vim.keymap.set("n", "<tab>l", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>h", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
 
--- conform formatting
-function TriggerFormatForCurrentBuf()
-  require("conform").format()
-  vim.print("@conform.format")
-end
-vim.keymap.set("n", "<leader><Enter>", TriggerFormatForCurrentBuf, { noremap = true, silent = true })
-
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
   vim.print(require("nvim-navic").get_location())

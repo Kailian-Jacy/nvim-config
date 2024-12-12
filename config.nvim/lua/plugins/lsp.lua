@@ -34,20 +34,36 @@ return {
   },
   {
     "stevearc/conform.nvim",
-    formatters_by_ft = {
-      -- Conform will run multiple formatters sequentially
-      -- You can customize some of the format options for the filetype (:help conform.format)
-      lua = { "luaformatter" },
-      python = { "ruff" },
-      golang = { "goimports", "gopls" },
-      rust = { "rustfmt", lsp_format = "fallback" },
-      -- Conform will run the first available formatter
+    keys = {
+      {
+        "<leader><CR>",
+        -- conform formatting
+        function()
+          require("conform").format()
+          vim.print("@conform.format")
+        end,
+        mode = "n",
+        desc = "[F]ormat buffer with conform.",
+      },
     },
-    format_on_save = false,
-    -- Conform will notify you when a formatter errors
-    notify_on_error = true,
-    -- Conform will notify you when no formatters are available for the buffer
-    notify_no_formatters = true,
+    opts = {
+        formatters_by_ft = {
+          -- Conform will run multiple formatters sequentially
+          -- You can customize some of the format options for the filetype (:help conform.format)
+          lua = { "stylua" },
+          c = { "clang_format" },
+          cpp = { "clang_format" },
+          python = { "ruff" },
+          golang = { "goimports", "gopls" },
+          rust = { "rustfmt", lsp_format = "fallback" },
+          -- Conform will run the first available formatter
+        },
+        format_on_save = false,
+        -- Conform will notify you when a formatter errors
+        notify_on_error = true,
+        -- Conform will notify you when no formatters are available for the buffer
+        notify_no_formatters = true,
+    },
   },
   {
     "utilyre/barbecue.nvim",
