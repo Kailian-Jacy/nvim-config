@@ -52,7 +52,7 @@ return {
       end]]
       local cmp = require("cmp")
       require("cmp").setup({
-        auto_brackets = {}, -- configure any filetype to auto add brackets
+        auto_brackets = {}, -- disabled. Being managed by other plugins.
         completion = {
           completeopt = "menu,menuone,noinsert,noselect",
         },
@@ -68,33 +68,60 @@ return {
             winblend=0,
           }
         },
+        -- Docs has example about how to set for copilot compatibility:
         mapping = cmp.mapping.preset.insert {
-          -- dont't know why but it works.. No selection accept copilot;
-          ['jj'] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = false,
-          }),
-          ['<CR>'] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = false,
-          }),
-          --[[['<CR>'] = function ()
-            if cmp.get_selected_index() then
-              vim.print("1")
-              cmp.mapping.confirm({
-                behavior = cmp.ConfirmBehavior.Replace,
-                select = false,
-              })
-            else
-              vim.print("2")
-              vim.fn["copilot#Accept"]("<CR>")
+          ['<Tab>'] = function(_)
+            if cmp.visible() and cmp.get_selected_entry() then
+              cmp.confirm({select = false, behavior = cmp.ConfirmBehavior.Replace})
+            else 
+              vim.api.nvim_feedkeys(vim.fn['copilot#AcceptLine'](vim.api.nvim_replace_termcodes('<Tab>', true, true, true)), 'n', true)
             end
-            end,]]
-          ["<S-Tab>"] = cmp.mapping.select_prev_item(),
-          ["<Tab>"] = cmp.mapping.select_next_item(),
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          -- ['<esc>'] = cmp.mapping.abort()
+          end,
+          ['<C-CR>'] = function(_)
+            if cmp.visible() and cmp.get_selected_entry() then
+              cmp.confirm({select = false, behavior = cmp.ConfirmBehavior.Replace})
+            else
+              -- TODO: Make C-CR copilot.Suggest() if no present suggestions.
+              vim.api.nvim_feedkeys(vim.fn['copilot#Accept'](vim.api.nvim_replace_termcodes('<C-CR>', true, true, true)), 'n', true)
+            end
+          end,
+          -- aligned with nvim screen shift and telescope previews shift.
+          ['<C-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
+          ['<C-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
+          -- cancel suggestion.
+          ['<C-c>'] = function(_)
+            if cmp.visible() and cmp.get_selected_entry() then
+              cmp.abort()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Clear'](), 'n', true)
+            end
+          end,
+          ['<CR>'] = function(fallback)
+            if cmp.visible() and cmp.get_selected_entry() then
+              cmp.confirm()
+            else
+              -- allow <CR> passthrough as normal line switching.
+              fallback()
+            end
+          end,
+          -- it's very rare to require copilot to give multiple solutions. If it's not good enough, we'll use avante to generate ai response manually.
+          ['<C-j>'] = function(_)
+            if cmp.visible() then 
+              cmp.select_next_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
+            end
+          end,
+          ['<C-k>'] = function(_)
+            if cmp.visible() then 
+              cmp.select_prev_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Previous'](), 'n', true)
+            end
+          end
+        },
+        experimental = {
+          ghost_text = false -- this feature conflict with copilot.vim's preview.
         },
         sources = {
           {
@@ -128,14 +155,14 @@ return {
         }
       });
       cmp.setup.cmdline({ '/', '?' }, {
-        mapping = cmp.mapping.preset.cmdline(),
+        -- mapping = cmp.mapping.preset.cmdline(),
         sources = {
           { name = 'buffer' }
         }
       });
       -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
       cmp.setup.cmdline(':', {
-        mapping = cmp.mapping.preset.cmdline(),
+        -- mapping = cmp.mapping.preset.cmdline(),
         sources = cmp.config.sources({
           { name = 'path' }
         }, {
