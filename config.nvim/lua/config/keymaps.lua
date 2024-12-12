@@ -42,10 +42,6 @@ vim.keymap.set({ "n", "v", "i" }, "<C-h>", "<C-W>h", { noremap = true, silent = 
 vim.keymap.set({ "n", "v", "i" }, "<C-l>", "<C-W>l", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-k>", "<C-W>k", { noremap = true, silent = true })
 
--- disable alt moving around. Iterm2 is mapping esc to alt.
-vim.keymap.del({"n", "i", "v"}, "<A-j>")
-vim.keymap.del({"n", "i", "v"}, "<A-k>")
-
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
 vim.keymap.set("n", "<leader>/", require("telescope").extensions.live_grep_args.live_grep_args, { noremap = true })
