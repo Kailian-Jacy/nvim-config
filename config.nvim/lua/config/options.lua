@@ -4,3 +4,9 @@
 vim.g.minimap_highlight_search = 1
 vim.g.minimap_git_colors = 1
 vim.g.autoformat = false
+vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
+--[[Running = "Running",
+  Stopped = "Stopped",
+  DebugOthers = "DebugOthers",
+  NoDebug = "NoDebug"]]
+vim.g.debugging_status = "NoDebug"

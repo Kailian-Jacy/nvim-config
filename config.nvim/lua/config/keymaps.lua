@@ -76,7 +76,12 @@ vim.keymap.set("n", "<leader>bd", function()
   if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
     vim.notify("last buf", vim.log.levels.INFO)
   elseif #vim.fn.getbufinfo({ bufloaded = true }) == 1 then
-    vim.cmd("tabclose")
+    local choice = vim.fn.confirm("Last buf. Close tab?", "&Yes\n&No", 2)
+    if choice == 1 then
+      vim.cmd("tabclose")
+    else
+      vim.api.nvim_echo({{"Abort.", "WarningMsg"}}, true, {})
+    end
   else
     vim.cmd("bdelete")
   end
@@ -201,7 +206,7 @@ local isInDebugging = function()
 end
 
 -- NoUIGenericDebug
-NoUIGeneircDebug = function()
+function NoUIGeneircDebug()
   -- Invoke debugging. dap.ext.vscode.launch_js reads the launch debug file;
   -- Choose debug file for debugging.
   -- Set Keymap for debugging

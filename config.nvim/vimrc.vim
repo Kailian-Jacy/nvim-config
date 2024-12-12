@@ -1,4 +1,8 @@
 """ lua require("main")
+"" use autocmd to restore the cursor style.
+"" built in terminal cursor style is currently an issue 
+""  https://github.com/neovim/neovim/issues/3681
+au VimLeave * set guicursor=a:ver10-blinkon1
 
 """ Get the rull path
 """ 1 <C-g>
@@ -31,7 +35,6 @@ set linebreak
 set smoothscroll
 
 highlight WinSeparator guifg=#565f89
-set fillchars="diff:╱,eob: ,fold: ,foldclose:,foldopen:,foldsep: ,vert:\ "
 
 autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
 set termguicolors
@@ -42,6 +45,7 @@ set termguicolors
 autocmd FileType html setlocal shiftwidth=2 tabstop=2 softtabstop=2
 autocmd FileType css setlocal shiftwidth=2 tabstop=2 softtabstop=2
 autocmd FileType xml setlocal shiftwidth=2 tabstop=2 softtabstop=2
+autocmd FileType json setlocal shiftwidth=2 tabstop=2 softtabstop=2
 
 " Markdown and Journal
 autocmd FileType markdown setlocal shiftwidth=2 tabstop=2 softtabstop=2

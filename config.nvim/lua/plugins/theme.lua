@@ -235,20 +235,33 @@ return {
           lualine_a = {
             {
               function()
-                local sysname = vim.loop.os_uname().sysname
+                -- prefix.
+                local sys_sign = function()
+                  local sysname = vim.loop.os_uname().sysname
+                  if sysname == "Darwin" then
+                    return "󰀵" -- Mac icon
+                  elseif sysname == "Linux" then
+                    return "" -- Linux icon
+                  else
+                    return "" -- Default case, no icon
+                  end
+                end
                 local debug_sign = function()
-                  if vim.g.is_debugging then
-                    return "[DEB]"
+                  if vim.g.debugging_status == "NoDebug" then
+                    return ""
+                  end
+                  if vim.g.debugging_status == "Running" then
+                    return ""
+                  end
+                  if vim.g.debugging_status == "DebugOthers" then
+                    return ""
+                  end
+                  if vim.g.debugging_status == "Stopped" then
+                    return ""
                   end
                   return ""
                 end
-                if sysname == "Darwin" then
-                  return "{󰀵} => {" .. debug_sign() .. "}" -- Mac icon
-                elseif sysname == "Linux" then
-                  return "{} => {" .. debug_sign() .. "}" -- Linux icon
-                else
-                  return "{} => {" .. debug_sign() .. "}" -- Default case, no icon
-                end
+                return sys_sign() .. debug_sign() .. " -> {}"
               end,
             },
           },

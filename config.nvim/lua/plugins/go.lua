@@ -136,6 +136,20 @@ return {
     end,
   },]]
   {
+    "neovim/nvim-lspconfig",
+    config = function()
+      local cmp_nvim_lsp = require("cmp_nvim_lsp")
+      require("lspconfig").clangd.setup({
+        -- on_attach = on_attach,
+        capabilities = cmp_nvim_lsp.default_capabilities(),
+        cmd = {
+          "clangd",
+          "--offset-encoding=utf-16",
+        },
+      })
+    end,
+  },
+  {
     "ray-x/go.nvim",
     dependencies = { -- optional packages
       "ray-x/guihua.lua",
@@ -144,7 +158,7 @@ return {
     },
     config = function()
       require("go").setup({
-        dap_debug_gui = false
+        dap_debug_gui = false,
       })
     end,
     event = { "CmdlineEnter" },
