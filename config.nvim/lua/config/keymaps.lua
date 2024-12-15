@@ -37,10 +37,10 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = t
 --end)
 
 -- Cursor wandering around
-vim.keymap.set({ "n", "v", "i" }, "<C-j>", "<C-W>j", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-h>", "<C-W>h", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-l>", "<C-W>l", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-k>", "<C-W>k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<C-W>k", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')

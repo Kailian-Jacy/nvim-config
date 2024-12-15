@@ -431,15 +431,56 @@ return {
     "Kailian-Jacy/bookmarks.nvim",
     -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
     dependencies = {
+      {"kkharji/sqlite.lua"},
       {"nvim-telescope/telescope.nvim"},
       {"stevearc/dressing.nvim"} -- optional: to have the same UI shown in the GIF
     },
+    keys = {
+        {
+            "<leader>fm",
+            function ()
+                vim.cmd[[ BookmarksLists ]]
+            end
+        },
+        {
+            "<leader>mm",
+            function ()
+                vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+                    if input then
+                    local Service = require("bookmarks.domain.service")
+                    Service.toggle_mark("[BM]" .. input)
+                    require("bookmarks.sign").safe_refresh_signs()
+                    end
+                end)
+            end
+        },
+        {
+            "<leader>md",
+            function ()
+                vim.cmd[[ BookmarksDesc ]]
+            end
+        },
+        {
+            "<leader>ml",
+            function ()
+                vim.cmd[[ BookmarksNewList ]]
+            end
+        }
+    },
+    commands = {
+        mark_comment = function ()
+            vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+                if input then
+                local Service = require("bookmarks.domain.service")
+                Service.toggle_mark("[BM]" .. input)
+                require("bookmarks.sign").safe_refresh_signs()
+                end
+            end)
+        end
+    },
     config = function ()
-      local cmd = require("bookmarks.adapter.commands").commands
-      vim.keymap.set({ "n", "v" }, "<leader>mm", "<cmd>BookmarksMark<cr>", { desc = "Mark current line into active BookmarkList." })
-      --[[vim.keymap.set({ "n", "v" }, "<leader>mM", "<cmd>", { desc = "Create new bookmark lists." })]]
-      vim.keymap.set({ "n", "v" }, "<leader>fm", cmd[4].callback, { desc = "All bookmarks." })
-      vim.keymap.set({ "n", "v" }, "<leader>fM", cmd[2].callback, { desc = "Select active bookmark list." })
+        local opts = {}
+        require("bookmarks").setup(opts)
     end
   },
   -- try to replace with vimrc autocmd settings.
