@@ -10,6 +10,16 @@ return {
         on_attach = lspconfig.marksman.LspOnAttach,
         capabilities = lspconfig.marksman.LspCapabilities,
       })
+      -- clang config.
+      local cmp_nvim_lsp = require("cmp_nvim_lsp")
+      lspconfig.clangd.setup({
+        -- on_attach = on_attach,
+        capabilities = cmp_nvim_lsp.default_capabilities(),
+        cmd = {
+          "clangd",
+          "--offset-encoding=utf-16",
+        },
+      })
       -- lua config
       lspconfig.lua_ls.setup({
         settings = {
