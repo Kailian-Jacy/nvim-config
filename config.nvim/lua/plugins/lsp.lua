@@ -1,5 +1,8 @@
 return {
   {
+    -- lsp configurations:
+    -- 1. Configure lsp from here as example does: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
+    -- 2. LspInfo to check if working.
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
       local lspconfig = require("lspconfig")
@@ -41,6 +44,10 @@ return {
     end,
   },
   {
+    -- nvim lint:
+    -- 1. Add linter here.
+    -- 2. Use LintInfo in the filetype.
+    -- 3. If linter still not working on save or formatting, trigger with vim.print(require("lint").try_lint())
     "mfussenegger/nvim-lint",
     config = function()
       require("lint").linters_by_ft = {
@@ -55,7 +62,7 @@ return {
         markdown = { "markdownlint-cli2" },
         python = { "ruff" },
         sql = { "sqlfluff" },
-        go = { "gopls" }
+        -- go = { "gopls" },
       }
     end,
   },
