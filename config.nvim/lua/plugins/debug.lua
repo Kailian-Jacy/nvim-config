@@ -31,7 +31,8 @@ return {
         "gopls",
         "impl",
         -- json
-        --[["jsonlint",]]
+        "jsonlint",
+        "fixjson",
         -- lua
         "lua-language-server",
         "luacheck",

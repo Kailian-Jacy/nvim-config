@@ -21,6 +21,12 @@ return {
           },
         },
       })
+      -- json config
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
+      lspconfig.jsonls.setup({
+        capabilities = capabilities,
+      })
       return opts
     end,
   },
@@ -28,7 +34,18 @@ return {
     "mfussenegger/nvim-lint",
     config = function()
       require("lint").linters_by_ft = {
-        markdown = { "vale" },
+        json = { "jsonlint" },
+        rust = { "bacon" },
+        makefile = { "checkmake" },
+        cmake = { "cmakelint" },
+        c = { "cpplint" },
+        cpp = { "cpplint" },
+        docker = { "hadolint" },
+        lua = { "luacheck" },
+        markdown = { "markdownlint-cli2" },
+        python = { "ruff" },
+        sql = { "sqlfluff" },
+        go = { "gopls" }
       }
     end,
   },
@@ -40,6 +57,7 @@ return {
         -- conform formatting
         function()
           require("conform").format()
+          require("lint").try_lint()
           vim.print("@conform.format")
         end,
         mode = "n",
@@ -56,7 +74,7 @@ return {
         python = { "ruff" },
         golang = { "goimports", "gopls" },
         rust = { "rustfmt", lsp_format = "fallback" },
-        json = { "fixjson" }
+        json = { "fixjson" },
         -- Conform will run the first available formatter
       },
       format_on_save = false,

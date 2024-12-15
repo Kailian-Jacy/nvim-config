@@ -76,6 +76,7 @@ function dependencies() {
     fi
 
     $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep cmake
+    npm i -g vscode-langservers-extracted
 
     function install_fzf() {
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
