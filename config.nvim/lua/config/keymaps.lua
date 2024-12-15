@@ -13,20 +13,20 @@ end
 vim.g.mapleader = " "
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
-vim.keymap.del({"n", "i", "v"}, "<M-k>")
-vim.keymap.del({"n", "i", "v"}, "<M-j>")
+vim.keymap.del({ "n", "i", "v" }, "<M-k>")
+vim.keymap.del({ "n", "i", "v" }, "<M-j>")
 -- Lsp replace name.
 vim.keymap.set("n", "<leader>rn", ":IncRename ")
-vim.keymap.set({"n", "i", "v"}, "<c-i>", "<c-i>")
+vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")
 
 -- Keymap Line
-vim.keymap.set("n", "ZA", function ()
-  vim.cmd [[ wqa ]]
-end , { noremap = true })
+vim.keymap.set("n", "ZA", function()
+  vim.cmd([[ wqa ]])
+end, { noremap = true })
 -- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
-vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})
+vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
 
 -- message history display
 --vim.keymap.set({ "n", "v" }, "<leader>snh", function()
@@ -75,7 +75,7 @@ vim.keymap.set("n", "<leader>bd", function()
     if choice == 1 then
       vim.cmd("tabclose")
     else
-      vim.api.nvim_echo({{"Abort.", "WarningMsg"}}, true, {})
+      vim.api.nvim_echo({ { "Abort.", "WarningMsg" } }, true, {})
     end
   else
     vim.cmd("bdelete")
@@ -156,8 +156,8 @@ NoUIUnmap = function()
     "C",
     "b",
     "P",
-    'p',
-  --[['K',
+    "p",
+    --[['K',
   'B',
   'R',
   'O',
