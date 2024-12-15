@@ -219,6 +219,7 @@ function NoUIGeneircDebug()
 end
 
 vim.keymap.set("n", "<leader>DD", NoUIGeneircDebug)
+vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 
 --[[
 vim.keymap.set("n", "<leader>sn", function()

@@ -65,7 +65,7 @@ return {
         c = { "cpplint" },
         cpp = { "cpplint" },
         docker = { "hadolint" },
-        lua = { "luacheck" },
+        -- lua = { "luacheck" },
         markdown = { "markdownlint-cli2" },
         python = { "ruff" },
         sql = { "sqlfluff" },
