@@ -17,8 +17,11 @@ return {
           PmenuSbar = { bg = "" },
           CmpPmenuBorder = { link = "Comment" },
           CompeDocumentationBorder = { link = "Comment" },
+          -- System wide borders color.
           StatusLine = { bg = "" },
-          StatueLineTerm = { bg = "" },
+          StatusLineTerm = { bg = "" },
+          WinBar = { bg = "" },
+          WinBarNC = { bg = "" },
           -- Telescope borders
           TelescopeBorder = { link = "Constant" },
           WinSeparator = { fg = "#565f89" },
