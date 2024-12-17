@@ -2,17 +2,25 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 -- Trigger linter
+local function lint()
+  -- try_lint without arguments runs the linters defined in `linters_by_ft`
+  -- for the current filetype
+  require("lint").try_lint()
+  -- You can call `try_lint` with a linter name or a list of names to always
+  -- run specific linters, independent of the `linters_by_ft` configuration
+  -- require("lint").try_lint("cspell")
+end
+vim.api.nvim_create_user_command("Lint", lint, {})
 vim.api.nvim_create_autocmd({ "BufWritePost" }, {
-  callback = function()
-    -- try_lint without arguments runs the linters defined in `linters_by_ft`
-    -- for the current filetype
-    require("lint").try_lint()
-
-    -- You can call `try_lint` with a linter name or a list of names to always
-    -- run specific linters, independent of the `linters_by_ft` configuration
-    -- require("lint").try_lint("cspell")
-  end,
+  callback = lint,
 })
+-- Disabled auto lint when opening files. They are annoying when reading source codes.
+-- Normally we want linting to be done when formatting triggered
+-- If really need, just call Lint command mannually.
+--[[vim.api.nvim_create_autocmd({ "BufReadPost" }, {
+  callback = lint,
+})]]
+
 -- Workaround for a tmux problem:
 --[[vim.api.nvim_create_autocmd("VimLeave", {
   command = "set guicursor=a:ver1",
@@ -105,15 +113,15 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- OSC52 to sync remote to local.
 -- When yank triggered, it got wrapped by special chars, and iterm2 recognize it as
--- signal to be synced to clipboard. 
+-- signal to be synced to clipboard.
 -- So vim instance anywhere could sync to system clipboard. Including ssh remote.
 local copy = function()
-  if vim.v.event.operator == 'y' then
-    require('vim.ui.clipboard.osc52').copy('"')
+  if vim.v.event.operator == "y" then
+    require("vim.ui.clipboard.osc52").copy('"')
   end
 end
 
-vim.api.nvim_create_autocmd('TextYankPost', {callback = copy})
+vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
 
 -- disable barbecue (Context) showing atop of the window
 require("barbecue.ui").toggle(false)

@@ -11,6 +11,8 @@ return {
         "clang-format",
         "clangd",
         "cmakelint",
+        "cmake-language-server",
+        "cmakelang",
         "codelldb",
         "cpplint",
         "cpptools",

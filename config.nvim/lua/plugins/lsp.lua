@@ -47,6 +47,8 @@ return {
       lspconfig.yamlls.setup({})
       -- python
       lspconfig.pyright.setup({})
+      -- cmake
+      lspconfig.cmake.setup({})
       return opts
     end,
   },
@@ -61,7 +63,7 @@ return {
         json = { "jsonlint" },
         rust = { "bacon" },
         makefile = { "checkmake" },
-        cmake = { "cmakelint" },
+        cmake = { "cmakelang" },
         c = { "cpplint" },
         cpp = { "cpplint" },
         docker = { "hadolint" },
@@ -95,6 +97,7 @@ return {
         lua = { "stylua" },
         c = { "clang-format" },
         cpp = { "clang-format" },
+        cmake = { "cmake-lint" },
         python = { "ruff" },
         golang = { "goimports", "gopls" },
         rust = { "rustfmt", lsp_format = "fallback" },
