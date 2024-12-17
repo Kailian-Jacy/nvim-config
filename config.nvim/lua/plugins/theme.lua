@@ -17,6 +17,8 @@ return {
           PmenuSbar = { bg = "" },
           CmpPmenuBorder = { link = "Comment" },
           CompeDocumentationBorder = { link = "Comment" },
+          StatusLine = { bg = "" },
+          StatueLineTerm = { bg = "" },
           -- Telescope borders
           TelescopeBorder = { link = "Constant" },
           WinSeparator = { fg = "#565f89" },
