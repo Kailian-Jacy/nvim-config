@@ -55,6 +55,7 @@ vim.keymap.set(
 -- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "ga", "<cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
 
 -- disable lazyim default keymaps.
 vim.keymap.del("n", "<leader>l")
