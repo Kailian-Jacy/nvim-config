@@ -86,7 +86,7 @@ return {
           require("lint").try_lint()
           vim.print("@conform.format")
         end,
-        mode = "n",
+        mode = {"n", "v"}, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",
       },
     },
