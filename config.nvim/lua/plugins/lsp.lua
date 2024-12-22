@@ -64,6 +64,9 @@ return {
         rust = { "bacon" },
         makefile = { "checkmake" },
         cmake = { "cmakelang" },
+        -- for c/cpp linter not recognizing the include path, use envs.
+        -- export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$(pwd)/include
+        -- export C_INCLUDE_PATH=$C_INCLUDE_PATH:$(pwd)/include
         c = { "cpplint" },
         cpp = { "cpplint" },
         docker = { "hadolint" },
@@ -86,7 +89,7 @@ return {
           require("lint").try_lint()
           vim.print("@conform.format")
         end,
-        mode = {"n", "v"}, -- under visual mode, selected range will be formatted.
+        mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",
       },
     },
