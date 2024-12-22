@@ -79,7 +79,7 @@ vim.keymap.set("n", "<leader>bd", function()
       vim.api.nvim_echo({ { "Abort.", "WarningMsg" } }, true, {})
     end
   else
-    vim.cmd("bdelete")
+    vim.cmd[[ bp | sp | bn | bd ]]
   end
 end, { noremap = true, silent = true })
 
