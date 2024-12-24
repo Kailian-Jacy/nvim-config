@@ -129,3 +129,104 @@ vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
 
 -- disable barbecue (Context) showing atop of the window
 require("barbecue.ui").toggle(false)
+
+-- TODO: Link images altogether.
+--[[Obsidian related autoCommands 
+
+    Tool functions]]
+
+-- Shell integration
+vim.g.shell_run = function(cmd)
+  local tmpfile = "/tmp/lua_execute_tmp_file"
+  local exit = os.execute(cmd .. " > " .. tmpfile .. " 2> " .. tmpfile .. ".err")
+
+  local stdout_file = io.open(tmpfile)
+  local stdout = stdout_file:read("*all")
+
+  local stderr_file = io.open(tmpfile .. ".err")
+  local stderr = stderr_file:read("*all")
+
+  stdout_file:close()
+  stderr_file:close()
+
+  return exit, stdout .. stderr
+end
+
+function CommandCheckBefore()
+  -- osbdidian vault guard.
+  if not vim.g.obsidian_functions_enabled then
+    vim.notify("Obsidian not installed or functionality set off. Stopped.", vim.log.levels.ERROR)
+    return
+  end
+  if not vim.g.obsidian_vault or vim.g.obsidian_vault == "" then
+    vim.notify("vim.g.obsidian_vault is not set. Stopped.", vim.log.levels.ERROR)
+    return
+  end
+end
+
+function VaultMap(localName)
+  return vim.g.obsidian_vault:gsub("/$", "") .. "/" .. vim.fn.fnamemodify(localName, ":t")
+end
+
+--[[Exposed Commands]]
+
+-- Unlink the current file. (Remove hard link.)
+vim.api.nvim_create_user_command("ObsUnlink", function()
+  CommandCheckBefore()
+  -- file type guard.
+  local current_file = vim.fn.expand("%:p", nil, nil)
+  vim.cmd([[ :w ]])
+  if vim.fn.fnamemodify(current_file, ":e") ~= "md" then
+    vim.notify("The current file is not a Markdown file. Stopped.", vim.log.levels.ERROR)
+    return
+  end
+  local destination = VaultMap(current_file)
+
+  -- hard link here. Removal of any side won't be removing the file.
+  local cmd = string.format("rm %s", vim.fn.shellescape(destination))
+  local success, std = vim.g.shell_run(cmd)
+  if not success then
+    vim.notify("Error Unlinking file: " .. (std or ""), vim.log.levels.ERROR)
+    return
+  else
+    vim.notify("Link " .. destination .. " removed: " .. (std or ""), vim.log.levels.INFO)
+  end
+end, {})
+
+-- Link the current file to obsidian vault.
+vim.api.nvim_create_user_command("ObsOpen", function()
+  CommandCheckBefore()
+
+  -- file type guard.
+  local current_file = vim.fn.expand("%:p", nil, nil)
+  vim.cmd([[ :w ]])
+  if vim.fn.fnamemodify(current_file, ":e") ~= "md" then
+    vim.notify("The current file is not a Markdown file. Stopped.", vim.log.levels.ERROR)
+    return
+  end
+
+  local destination = VaultMap(current_file)
+  -- Check if link already exists.
+  local f = io.open(destination, "r")
+  if f == nil then
+    -- hard link the original to destination. Removal of any side won't be removing the file.
+    local cmd = string.format("ln %s %s", vim.fn.shellescape(current_file), vim.fn.shellescape(destination))
+    local success, std = vim.g.shell_run(cmd)
+    if not success then
+      vim.notify("Error linking file: " .. (std or ""), vim.log.levels.ERROR)
+      return
+    else
+      vim.notify("Linked " .. current_file .. " to " .. destination .. (std or ""), vim.log.levels.INFO)
+    end
+  else
+    io.close(f)
+  end
+
+  -- No need to switch there. Currently we can't ObsidianOpen a file with lcd out of vault.
+  -- switch to the linked file for full functionality.
+  --[[vim.cmd("edit " .. vim.fn.shellescape(destination))
+  vim.cmd("bdelete " .. vim.fn.bufnr(current_file))
+  vim.notify("Switch to linked file in vault: " .. destination, vim.log.levels.INFO)]]
+  -- Open from obs
+  -- vim.cmd("ObsidianOpen")
+end, {})

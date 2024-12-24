@@ -273,8 +273,8 @@ return {
                   end
                   return ""
                 end
-                return sys_sign() .. debug_sign() .. " -> {}"
-              end,
+                    return "{} | " .. sys_sign() .. debug_sign() .. ""
+                end,
             },
           },
         },
