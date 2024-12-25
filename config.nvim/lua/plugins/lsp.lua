@@ -1,5 +1,8 @@
 return {
   {
+    -- lsp configurations:
+    -- 1. Configure lsp from here as example does: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
+    -- 2. LspInfo to check if working.
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
       local lspconfig = require("lspconfig")
@@ -9,6 +12,16 @@ return {
       lspconfig.marksman.setup({
         on_attach = lspconfig.marksman.LspOnAttach,
         capabilities = lspconfig.marksman.LspCapabilities,
+      })
+      -- clang config.
+      local cmp_nvim_lsp = require("cmp_nvim_lsp")
+      lspconfig.clangd.setup({
+        -- on_attach = on_attach,
+        capabilities = cmp_nvim_lsp.default_capabilities(),
+        cmd = {
+          "clangd",
+          "--offset-encoding=utf-16",
+        },
       })
       -- lua config
       lspconfig.lua_ls.setup({
@@ -21,14 +34,47 @@ return {
           },
         },
       })
+      -- json config
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
+      lspconfig.jsonls.setup({
+        capabilities = capabilities,
+      })
+      -- docker/docker-compose
+      lspconfig.docker_compose_language_service.setup({})
+      lspconfig.dockerls.setup({})
+      -- yaml
+      lspconfig.yamlls.setup({})
+      -- python
+      lspconfig.pyright.setup({})
+      -- cmake
+      lspconfig.cmake.setup({})
       return opts
     end,
   },
   {
+    -- nvim lint:
+    -- 1. Add linter here.
+    -- 2. Use LintInfo in the filetype.
+    -- 3. If linter still not working on save or formatting, trigger with vim.print(require("lint").try_lint())
     "mfussenegger/nvim-lint",
     config = function()
       require("lint").linters_by_ft = {
-        markdown = { "vale" },
+        json = { "jsonlint" },
+        rust = { "bacon" },
+        makefile = { "checkmake" },
+        cmake = { "cmakelang" },
+        -- for c/cpp linter not recognizing the include path, use envs.
+        -- export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$(pwd)/include
+        -- export C_INCLUDE_PATH=$C_INCLUDE_PATH:$(pwd)/include
+        c = { "cpplint" },
+        cpp = { "cpplint" },
+        docker = { "hadolint" },
+        -- lua = { "luacheck" },
+        -- markdown = { "markdownlint-cli2" },
+        python = { "ruff" },
+        sql = { "sqlfluff" },
+        -- go = { "gopls" },
       }
     end,
   },
@@ -40,9 +86,10 @@ return {
         -- conform formatting
         function()
           require("conform").format()
+          require("lint").try_lint()
           vim.print("@conform.format")
         end,
-        mode = "n",
+        mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",
       },
     },
@@ -53,10 +100,11 @@ return {
         lua = { "stylua" },
         c = { "clang-format" },
         cpp = { "clang-format" },
+        cmake = { "cmake-lint" },
         python = { "ruff" },
         golang = { "goimports", "gopls" },
         rust = { "rustfmt", lsp_format = "fallback" },
-        json = { "fixjson" }
+        json = { "fixjson" },
         -- Conform will run the first available formatter
       },
       format_on_save = false,
@@ -84,39 +132,4 @@ return {
       require("inc_rename").setup({})
     end,
   },
-  -- add tsserver and setup with typescript.nvim instead of lspconfig
-  --{
-  --"neovim/nvim-lspconfig",
-  --dependencies = {
-  --"jose-elias-alvarez/typescript.nvim",
-  --init = function()
-  --require("lazyvim.util").lsp.on_attach(function(_, buffer)
-  ---- stylua: ignore
-  --vim.keymap.set( "n", "<leader>co", "TypescriptOrganizeImports", { buffer = buffer, desc = "Organize Imports" })
-  --vim.keymap.set("n", "<leader>cR", "TypescriptRenameFile", { desc = "Rename File", buffer = buffer })
-  ---- vim.keymap.set("n", "K", "TypescriptRenameFile", { desc = "Rename File", buffer = buffer })
-  --end)
-  --end,
-  --},
-  -----@class PluginLspOpts
-  --opts = {
-  -----@type lspconfig.options
-  --servers = {
-  ---- tsserver will be automatically installed with mason and loaded with lspconfig
-  --tsserver = {},
-  --},
-  ---- you can do any additional lsp server setup here
-  ---- return true if you don't want this server to be setup with lspconfig
-  -----@type table<string, fun(server:string, opts:_.lspconfig.options):boolean?>
-  --setup = {
-  ---- example to setup with typescript.nvim
-  --tsserver = function(_, opts)
-  --require("typescript").setup({ server = opts })
-  --return true
-  --end,
-  ---- Specify * to use this function as a fallback for any server
-  ---- ["*"] = function(server, opts) end,
-  --},
-  --},
-  --},
 }

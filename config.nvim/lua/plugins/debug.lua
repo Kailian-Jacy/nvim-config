@@ -11,6 +11,8 @@ return {
         "clang-format",
         "clangd",
         "cmakelint",
+        "cmake-language-server",
+        "cmakelang",
         "codelldb",
         "cpplint",
         "cpptools",
@@ -31,7 +33,8 @@ return {
         "gopls",
         "impl",
         -- json
-        --[["jsonlint",]]
+        "jsonlint",
+        "fixjson",
         -- lua
         "lua-language-server",
         "luacheck",

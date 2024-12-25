@@ -387,10 +387,19 @@ return {
   },]]
   {
     "okuuva/auto-save.nvim",
+    event = { "InsertLeave", "TextChanged" },
     config = function()
-      require("auto-save").setup {
-        execution_message = false,
-      }
+      require("auto-save").setup({
+        trigger_events = {
+            defer_save = { 
+                        "InsertLeave", 
+                        "TextChanged", 
+                        {"TextChangedP", pattern = "*.md"}, 
+                        {"TextChangedI", pattern = "*.md"}
+            },
+        },
+        -- debounce_delay = 500,
+      })
     end,
   },
   {
@@ -451,15 +460,56 @@ return {
     "Kailian-Jacy/bookmarks.nvim",
     -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
     dependencies = {
+      {"kkharji/sqlite.lua"},
       {"nvim-telescope/telescope.nvim"},
       {"stevearc/dressing.nvim"} -- optional: to have the same UI shown in the GIF
     },
+    keys = {
+        {
+            "<leader>fm",
+            function ()
+                vim.cmd[[ BookmarksLists ]]
+            end
+        },
+        {
+            "<leader>mm",
+            function ()
+                vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+                    if input then
+                    local Service = require("bookmarks.domain.service")
+                    Service.toggle_mark("[BM]" .. input)
+                    require("bookmarks.sign").safe_refresh_signs()
+                    end
+                end)
+            end
+        },
+        {
+            "<leader>md",
+            function ()
+                vim.cmd[[ BookmarksDesc ]]
+            end
+        },
+        {
+            "<leader>ml",
+            function ()
+                vim.cmd[[ BookmarksNewList ]]
+            end
+        }
+    },
+    commands = {
+        mark_comment = function ()
+            vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+                if input then
+                local Service = require("bookmarks.domain.service")
+                Service.toggle_mark("[BM]" .. input)
+                require("bookmarks.sign").safe_refresh_signs()
+                end
+            end)
+        end
+    },
     config = function ()
-      local cmd = require("bookmarks.adapter.commands").commands
-      vim.keymap.set({ "n", "v" }, "<leader>mm", "<cmd>BookmarksMark<cr>", { desc = "Mark current line into active BookmarkList." })
-      --[[vim.keymap.set({ "n", "v" }, "<leader>mM", "<cmd>", { desc = "Create new bookmark lists." })]]
-      vim.keymap.set({ "n", "v" }, "<leader>fm", cmd[4].callback, { desc = "All bookmarks." })
-      vim.keymap.set({ "n", "v" }, "<leader>fM", cmd[2].callback, { desc = "Select active bookmark list." })
+        local opts = {}
+        require("bookmarks").setup(opts)
     end
   },
   -- try to replace with vimrc autocmd settings.
@@ -498,5 +548,26 @@ return {
     saturation = 0.5,  -- Saturation to preserve
     })
   end
+  },
+  {
+    "gbprod/yanky.nvim",
+    config = function() 
+        require("yanky").setup({})
+        require("telescope").load_extension("yank_history")
+    end,
+    keys = {
+      { "<leader>fp", function() require("telescope").extensions.yank_history.yank_history() end, desc = "Yanky History"}
+    }
+  },
+  {
+    "HakonHarnes/img-clip.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- add options here
+      -- or leave it empty to use the default settings
+    },
+    keys = {
+      -- keymap to paste image. Compatible with obsidian plugins, not set here. See keymap.lua
+    },
   }
 }
