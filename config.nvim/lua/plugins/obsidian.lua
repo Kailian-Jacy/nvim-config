@@ -24,6 +24,10 @@ return {
           path = vim.g.obsidian_vault,
         },
       },
+      mapping = {},
+      attachments = {
+        img_folder = "attachments",
+      },
     },
   },
   {

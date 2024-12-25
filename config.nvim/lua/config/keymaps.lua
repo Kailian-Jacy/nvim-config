@@ -1,20 +1,12 @@
 -- Keymaps are automatically loaded on the VeryLazy event
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
-
-local function map(mode, lhs, rhs, opts)
-  local options = { noremap = true, silent = true }
-  if opts then
-    options = vim.tbl_extend("force", options, opts)
-  end
-  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-end
-
 vim.g.mapleader = " "
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
 vim.keymap.del({ "n", "i", "v" }, "<M-k>")
 vim.keymap.del({ "n", "i", "v" }, "<M-j>")
+
 -- Lsp replace name.
 vim.keymap.set("n", "<leader>rn", ":IncRename ")
 vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")

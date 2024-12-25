@@ -378,7 +378,7 @@ return {
                         {"TextChangedI", pattern = "*.md"}
             },
         },
-        debounce_delay = 500,
+        -- debounce_delay = 500,
       })
     end,
   },
@@ -528,5 +528,26 @@ return {
     saturation = 0.5,  -- Saturation to preserve
     })
   end
+  },
+  {
+    "gbprod/yanky.nvim",
+    config = function() 
+        require("yanky").setup({})
+        require("telescope").load_extension("yank_history")
+    end,
+    keys = {
+      { "<leader>fp", function() require("telescope").extensions.yank_history.yank_history() end, desc = "Yanky History"}
+    }
+  },
+  {
+    "HakonHarnes/img-clip.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- add options here
+      -- or leave it empty to use the default settings
+    },
+    keys = {
+      -- keymap to paste image. Compatible with obsidian plugins, not set here. See keymap.lua
+    },
   }
 }
