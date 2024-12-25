@@ -71,7 +71,7 @@ return {
         cpp = { "cpplint" },
         docker = { "hadolint" },
         -- lua = { "luacheck" },
-        markdown = { "markdownlint-cli2" },
+        -- markdown = { "markdownlint-cli2" },
         python = { "ruff" },
         sql = { "sqlfluff" },
         -- go = { "gopls" },

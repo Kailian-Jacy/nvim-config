@@ -5,6 +5,45 @@
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
 
+-- keymap for markdown ft
+local function is_obs_md(buf)
+  if vim.bo[buf].filetype == "markdown" and vim.startswith(vim.fn.expand('%:p'), vim.g.obsidian_vault)
+  then
+    return true
+  end
+  return false
+end
+
+vim.api.nvim_create_autocmd("BufRead", {
+  group = vim.api.nvim_create_augroup("markdown", { clear = true }),
+  callback = function(opts)
+    if is_obs_md(opts.buf) then
+      -- Commands
+      vim.keymap.set({ "n", "v" }, "<leader>fd", "<cmd>ObsidianBridgeTelescopeCommand<CR>", { buffer = true })
+      -- follow link
+      vim.keymap.set({ "n", "v" }, "gf", function()
+        if require("obsidian").util.cursor_on_markdown_link() then
+          return "<cmd>ObsidianFollowLink<CR>"
+        else
+          return "gf"
+        end
+      end, { buffer = true })
+      -- Image Paste in Vault image base.
+      vim.keymap.set(
+        { "n", "v" },
+        "<leader>pi",
+        "<cmd>ObsidianPasteImg " .. os.date("%Y%m%d%H%M%S") .. "<cr>",
+        { buffer = true }
+      )
+    else
+      if vim.bo[opts.buf].filetype == "markdown" then
+        vim.keymap.set({ "n", "v" }, "<leader>pi", "<cmd>PasteImage<cr>", { buffer = true })
+      end
+    end
+  end,
+})
+-- Image Paste locally.
+
 -- Trigger linter
 local function lint()
   -- try_lint without arguments runs the linters defined in `linters_by_ft`
