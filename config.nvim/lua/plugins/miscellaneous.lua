@@ -51,6 +51,7 @@ return {
           vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
       end]]
       local cmp = require("cmp")
+      local luasnip = require("luasnip")
       require("cmp").setup({
         auto_brackets = {}, -- disabled. Being managed by other plugins.
         completion = {
@@ -70,22 +71,26 @@ return {
         },
         -- Docs has example about how to set for copilot compatibility:
         mapping = cmp.mapping.preset.insert {
+          -- Tab will only be used to expand when item being selected. Else you can be sure to tab expand snippets.
           ['<Tab>'] = function(_)
             if cmp.visible() and cmp.get_selected_entry() then
               cmp.confirm({select = false, behavior = cmp.ConfirmBehavior.Replace})
-            else 
-              vim.api.nvim_feedkeys(vim.fn['copilot#AcceptLine'](vim.api.nvim_replace_termcodes('<Tab>', true, true, true)), 'n', true)
-            end
-          end,
-          ['<C-CR>'] = function(_)
-            if cmp.visible() and cmp.get_selected_entry() then
-              cmp.confirm({select = false, behavior = cmp.ConfirmBehavior.Replace})
+            elseif luasnip.expandable() then 
+                luasnip.expand()
+            elseif luasnip.locally_jumpable(1) then
+              luasnip.jump(1)
             else
-              -- TODO: Make C-CR copilot.Suggest() if no present suggestions.
-              vim.api.nvim_feedkeys(vim.fn['copilot#Accept'](vim.api.nvim_replace_termcodes('<C-CR>', true, true, true)), 'n', true)
+              vim.api.nvim_feedkeys(vim.fn['copilot#Accept'](vim.api.nvim_replace_termcodes('<Tab>', true, true, true)), 'n', true)
             end
           end,
-          -- aligned with nvim screen shift and telescope previews shift.
+          ['<S-Tab>'] = cmp.mappint(function(fallback) 
+                if luasnip.locally_jumpable(-1) then
+                    luasnip.jump(-1)
+                else
+                    fallback()
+                end
+            end),
+          -- aligned with nvim screen shift and telescope previews shift. TODO: Not warking now.
           ['<C-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
           ['<C-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
           -- cancel suggestion.
@@ -112,18 +117,32 @@ return {
               vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
             end
           end,
-          ['<C-j>'] = function(_)
-            if cmp.visible() then 
-              cmp.select_next_item()
+          ['<Right>'] = function(_)
+            if luasnip.locally_jumpable() then 
+              luasnip.jump(1)
             else
-              vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
+              vim.api.nvim_feedkeys(vim.fn['copilot#AcceptLine'](vim.api.nvim_replace_termcodes('<Right>', true, true, true)), 'n', true)
             end
           end,
+          ['<Left>'] = cmp.mapping(function(fallback)
+            if luasnip.locally_jumpable() then 
+              luasnip.jump(-1)
+            else
+              fallback()
+            end
+          end),
           ['<Up>'] = function(_)
             if cmp.visible() then 
               cmp.select_prev_item()
             else
               vim.api.nvim_feedkeys(vim.fn['copilot#Previous'](), 'n', true)
+            end
+          end,
+          ['<C-j>'] = function(_)
+            if cmp.visible() then 
+              cmp.select_next_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn['copilot#Next'](), 'n', true)
             end
           end,
           ['<C-k>'] = function(_)
@@ -138,6 +157,7 @@ return {
           ghost_text = false -- this feature conflict with copilot.vim's preview.
         },
         sources = {
+          { name = 'luasnip' },
           {
             name = "cmp_tabnine",
             group_index = 1,
