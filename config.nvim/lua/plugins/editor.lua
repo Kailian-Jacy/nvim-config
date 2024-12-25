@@ -12,4 +12,8 @@ return {
       -- require("luasnip.loaders.from_vscode").lazy_load({ paths = { "./my-cool-snippets" } })
     end,
   },
+  {
+    "NStefan002/visual-surround.nvim",
+    config = true,
+  },
 }
