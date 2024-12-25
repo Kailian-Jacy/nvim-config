@@ -79,7 +79,7 @@ vim.keymap.set("n", "<leader>bd", function()
       vim.api.nvim_echo({ { "Abort.", "WarningMsg" } }, true, {})
     end
   else
-    vim.cmd[[ bp | sp | bn | bd ]]
+    vim.cmd([[ bp | sp | bn | bd ]])
   end
 end, { noremap = true, silent = true })
 
@@ -87,6 +87,7 @@ end, { noremap = true, silent = true })
 vim.keymap.set("n", "<leader><tab>", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>l", "<cmd>tabnext<CR>", { noremap = true, silent = true })
