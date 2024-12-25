@@ -84,8 +84,8 @@ vim.keymap.set("n", "<leader>bd", function()
 end, { noremap = true, silent = true })
 
 -- Tab-related.
-vim.keymap.set("n", "<leader><tab>", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
