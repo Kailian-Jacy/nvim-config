@@ -367,10 +367,19 @@ return {
   },]]
   {
     "okuuva/auto-save.nvim",
+    event = { "InsertLeave", "TextChanged" },
     config = function()
-      require("auto-save").setup {
-        execution_message = false,
-      }
+      require("auto-save").setup({
+        trigger_events = {
+            defer_save = { 
+                        "InsertLeave", 
+                        "TextChanged", 
+                        {"TextChangedP", pattern = "*.md"}, 
+                        {"TextChangedI", pattern = "*.md"}
+            },
+        },
+        debounce_delay = 500,
+      })
     end,
   },
   {

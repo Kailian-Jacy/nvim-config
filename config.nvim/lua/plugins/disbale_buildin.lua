@@ -32,11 +32,20 @@ return {
     enabled = false,
   },
   {
-    -- It's a visual mode selection enhancer. 
+    -- It's a visual mode selection enhancer.
     -- Go back for it when actually needed.
     "echasnovski/mini.ai",
     enabled = false,
-  }
+  },
+  {
+    "folke/persistence.nvim",
+    enabled = false,
+  },
+  {
+    -- Haven't consider how to use it yet. Disable for now.
+    "lervag/vimtex",
+    enabled = false,
+  },
   --[[{
     "nvim-lualine/lualine.nvim",
     enabled = false,
