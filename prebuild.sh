@@ -54,8 +54,10 @@ function dependencies() {
         $INSTALLER install $ENSURE node
         $INSTALLER install $ENSURE lazygit
         $INSTALLER install $ENSURE zoxide
+        $INSTALLER install $ENSURE pngpaste
     elif [[ "$(uname)" == "Linux" ]]; then
         # Linux
+        #  Linux users need xclip (X11) or wl-clipboard (Wayland) for the :ObsidianPasteImg command.
         $INSTALLER install $ENSURE nodejs
         function install_lazygit() {
             LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": *"v\K[^"]*')
@@ -76,6 +78,7 @@ function dependencies() {
     fi
 
     $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep cmake
+    npm i -g vscode-langservers-extracted
 
     function install_fzf() {
         git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf

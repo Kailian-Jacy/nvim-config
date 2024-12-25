@@ -17,6 +17,11 @@ return {
           PmenuSbar = { bg = "" },
           CmpPmenuBorder = { link = "Comment" },
           CompeDocumentationBorder = { link = "Comment" },
+          -- System wide borders color.
+          StatusLine = { bg = "" },
+          StatusLineTerm = { bg = "" },
+          WinBar = { bg = "" },
+          WinBarNC = { bg = "" },
           -- Telescope borders
           TelescopeBorder = { link = "Constant" },
           WinSeparator = { fg = "#565f89" },
@@ -233,6 +238,13 @@ return {
             end,
           }}, -- Used to display is Debugging information.]]
           lualine_a = {
+            { "filename", path = 1 },
+          },
+          lualine_b = {},
+          lualine_c = {},
+          lualine_x = {},
+          lualine_y = {},
+          lualine_z = {
             {
               function()
                 -- prefix.
@@ -261,15 +273,10 @@ return {
                   end
                   return ""
                 end
-                return sys_sign() .. debug_sign() .. " -> {}"
-              end,
+                    return "{} | " .. sys_sign() .. debug_sign() .. ""
+                end,
             },
           },
-          lualine_b = {},
-          lualine_c = {},
-          lualine_x = {},
-          lualine_y = {},
-          lualine_z = { { "filename", path = 1 } },
         },
       })
     end,

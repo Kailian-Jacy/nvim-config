@@ -1,32 +1,24 @@
 -- Keymaps are automatically loaded on the VeryLazy event
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
-
-local function map(mode, lhs, rhs, opts)
-  local options = { noremap = true, silent = true }
-  if opts then
-    options = vim.tbl_extend("force", options, opts)
-  end
-  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-end
-
 vim.g.mapleader = " "
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
-vim.keymap.del({"n", "i", "v"}, "<M-k>")
-vim.keymap.del({"n", "i", "v"}, "<M-j>")
+vim.keymap.del({ "n", "i", "v" }, "<M-k>")
+vim.keymap.del({ "n", "i", "v" }, "<M-j>")
+
 -- Lsp replace name.
 vim.keymap.set("n", "<leader>rn", ":IncRename ")
-vim.keymap.set({"n", "i", "v"}, "<c-i>", "<c-i>")
+vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")
 
 -- Keymap Line
-vim.keymap.set("n", "ZA", function ()
-  vim.cmd [[ wqa ]]
-end , { noremap = true })
+vim.keymap.set("n", "ZA", function()
+  vim.cmd([[ wqa ]])
+end, { noremap = true })
 -- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
-vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = true})
+vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
 
 -- message history display
 --vim.keymap.set({ "n", "v" }, "<leader>snh", function()
@@ -37,10 +29,10 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", {noremap = true, silent = t
 --end)
 
 -- Cursor wandering around
-vim.keymap.set({ "n", "v", "i" }, "<C-j>", "<C-W>j", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-h>", "<C-W>h", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-l>", "<C-W>l", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-k>", "<C-W>k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<C-W>k", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
@@ -55,6 +47,7 @@ vim.keymap.set(
 -- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "ga", "<cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
 
 -- disable lazyim default keymaps.
 vim.keymap.del("n", "<leader>l")
@@ -75,17 +68,18 @@ vim.keymap.set("n", "<leader>bd", function()
     if choice == 1 then
       vim.cmd("tabclose")
     else
-      vim.api.nvim_echo({{"Abort.", "WarningMsg"}}, true, {})
+      vim.api.nvim_echo({ { "Abort.", "WarningMsg" } }, true, {})
     end
   else
-    vim.cmd("bdelete")
+    vim.cmd([[ bp | sp | bn | bd ]])
   end
 end, { noremap = true, silent = true })
 
 -- Tab-related.
-vim.keymap.set("n", "<leader><tab>", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>ft", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>l", "<cmd>tabnext<CR>", { noremap = true, silent = true })
@@ -156,8 +150,8 @@ NoUIUnmap = function()
     "C",
     "b",
     "P",
-    'p',
-  --[['K',
+    "p",
+    --[['K',
   'B',
   'R',
   'O',
@@ -219,6 +213,7 @@ function NoUIGeneircDebug()
 end
 
 vim.keymap.set("n", "<leader>DD", NoUIGeneircDebug)
+vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 
 --[[
 vim.keymap.set("n", "<leader>sn", function()
