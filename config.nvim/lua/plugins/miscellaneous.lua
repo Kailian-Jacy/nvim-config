@@ -83,7 +83,7 @@ return {
               vim.api.nvim_feedkeys(vim.fn['copilot#Accept'](vim.api.nvim_replace_termcodes('<Tab>', true, true, true)), 'n', true)
             end
           end,
-          ['<S-Tab>'] = cmp.mappint(function(fallback) 
+          ['<S-Tab>'] = cmp.mapping(function(fallback) 
                 if luasnip.locally_jumpable(-1) then
                     luasnip.jump(-1)
                 else
