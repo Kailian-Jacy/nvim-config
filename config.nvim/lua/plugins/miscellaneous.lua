@@ -439,20 +439,6 @@ return {
     dependencies = { 'nvim-telescope/telescope.nvim' },
   },
   {
-    "kylechui/nvim-surround",
-    version = "*", -- Use for stability; omit to use `main` branch for the latest features
-    event = "VeryLazy",
-    config = function()
-      require("nvim-surround").setup({
-        -- Configuration here, or leave empty to use defaults
-        keymaps = {
-          visual = 's',
-          visual_line = 'S'
-        }
-      })
-    end
-  },
-  {
     "cohama/lexima.vim"
   },
   {
