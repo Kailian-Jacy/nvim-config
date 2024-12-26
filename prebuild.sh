@@ -96,12 +96,14 @@ function dependencies() {
     source $SHELL_DOT
     # $INSTALLER install --cask font-jetbrains-mono-nerd-font
     $NVIM
+
 }
 
 function todo() {
     echo "you can choose to clean up:"
     echo "1. login to github copilot to use avante;"
     echo "2. uncomment corresponding mason ensure_install after setting up language envs."
+    echo "3. go to options.lua and set options."
 }
 
 install_neovim
