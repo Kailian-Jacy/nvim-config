@@ -40,17 +40,6 @@ return {
     end,
   },
   {
-    "nvim-treesitter/nvim-treesitter",
-    dependencies = { "HiPhish/rainbow-delimiters.nvim" },
-    opts = function(_, opts)
-      opts.rainbow = {
-        enable = true,
-        query = "rainbow-delimiters",
-        strategy = require("rainbow-delimiters").strategy.global,
-      }
-    end,
-  },
-  {
     "xiyaowong/transparent.nvim",
     config = function()
       -- Optional, you don't have to run setup.
@@ -273,8 +262,8 @@ return {
                   end
                   return ""
                 end
-                    return "{} | " .. sys_sign() .. debug_sign() .. ""
-                end,
+                return "{} | " .. sys_sign() .. debug_sign() .. ""
+              end,
             },
           },
         },
@@ -287,6 +276,15 @@ return {
       require("scrollbar").setup()
       require("gitsigns").setup()
       require("scrollbar.handlers.gitsigns").setup()
+    end,
+  },
+  {
+    "levouh/tint.nvim",
+    config = function()
+      require("tint").setup({
+        tint = -80,
+        saturation = 0.5, -- Saturation to preserve
+      })
     end,
   },
 }

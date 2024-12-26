@@ -18,6 +18,39 @@ return {
     },
   },
   {
+    "nvim-treesitter/nvim-treesitter",
+    dependencies = { "HiPhish/rainbow-delimiters.nvim" },
+    opts = function(_, opts)
+      opts.rainbow = {
+        enable = true,
+        query = "rainbow-delimiters",
+        strategy = require("rainbow-delimiters").strategy.global,
+      }
+      opts.ensure_installed = {
+        "bash",
+        "html",
+        "javascript",
+        "json",
+        "lua",
+        "markdown",
+        "markdown_inline",
+        "python",
+        "query",
+        "regex",
+        "tsx",
+        "rust",
+        "go",
+        "vim",
+        "yaml",
+        "json",
+        "json5",
+      }
+      opts.indent = {
+        disable = true,
+      }
+    end,
+  },
+  {
     "folke/snacks.nvim",
     opts = {
       notify = { enabled = false },
@@ -27,10 +60,11 @@ return {
       },
       words = { enabled = true },
     },
-    keys = {
-      { "]]", function() require("snacks").words.jump(vim.v.count1) end, desc = "Next Reference" },
-      { "[[", function() require("snacks").words.jump(-vim.v.count1) end, desc = "Prev Reference" },
-    },
+    -- No need for now. Now use nvim build in * to navigate.
+    -- keys = {
+    --   { "]]", function() require("snacks").words.jump(vim.v.count1) end, desc = "Next Reference" },
+    --   { "[[", function() require("snacks").words.jump(-vim.v.count1) end, desc = "Prev Reference" },
+    -- },
   },
 
   -- Trouble:	diagnostic plugin.
@@ -294,57 +328,6 @@ return {
       require('telescope').load_extension('fzf')
     end
   },
-
-  -- add more treesitter parsers
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = {
-      ensure_installed = {
-        "bash",
-        "html",
-        "javascript",
-        "json",
-        "lua",
-        "markdown",
-        "markdown_inline",
-        "python",
-        "query",
-        "regex",
-        "tsx",
-        "rust",
-        "go",
-        "vim",
-        "yaml",
-        "json",
-        "json5",
-      },
-    },
-  },
-
-  -- add any tools you want to have installed below
-  {
-    "preservim/nerdcommenter"
-  },
-
-  {
-    'windwp/nvim-autopairs',
-    config = function()
-      require("nvim-autopairs").setup {
-        event = { "BufReadPre", "BufNewFile" },
-        opts = {
-          enable_check_bracket_line = false, -- Don't add pairs if it already has a close pair in the same line
-          ignored_next_char = "[%w%.]",    -- will ignore alphanumeric and `.` symbol
-          check_ts = true,           -- use treesitter to check for a pair.
-          ts_config = {
-            lua = { "string" },      -- it will not add pair on that treesitter node
-            javascript = { "template_string" },
-            java = false,          -- don't check treesitter on java
-          },
-        },
-      }
-    end
-  },
-
   --[[{
     'nvimdev/dashboard-nvim',
     event = 'VimEnter',
@@ -442,100 +425,6 @@ return {
     "cohama/lexima.vim"
   },
   {
-    -- with lazy.nvim
-    "Kailian-Jacy/bookmarks.nvim",
-    -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
-    dependencies = {
-      {"kkharji/sqlite.lua"},
-      {"nvim-telescope/telescope.nvim"},
-      {"stevearc/dressing.nvim"} -- optional: to have the same UI shown in the GIF
-    },
-    keys = {
-        {
-            "<leader>fm",
-            function ()
-                vim.cmd[[ BookmarksLists ]]
-            end
-        },
-        {
-            "<leader>mm",
-            function ()
-                vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
-                    if input then
-                    local Service = require("bookmarks.domain.service")
-                    Service.toggle_mark("[BM]" .. input)
-                    require("bookmarks.sign").safe_refresh_signs()
-                    end
-                end)
-            end
-        },
-        {
-            "<leader>md",
-            function ()
-                vim.cmd[[ BookmarksDesc ]]
-            end
-        },
-        {
-            "<leader>ml",
-            function ()
-                vim.cmd[[ BookmarksNewList ]]
-            end
-        }
-    },
-    commands = {
-        mark_comment = function ()
-            vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
-                if input then
-                local Service = require("bookmarks.domain.service")
-                Service.toggle_mark("[BM]" .. input)
-                require("bookmarks.sign").safe_refresh_signs()
-                end
-            end)
-        end
-    },
-    config = function ()
-        local opts = {}
-        require("bookmarks").setup(opts)
-    end
-  },
-  -- try to replace with vimrc autocmd settings.
-  --[[{
-    "FotiadisM/tabset.nvim",
-    config = function()
-      require("tabset").setup({
-        defaults = {
-          tabwidth = 4,
-          expandtab = true
-        },
-        languages = {
-          [>cpp = {
-            tabwidth = 2,
-            expandtab = true,
-          },<]
-          go = {
-            tabwidth = 4,
-            expandtab = true,
-          },
-          {
-            filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact", "json", "yaml" },
-            config = {
-              tabwidth = 2
-            }
-          }
-        }
-      })
-    end
-  },]]
-  {
-  "levouh/tint.nvim",
-  config = function ()
-    require("tint").setup({
-    tint = -80,
-    saturation = 0.5,  -- Saturation to preserve
-    })
-  end
-  },
-  {
     "gbprod/yanky.nvim",
     config = function() 
         require("yanky").setup({})
@@ -545,15 +434,4 @@ return {
       { "<leader>fp", function() require("telescope").extensions.yank_history.yank_history() end, desc = "Yanky History"}
     }
   },
-  {
-    "HakonHarnes/img-clip.nvim",
-    event = "VeryLazy",
-    opts = {
-      -- add options here
-      -- or leave it empty to use the default settings
-    },
-    keys = {
-      -- keymap to paste image. Compatible with obsidian plugins, not set here. See keymap.lua
-    },
-  }
 }

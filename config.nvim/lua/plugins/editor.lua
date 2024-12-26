@@ -44,4 +44,83 @@ return {
     end,
     opts = {},
   },
+  {
+    "preservim/nerdcommenter",
+  },
+  -- TODO: Migrate mini.pair to nvim-autopairs. At leat choose one.
+  {
+    "windwp/nvim-autopairs",
+    config = function()
+      require("nvim-autopairs").setup({
+        event = { "BufReadPre", "BufNewFile" },
+        opts = {
+          enable_check_bracket_line = false, -- Don't add pairs if it already has a close pair in the same line
+          ignored_next_char = "[%w%.]", -- will ignore alphanumeric and `.` symbol
+          check_ts = true, -- use treesitter to check for a pair.
+          ts_config = {
+            lua = { "string" }, -- it will not add pair on that treesitter node
+            javascript = { "template_string" },
+            java = false, -- don't check treesitter on java
+          },
+        },
+      })
+    end,
+  },
+  {
+    -- with lazy.nvim
+    "Kailian-Jacy/bookmarks.nvim",
+    -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
+    dependencies = {
+      { "kkharji/sqlite.lua" },
+      { "nvim-telescope/telescope.nvim" },
+      { "stevearc/dressing.nvim" }, -- optional: to have the same UI shown in the GIF
+    },
+    keys = {
+      {
+        "<leader>fm",
+        function()
+          vim.cmd([[ BookmarksLists ]])
+        end,
+      },
+      {
+        "<leader>mm",
+        function()
+          vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+            if input then
+              local Service = require("bookmarks.domain.service")
+              Service.toggle_mark("[BM]" .. input)
+              require("bookmarks.sign").safe_refresh_signs()
+            end
+          end)
+        end,
+      },
+      {
+        "<leader>md",
+        function()
+          vim.cmd([[ BookmarksDesc ]])
+        end,
+      },
+      {
+        "<leader>ml",
+        function()
+          vim.cmd([[ BookmarksNewList ]])
+        end,
+      },
+    },
+    commands = {
+      mark_comment = function()
+        vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
+          if input then
+            local Service = require("bookmarks.domain.service")
+            Service.toggle_mark("[BM]" .. input)
+            require("bookmarks.sign").safe_refresh_signs()
+          end
+        end)
+      end,
+    },
+    config = function()
+      local opts = {}
+      require("bookmarks").setup(opts)
+    end,
+  },
 }
