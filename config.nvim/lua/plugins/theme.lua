@@ -9,28 +9,40 @@ return {
           visual = "#2D4263",
           bg = "",
         },
-        transparent_bg = true,
+        -- Transparent is not controlled at neovim layer. "transparent" here is just to clear some of the background group.
+        -- if transprent bg set, the background hl just goes transparent, but linked hl
+        --  (telescope, etc) remains.
+        -- and the bottom gui/terminal take control.
+        -- dracula can only make full transparency or not. Not semi. So just set it to none. transparent_bg = true,
         italic_comment = true,
-        overrides = {
-          -- Completion/documentation Pmenu border color when using bordered windows
-          Pmenu = { bg = "" },
-          PmenuSbar = { bg = "" },
-          CmpPmenuBorder = { link = "Comment" },
-          CompeDocumentationBorder = { link = "Comment" },
-          -- System wide borders color.
-          StatusLine = { bg = "" },
-          StatusLineTerm = { bg = "" },
-          WinBar = { bg = "" },
-          WinBarNC = { bg = "" },
-          -- Telescope borders
-          TelescopeBorder = { link = "Constant" },
-          WinSeparator = { fg = "#565f89" },
-          -- Message region separator
-          MsgSeparator = { bg = "" },
-          -- Diff color palette
-          DiffAdd = { bg = "#4a2f90" },
-          -- Scrollbar handle
-        },
+        overrides = function(colors)
+          return {
+            -- Basics
+            -- Completion/documentation Pmenu border color when using bordered windows
+            Pmenu = { bg = "" },
+            PmenuSbar = { bg = "" },
+            CmpPmenuBorder = { link = "Comment" },
+            CompeDocumentationBorder = { link = "Comment" },
+            -- System wide borders color.
+            StatusLine = { bg = "" },
+            StatusLineTerm = { bg = "" },
+            WinBar = { bg = "" },
+            WinBarNC = { bg = "" },
+            -- Telescope borders
+            TelescopeBorder = { link = "Constant" },
+            WinSeparator = { fg = "#565f89" },
+            -- Message region separator
+            MsgSeparator = { bg = "" },
+            -- Diff color palette
+            DiffAdd = { bg = "#4a2f90" },
+            -- TODO: Workaround for neovide. Should be reverted when neovide 
+            --  transparency issue resolved.
+            Visual = { bg = colors.selection, fg = "red" },
+            Search = { bg = colors.comment, fg = "orange" },
+            CurSearch = { bg = colors.comment, fg = "red" },
+            TodoBgTODO = { link = "TodoFgTODO" }
+          }
+        end,
       })
       require("scrollbar").setup({
         handle = {
