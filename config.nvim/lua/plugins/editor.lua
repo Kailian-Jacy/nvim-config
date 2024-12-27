@@ -45,6 +45,12 @@ return {
     opts = {},
   },
   {
+    "NMAC427/guess-indent.nvim",
+    config = function()
+      require("guess-indent").setup({})
+    end,
+  },
+  {
     "preservim/nerdcommenter",
   },
   -- TODO: Migrate mini.pair to nvim-autopairs. At leat choose one.
