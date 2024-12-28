@@ -29,14 +29,22 @@ vim.g.neovide_cursor_trail_size = 0
 local alpha = function()
   return string.format("%x", math.floor(255 * (vim.g.transparency or 0.8)))
 end
-vim.g.neovide_transparency = 0 -- 0: fully transparent.
+vim.g.neovide_transparency = 0.3 -- 0: fully transparent.
 vim.g.transparency = 0.9 -- 0: fully transparent.
 vim.g.neovide_padding_top = 10
 -- vim.g.neovide_background_color = "#13103de0"
 vim.g.neovide_background_color = "#13103d" .. alpha()
+
+-- Not to bother around blurring. Neovide is just setting blur to a fixed value.
+--  Unconfortable.
 vim.g.neovide_window_blurred = false
-vim.g.neovide_floating_blur_amount_x = 20.0
-vim.g.neovide_floating_blur_amount_y = 20.0
+-- vim.g.neovide_window_floating_blur = 0.1
+-- vim.g.neovide_floating_blur_amount_x = 0
+-- vim.g.neovide_floating_blur_amount_y = 0
+-- vim.g.neovide_window_floating_opacity = 0.1
+-- vim.g.neovide_floating_blur = 0.1
+-- vim.g.neovide_floating_blur_amount = 0.1
+
 -- TODO: Not working.
 vim.g.neovide_text_gamma = 0.0
 vim.g.neovide_text_contrast = 0.5
