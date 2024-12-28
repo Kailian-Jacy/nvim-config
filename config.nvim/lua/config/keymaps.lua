@@ -76,14 +76,13 @@ vim.keymap.set("n", "<leader>bd", function()
 end, { noremap = true, silent = true })
 
 -- Tab-related.
-vim.keymap.set("n", "<leader>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>n", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>c", "<cmd>tabnew<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>l", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>h", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>n", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>p", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
