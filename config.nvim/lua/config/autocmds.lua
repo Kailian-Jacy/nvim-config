@@ -4,11 +4,17 @@
 
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
+vim.api.nvim_create_autocmd({
+  "TermOpen",
+  "WinEnter",
+}, {
+  pattern = "term://*",
+  command = "startinsert",
+})
 
 -- keymap for markdown ft
 local function is_obs_md(buf)
-  if vim.bo[buf].filetype == "markdown" and vim.startswith(vim.fn.expand('%:p'), vim.g.obsidian_vault)
-  then
+  if vim.bo[buf].filetype == "markdown" and vim.startswith(vim.fn.expand("%:p"), vim.g.obsidian_vault) then
     return true
   end
   return false
