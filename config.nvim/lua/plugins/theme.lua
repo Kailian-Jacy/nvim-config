@@ -48,6 +48,7 @@ return {
             -- TODO: Workaround for neovide. Should be reverted when neovide 
             --  transparency issue resolved.
             Visual = { bg = colors.selection, fg = "red" },
+            VisualNC = { bg = colors.selection, fg = "red" },
             Search = { bg = colors.comment, fg = "orange" },
             CurSearch = { bg = colors.comment, fg = "red" },
             TodoBgTODO = { link = "TodoFgTODO" }
@@ -256,8 +257,12 @@ return {
     "levouh/tint.nvim",
     config = function()
       require("tint").setup({
-        tint = -80,
-        saturation = 0.5, -- Saturation to preserve
+        transforms = {
+          require("tint.transforms").tint_with_threshold(-80, "#1C1C1C", 200),  -- Try to tint by `-100`, but keep all colors at least `150` away from `#1C1C1C`
+          require("tint.transforms").saturate(0.5),
+        },
+        -- tint = -80,
+        highlight_ignore_patterns = { "WinSeparator" },
       })
     end,
   },
