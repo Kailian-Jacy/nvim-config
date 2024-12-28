@@ -8,6 +8,7 @@ return {
       local lspconfig = require("lspconfig")
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "K", false }
+      keys[#keys + 1] = { "<C-K>", false, mode = { "i" } }
       -- markdown config.
       lspconfig.marksman.setup({
         on_attach = lspconfig.marksman.LspOnAttach,
