@@ -55,7 +55,8 @@ return {
               fallback()
             end
           end),
-          -- aligned with nvim screen shift and telescope previews shift. TODO: Not warking now.
+          -- aligned with nvim screen shift and telescope previews shift. 
+          -- TODO: Not warking now.
           ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
           ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
           -- cancel suggestion.
@@ -101,20 +102,6 @@ return {
             end
           end),
           ["<Up>"] = function(_)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            else
-              vim.api.nvim_feedkeys(vim.fn["copilot#Previous"](), "n", true)
-            end
-          end,
-          ["<C-j>"] = function(_)
-            if cmp.visible() then
-              cmp.select_next_item()
-            else
-              vim.api.nvim_feedkeys(vim.fn["copilot#Next"](), "n", true)
-            end
-          end,
-          ["<C-k>"] = function(_)
             if cmp.visible() then
               cmp.select_prev_item()
             else
