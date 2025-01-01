@@ -79,8 +79,8 @@ vim.g.dotenv_dir = vim.fn.expand('$HOME/')
 
 -- obsidian related settings.
 -- obsidian functionalities could not be enabled on the remote side. So compatibility out of macos is not considerd.
-vim.g.obsidian_functions_enabled = vim.fn.has("mac") == 1 and obsidian_app_exists()
 vim.g.obsidian_executable = "/applications/obsidian.app"
+vim.g.obsidian_functions_enabled = obsidian_app_exists()
 vim.g.obsidian_vault = "/Users/kailianjacy/Library/Mobile Documents/iCloud~md~obsidian/Documents/universe"
 
 -- Snippet path settings
