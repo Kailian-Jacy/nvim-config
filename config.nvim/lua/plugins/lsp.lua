@@ -62,7 +62,7 @@ return {
     config = function()
       require("lint").linters_by_ft = {
         json = { "jsonlint" },
-        rust = { "bacon" },
+        -- rust = { "bacon" }, For rust we just use rust-analysis.
         makefile = { "checkmake" },
         cmake = { "cmakelang" },
         -- for c/cpp linter not recognizing the include path, use envs.
