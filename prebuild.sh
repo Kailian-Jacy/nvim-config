@@ -78,6 +78,7 @@ function dependencies() {
     fi
 
     $INSTALLER install $ENSURE xsel golang make g++ unzip zip npm ripgrep cmake
+    pip3 install neovim-remote
     npm i -g vscode-langservers-extracted
 
     function install_fzf() {
