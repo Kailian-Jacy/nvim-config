@@ -20,10 +20,13 @@ vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 vim.g.debugging_status = "NoDebug"
 
 -- neovide settings. Always ready to be connected from remote neovide.
+vim.g.neovide_show_border = true
+
+vim.g.neovide_scroll_animation_length = 0.13
+vim.g.neovide_cursor_animate_command_line = true
 -- disable too much animation
-vim.g.neovide_scroll_animation_length = 0
-vim.g.neovide_cursor_animate_command_line = false
 vim.g.neovide_cursor_trail_size = 0
+
 -- appearance
 -- vim.print(string.format("%x", math.floor(255 * 0))) -- 0.88 e0; 0.9 cc; 0 0
 local alpha = function()
@@ -31,36 +34,23 @@ local alpha = function()
 end
 vim.g.neovide_transparency = 0.3 -- 0: fully transparent.
 vim.g.transparency = 0.9 -- 0: fully transparent.
-vim.g.neovide_padding_top = 10
 -- vim.g.neovide_background_color = "#13103de0"
 vim.g.neovide_background_color = "#13103d" .. alpha()
 
--- Not to bother around blurring. Neovide is just setting blur to a fixed value.
---  Unconfortable.
-vim.g.neovide_window_blurred = false
--- vim.g.neovide_window_floating_blur = 0.1
--- vim.g.neovide_floating_blur_amount_x = 0
--- vim.g.neovide_floating_blur_amount_y = 0
--- vim.g.neovide_window_floating_opacity = 0.1
--- vim.g.neovide_floating_blur = 0.1
--- vim.g.neovide_floating_blur_amount = 0.1
+-- padding surrounding.
+vim.g.neovide_padding_top = 10
+vim.g.neovide_padding_right = 10 -- floating point right side padding.
+vim.g.neovide_padding_bottom = 10
 
--- TODO: Not working.
-vim.g.neovide_text_gamma = 0.0
-vim.g.neovide_text_contrast = 0.5
--- floating window shadow
-vim.g.neovide_floating_shadow = true
-vim.g.neovide_floating_z_height = 10
-vim.g.neovide_light_angle_degrees = 45
-vim.g.neovide_light_radius = 5
-vim.g.neovide_show_border = true
--- TODO: Not working.
-vim.g.neovide_hide_mouse_when_typing = false
-vim.g.neovide_confirm_quit = true
--- refresh rate and cidling
-vim.g.neovide_refresh_rate = 100 -- frame rate.
-vim.g.neovide_refresh_rate_idle = 5
-vim.g.neovide_no_idle = false
+-- Unconfigurable blurr amount.
+-- Not to bother around blurring. Neovide is just setting blur to a fixed value.
+vim.g.neovide_window_blurred = false
+
+-- Setting floating blur amount.
+vim.g.neovide_floating_blur_amount_x = 3
+vim.g.neovide_floating_blur_amount_y = 3
+
+
 -- Paste to cmd + v
 vim.g.neovide_input_use_logo = 1
 vim.api.nvim_set_keymap("", "<D-v>", "+p<CR>", { noremap = true, silent = true })
