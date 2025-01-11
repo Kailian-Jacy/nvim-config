@@ -25,13 +25,23 @@ return {
   },
   {
     "jvgrootveld/telescope-zoxide",
+    keys = {
+      {
+        "<leader>zz",
+        function()
+          require("telescope").extensions.zoxide.list()
+        end,
+        mode = "n",
+        desc = "Switch working directory of current index",
+      },
+    },
     config = function()
       local t = require("telescope")
       local z_utils = require("telescope._extensions.zoxide.utils")
 
       notification = function(selection)
-                  print("Update to (" .. selection.z_score .. ") " .. selection.path)
-                end
+        print("Update to (" .. selection.z_score .. ") " .. selection.path)
+      end
 
       -- Configure the extension
       t.setup({
@@ -43,19 +53,19 @@ return {
                 action = function(selection)
                   vim.cmd.lcd(selection.path)
                 end,
-                after_action = notification
+                after_action = notification,
               },
               ["<C-CR>"] = {
                 action = function(selection)
                   vim.cmd.cd(selection.path)
                 end,
-                after_action = notification
+                after_action = notification,
               },
               ["<C-b>"] = {
                 keepinsert = true,
                 action = function(selection)
                   require("telescope").extensions.file_browser.file_browser({ cwd = selection.path })
-                end
+                end,
               },
             },
           },
@@ -63,10 +73,7 @@ return {
       })
 
       -- Load the extension
-      t.load_extension('zoxide')
-
-      -- Add a mapping
-      vim.keymap.set("n", "<leader>zz", t.extensions.zoxide.list)
-    end
-  }
+      t.load_extension("zoxide")
+    end,
+  },
 }

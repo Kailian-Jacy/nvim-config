@@ -15,6 +15,7 @@ return {
     end,
   },
   {
+    -- "Kailian-Jacy/visual-surround.nvim",
     "NStefan002/visual-surround.nvim",
     config = true,
   },

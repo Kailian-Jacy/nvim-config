@@ -29,10 +29,15 @@ vim.g.neovide_cursor_trail_size = 0
 local alpha = function()
   return string.format("%x", math.floor(255 * (vim.g.transparency or 0.8)))
 end
-vim.g.neovide_transparency = 0 -- 0: fully transparent.
-vim.g.transparency = 0.9 -- 0: fully transparent.
-vim.g.neovide_padding_top = 10
--- vim.g.neovide_background_color = "#13103de0"
+-- Visual parts transparency.
+vim.g.neovide_transparency = 1 -- 0: fully transparent.
+-- Normal Background transparency.
+vim.g.neovide_normal_opacity = 0.3
+
+-- Background color transparency. 0 fully transparent.
+-- FIXME: Setting this option to none-zero makes border disappear.
+vim.g.transparency = 1
+-- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
 vim.g.neovide_background_color = "#13103d" .. alpha()
 vim.g.neovide_window_blurred = false
 vim.g.neovide_floating_blur_amount_x = 20.0

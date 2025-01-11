@@ -28,11 +28,15 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = 
 --  vim.cmd([[put =execute('messages')]])
 --end)
 
--- Cursor wandering around
-vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<C-W>j", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<C-W>h", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<C-W>l", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<C-W>k", { noremap = true, silent = true })
+-- Navigation: Cursor wandering around
+vim.keymap.set({ "n", "v" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "<C-H>", "<C-W>h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "<C-L>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "<C-K>", "<C-W>k", { noremap = true, silent = true })
+vim.keymap.set({ "i" }, "<C-J>", "<esc><C-W>jli", { noremap = true, silent = true })
+vim.keymap.set({ "i" }, "<C-H>", "<esc><C-W>hli", { noremap = true, silent = true })
+vim.keymap.set({ "i" }, "<C-L>", "<esc><C-W>lli", { noremap = true, silent = true })
+vim.keymap.set({ "i" }, "<C-K>", "<esc><C-W>kli", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')

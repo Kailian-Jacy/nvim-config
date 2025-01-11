@@ -42,7 +42,14 @@ vim.api.nvim_create_autocmd("BufRead", {
     end
   end,
 })
--- Image Paste locally.
+
+-- Navigatin Z wrapper
+-- before cd there, add to zoxide.
+vim.api.nvim_create_user_command("Cd", function(opts)
+  opts = opts or ""
+  vim.cmd("silent !zoxide add \"" .. opts.args .. "\"")
+  vim.cmd("cd " .. opts.args )
+end, { nargs = "?" })
 
 -- Trigger linter
 local function lint()
