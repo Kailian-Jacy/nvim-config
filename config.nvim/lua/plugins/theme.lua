@@ -45,13 +45,6 @@ return {
             MsgSeparator = { bg = "" },
             -- Diff color palette
             DiffAdd = { bg = "#4a2f90" },
-            -- TODO: Workaround for neovide. Should be reverted when neovide
-            --  transparency issue resolved.
-            Visual = { bg = colors.selection, fg = "red" },
-            VisualNC = { bg = colors.selection, fg = "red" },
-            Search = { bg = colors.comment, fg = "orange" },
-            CurSearch = { bg = colors.comment, fg = "red" },
-            TodoBgTODO = { link = "TodoFgTODO" }]]
           }
         end,
       })
@@ -246,6 +239,11 @@ return {
     end,
   },
   {
+    --[[I tried to make search highlights works, but
+    this scrollbar plugin is deeply intergated with hlslen plugin
+    and after installation of that plugin it still won't work. 
+    
+    maybe sometimes I should discard this plugin.]]
     "petertriho/nvim-scrollbar",
     config = function()
       require("scrollbar").setup()
