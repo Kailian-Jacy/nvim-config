@@ -57,8 +57,6 @@ vim.api.nvim_create_user_command("Cd", function(opts)
   vim.cmd("cd " .. opts.args )
 end, { nargs = "?" })
 
--- Image Paste locally.
-
 -- Trigger linter
 local function lint()
   -- try_lint without arguments runs the linters defined in `linters_by_ft`

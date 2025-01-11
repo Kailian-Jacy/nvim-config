@@ -28,7 +28,7 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = 
 --  vim.cmd([[put =execute('messages')]])
 --end)
 
--- Cursor wandering around
+-- Navigation: Cursor wandering around
 vim.keymap.set({ "n", "v" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<C-H>", "<C-W>h", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<C-L>", "<C-W>l", { noremap = true, silent = true })

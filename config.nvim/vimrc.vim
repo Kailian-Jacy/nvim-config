@@ -185,20 +185,9 @@ nnoremap <leader>lt <cmd>TodoTelescope <cr>
 nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
 nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
-""" Copy Pasting
-nnoremap <leader>yy "+yy
-vnoremap <leader>y  "+y
-
-""" List all jump list and marks.
-nnoremap <leader>fj <cmd>Telescope jumplist<cr>
-" nnoremap <leader>fm <cmd>Telescope marks<cr>
-
 """ reference and jumping
-nnoremap <leader>lb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 
-nnoremap <leader>ls <cmd>Telescope aerial<cr>
-nnoremap <leader>fs <cmd>Telescope lsp_dynamic_workspace_symbols<cr>
 vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
 vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
@@ -230,10 +219,6 @@ nnoremap <leader>df <cmd>Telescope dap configurations<cr>
 nnoremap <leader>db <cmd>Telescope dap list_breakpoints<cr>
 nnoremap <leader>dv <cmd>Telescope dap variables<cr>
 nnoremap <leader>df <cmd>Telescope dap frames<cr>
-
-""" Navigate 
-nnoremap J <cmd>AerialNext<CR>
-nnoremap K <cmd>AerialPrev<CR>
 
 """ Noise history report.
 """ <leader>snt noice telescope<cr>

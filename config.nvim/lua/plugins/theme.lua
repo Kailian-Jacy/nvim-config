@@ -17,7 +17,7 @@ return {
           -- selection = "#0F3460",
           selection = "#2D4263",
           visual = "#2D4263",
-          bg = "",
+          bg = "#13103d",
         },
         -- Transparent is not controlled at neovim layer. "transparent" here is just to clear some of the background group.
         -- if transprent bg set, the background hl just goes transparent, but linked hl
@@ -45,13 +45,13 @@ return {
             MsgSeparator = { bg = "" },
             -- Diff color palette
             DiffAdd = { bg = "#4a2f90" },
-            -- TODO: Workaround for neovide. Should be reverted when neovide 
+            -- TODO: Workaround for neovide. Should be reverted when neovide
             --  transparency issue resolved.
             Visual = { bg = colors.selection, fg = "red" },
             VisualNC = { bg = colors.selection, fg = "red" },
             Search = { bg = colors.comment, fg = "orange" },
             CurSearch = { bg = colors.comment, fg = "red" },
-            TodoBgTODO = { link = "TodoFgTODO" }
+            TodoBgTODO = { link = "TodoFgTODO" }]]
           }
         end,
       })
@@ -258,7 +258,7 @@ return {
     config = function()
       require("tint").setup({
         transforms = {
-          require("tint.transforms").tint_with_threshold(-80, "#1C1C1C", 200),  -- Try to tint by `-100`, but keep all colors at least `150` away from `#1C1C1C`
+          require("tint.transforms").tint_with_threshold(-80, "#1C1C1C", 200), -- Try to tint by `-100`, but keep all colors at least `150` away from `#1C1C1C`
           require("tint.transforms").saturate(0.5),
         },
         -- tint = -80,

@@ -12,7 +12,7 @@ return {
     "yetone/avante.nvim",
     event = "VeryLazy",
     lazy = false,
-    version = false, -- set this if you want to always pull the latest change
+    commit = "e98fa46", -- set this if you want to always pull the latest change
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "azure", -- Recommend using Claude
@@ -24,7 +24,7 @@ return {
         api_version = "2024-02-15-preview",
         timeout = 30000,
         temperature = 0.7,
-        max_tokens = 4096,
+        max_tokens = 10000,
         ["local"] = false,
       },
       behaviour = {
@@ -71,6 +71,7 @@ return {
         wrap = true, -- similar to vim.o.wrap
         width = 30, -- default % based on available width
         sidebar_header = {
+          enabled = false,
           align = "center", -- left, center, right for title
           rounded = true,
         },
