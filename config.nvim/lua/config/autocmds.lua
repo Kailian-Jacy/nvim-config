@@ -12,6 +12,16 @@ vim.api.nvim_create_autocmd({
   command = "startinsert",
 })
 
+
+
+-- Start at the last place exited.
+vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))
+vim.api.nvim_create_autocmd( "VimLeavePre", {
+  callback = function()
+    vim.g.LAST_WORKING_DIRECTORY = vim.fn.getcwd()
+  end,
+})
+
 -- keymap for markdown ft
 local function is_obs_md(buf)
   if vim.bo[buf].filetype == "markdown" and vim.startswith(vim.fn.expand("%:p"), vim.g.obsidian_vault) then
