@@ -12,9 +12,8 @@ vim.api.nvim_create_autocmd({
   command = "startinsert",
 })
 
-
-
 -- Start at the last place exited.
+-- Seems like "VimEnter" function not working in autocmds.lua.
 vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))
 vim.api.nvim_create_autocmd( "VimLeavePre", {
   callback = function()
@@ -63,8 +62,8 @@ vim.api.nvim_create_autocmd("BufRead", {
 -- before cd there, add to zoxide.
 vim.api.nvim_create_user_command("Cd", function(opts)
   opts = opts or ""
-  vim.cmd("silent !zoxide add \"" .. opts.args .. "\"")
-  vim.cmd("cd " .. opts.args )
+  vim.cmd('silent !zoxide add "' .. opts.args .. '"')
+  vim.cmd("cd " .. opts.args)
 end, { nargs = "?" })
 
 -- Trigger linter

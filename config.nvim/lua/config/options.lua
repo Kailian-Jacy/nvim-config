@@ -37,6 +37,9 @@ vim.g.neovide_transparency = 1 -- 0: fully transparent.
 -- Normal Background transparency.
 vim.g.neovide_normal_opacity = 0.3
 
+-- Last location
+vim.g.LAST_WORKING_DIRECTORY = "~"
+
 -- Background color transparency. 0 fully transparent.
 -- FIXME: Setting this option to none-zero makes border disappear.
 vim.g.transparency = 1
