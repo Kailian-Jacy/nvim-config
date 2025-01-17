@@ -55,10 +55,10 @@ return {
               fallback()
             end
           end),
-          -- aligned with nvim screen shift and telescope previews shift. 
+          -- aligned with nvim screen shift and telescope previews shift.
           -- TODO: Not warking now.
-          ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
-          ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
+          ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "v", "n" }),
+          ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "v", "n" }),
           -- cancel suggestion.
           ["<C-c>"] = function(_)
             if cmp.visible() and cmp.get_selected_entry() then
@@ -76,6 +76,14 @@ return {
             end
           end,
           -- it's very rare to require copilot to give multiple solutions. If it's not good enough, we'll use avante to generate ai response manually.
+          ["<Up>"] = function(_)
+            if cmp.visible() then
+              -- FIXME: Don't know how it works.. cmp.select_prev_item() is returning a function to be called... Anyway let's not change since runnable...
+              cmp.select_prev_item()
+            else
+              vim.api.nvim_feedkeys(vim.fn["copilot#Previous"](), "n", true)
+            end
+          end,
           ["<Down>"] = function(_)
             if cmp.visible() then
               cmp.select_next_item()
@@ -101,13 +109,6 @@ return {
               fallback()
             end
           end),
-          ["<Up>"] = function(_)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            else
-              vim.api.nvim_feedkeys(vim.fn["copilot#Previous"](), "n", true)
-            end
-          end,
         }),
         experimental = {
           ghost_text = false, -- this feature conflict with copilot.vim's preview.
@@ -164,14 +165,101 @@ return {
         },
       })
       cmp.setup.cmdline({ "/", "?" }, {
-        -- mapping = cmp.mapping.preset.cmdline(),
+        mapping = cmp.mapping.preset.cmdline({
+          ["<Down>"] = {
+            c = function(fallback)
+              cmp.mapping.select_next_item({
+                behavior = cmp.SelectBehavior.Insert,
+              })(fallback)
+            end,
+          },
+          ["<Up>"] = {
+            c = function(fallback)
+              cmp.mapping.select_prev_item({
+                behavior = cmp.SelectBehavior.Insert,
+              })(fallback)
+            end,
+          },
+          ["<CR>"] = {
+            c = function(fallback)
+              if cmp.visible() and cmp.get_selected_entry() then
+                cmp.confirm()
+              else
+                -- allow <CR> passthrough as normal line switching.
+                fallback()
+              end
+            end,
+          },
+        }),
+        --[[mapping = cmp.mapping.preset.cmdline({
+          ["<Up>"] = function(fallback)
+
+            vim.print("Up")
+            if cmp.visible() then
+              cmp.select_prev_item()
+            else
+              fallback()
+            end
+          end,
+          ["<Down>"] = function(fallback)
+            vim.print("Down")
+            if cmp.visible() then
+              cmp.select_next_item()
+            else
+              fallback()
+            end
+          end,
+        }),]]
         sources = {
           { name = "buffer" },
         },
       })
       -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
       cmp.setup.cmdline(":", {
-        -- mapping = cmp.mapping.preset.cmdline(),
+        mapping = cmp.mapping.preset.cmdline({
+          ["<Down>"] = {
+            c = function(fallback)
+              cmp.mapping.select_next_item({
+                behavior = cmp.SelectBehavior.Insert,
+              })(fallback)
+            end,
+          },
+          ["<Up>"] = {
+            c = function(fallback)
+              cmp.mapping.select_prev_item({
+                behavior = cmp.SelectBehavior.Insert,
+              })(fallback)
+            end,
+          },
+          ["<CR>"] = {
+            c = function(fallback)
+              if cmp.visible() and cmp.get_selected_entry() then
+                cmp.confirm()
+              else
+                -- allow <CR> passthrough as normal line switching.
+                fallback()
+              end
+            end,
+          },
+        }),
+        --[[mapping = cmp.mapping.preset.cmdline({
+          ["<Up>"] = function(fallback)
+            vim.print("Up")
+            if cmp.visible() then
+              cmp.select_prev_item()
+            else
+              fallback()
+            end
+          end,
+          ["<Down>"] = function(fallback)
+            vim.print("Down")
+            if cmp.visible() then
+              cmp.select_next_item()
+            else
+              fallback()
+            end
+          end,
+        }),]]
         sources = cmp.config.sources({
           { name = "path" },
         }, {
