@@ -3,6 +3,11 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
+-- Commenting keymaps
+vim.keymap.set("v", "<leader>cm", function ()
+  vim.api.nvim_input("gc")
+end)
+
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
 vim.keymap.del({ "n", "i", "v" }, "<M-k>")
 vim.keymap.del({ "n", "i", "v" }, "<M-j>")

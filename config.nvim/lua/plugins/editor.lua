@@ -51,9 +51,6 @@ return {
       require("guess-indent").setup({})
     end,
   },
-  {
-    "preservim/nerdcommenter",
-  },
   -- TODO: Migrate mini.pair to nvim-autopairs. At leat choose one.
   {
     "windwp/nvim-autopairs",
