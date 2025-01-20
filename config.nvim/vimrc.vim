@@ -197,13 +197,6 @@ nnoremap gd <cmd>Telescope lsp_definitions<cr>
 vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
 
-nnoremap <leader>hp <cmd>Gitsigns preview_hunk<cr>
-nnoremap <leader>hP <cmd>Gitsigns diffthis<cr>
-nnoremap <leader>hb <cmd>Gitsigns toggle_current_line_blame<cr>
-nnoremap <leader>hr <cmd>Gitsigns reset_hunk<cr>
-nnoremap <leader>hR <cmd>Gitsigns reset_buffer<cr>
-""" nnoremap <leader>tr <cmd>Telescope treesitter<cr>
- 
 """ """ file browser
 nnoremap <leader>ff <cmd>Telescope find_files no_ignore=false<cr>
 nnoremap <leader>fF <cmd>Telescope find_files no_ignore=true<cr>

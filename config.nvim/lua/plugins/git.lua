@@ -1,6 +1,24 @@
 return {
   {
     "lewis6991/gitsigns.nvim",
+    keys = {
+      {
+        "<leader>hr",
+        "<Cmd>Gitsigns reset_hunk<CR>",
+        mode = "n",
+      },
+      {
+        "<leader>hR",
+        "<Cmd>Gitsigns preview_buffer<CR>",
+        mode = "n",
+      },
+      {
+        "<leader>hp",
+        "<Cmd>preview_hunk<CR>",
+        mode = "n",
+        desc = "n",
+      },
+    },
     config = function()
       require("gitsigns").setup({
         signs = {
