@@ -55,15 +55,29 @@ return {
       })
     end,
   },
-  --[[{
-    "j-hui/fidget.nvim",
-    config = function ()
-      require("fidget").setup({})
-    end
-  },]]
   {
     "folke/noice.nvim",
     enabled = true,
+    -- replace the keymap
+    keys = function()
+      return {
+        {
+          "<leader>sn",
+          "",
+          desc = "+noice",
+        },
+        {
+          "<leader>im",
+          "<Cmd>NoiceHistory<CR>",
+          mode = "n",
+        },
+        {
+          "<leader>iM",
+          "<Cmd>messages<CR>",
+          mode = "n",
+        },
+      }
+    end,
     config = function()
       --[[require("lualine").setup({
         sections = {
