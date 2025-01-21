@@ -12,10 +12,7 @@ end)
 vim.keymap.del({ "n", "i", "v" }, "<M-k>")
 vim.keymap.del({ "n", "i", "v" }, "<M-j>")
 
--- Lsp replace name.
-vim.keymap.set("n", "<leader>rn", ":IncRename ")
 vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")
-
 -- Keymap Line
 vim.keymap.set("n", "ZA", function()
   vim.cmd([[ wqa ]])
@@ -24,7 +21,6 @@ end, { noremap = true })
 
 -- Git related
 vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
-
 
 -- Navigation: Cursor wandering around
 vim.keymap.set({ "n", "v" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
@@ -219,36 +215,89 @@ vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 -- Cmd-related mappings.
 local cmd_mappings = {
   -- Ai related.
-  { ["<D-a>"] = { "<leader>ae", { "v" } } },
-  { ["<D-A>"] = { "<leader>aa", { "n", "v" } } },
+  { ["<D-a>"] = { "keymap", "<leader>ae", { "v" } } },
+  { ["<D-A>"] = { "keymap", "<leader>aa", { "n", "v" } } },
   { ["<D-A>"] = {
-    function()
-      vim.cmd([[ AvanteChat<CR> ]])
-    end,
+    "script",
+    "<cmd>AvanteChat<CR>",
     { "i" },
   } },
   -- Buffer related.
-  { ["<D-b>"] = { "<leader>fb", { "n", "i" } } },
+  { ["<D-b>"] = { "keymap", "<leader>fb", { "n" } } },
+  { ["<D-B>"] = { "script", "<cmd>new<CR>", { "n", "i" } } },
   -- Comment related.
-  { ["<D-c>"] = { "<leader>cm", { "v" } } },
+  { ["<D-c>"] = { "keymap", "<leader>cm", { "v" } } },
+  --    Spare: D-C
   -- Directory/file related
-  { ["<D-e>"] = { "<leader>fe", { "n" } } },
-  { ["<D-E>"] = { "<leader>ee", { "n" } } },
-  { ["<D-f>"] = { "<leader>ff", { "n" } } },
-  { ["<D-F>"] = { "<leader>fF", { "n" } } }, -- todo search.
-  -- Git 
+  { ["<D-e>"] = { "keymap", "<leader>fe", { "n" } } },
+  { ["<D-E>"] = { "keymap", "<leader>ee", { "n" } } },
+  { ["<D-f>"] = { "keymap", "<leader>ff", { "n" } } },
+  -- { ["<D-F>"] = { "keymap", "<leader>fF", { "n" } } }, -- todo search.
+  -- Git
   -- Spare: D-g
-  { ["<D-G>"] = { "<leader>gg", { "n" } } },
-  -- help tag (can't be used in macos though.)
-  { ["<D-h>"] = { "<leader>fh", { "n" } } },
-  -- messages
-  { ["<D-i>"] = { "<leader>im", { "n" } } },
-  { ["<D-I>"] = { "<cmd>iM", { "n" } } },
+  { ["<D-G>"] = { "keymap", "<leader>gg", { "n" } } },
+  --    Not usable: D-h/H
+  -- Messages
+  { ["<D-i>"] = { "keymap", "<leader>im", { "n" } } },
+  { ["<D-I>"] = { "keymap", "<leader>iM", { "n" } } },
+  -- Bookmarks
+  { ["<D-j>"] = { "keymap", "<leader>jj", { "n" } } },
+  { ["<D-J>"] = { "keymap", "<leader>jJ", { "n" } } }, -- TODO: Debug: not working.
+  -- Keymaps
+  { ["<D-k>"] = { "keymap", "<leader>sk", { "n" } } },
+  --    Spare: D-K
+  { ["<D-l>"] = { "keymap", "<leader>ll", { "n" } } },
+  --    Not usable: D-m/M
+  --    Spare: D-L
+  --    Spare: D-n/N
+  { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" } } },
+  --    Spare: D-O
+  -- Command History:
+  { ["<D-p>"] = { "keymap", "<leader>sc", { "n", "v" } } },
+  { ["<D-P>"] = { "keymap", "<leader>sC", { "n", "v" } } },
+  --    Not usable: D-q/Q
   -- Search
-  { ["<D-/>"] = { "<leader>/", { "n", "v" } } },
+  { ["<D-r>"] = { "keymap", "<leader>rn", { "n" } } },
+  { ["<D-R>"] = { "keymap", "<leader>rN", { "n", "v" } } },
+  -- Symbols
+  { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" } } },
+  { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" } } },
+  -- Terminal.
+  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v" } } }, -- TODO: Start new session.
+  -- { ["<D-T>"] = { "keymap", "<C-?>", { "n", "v" } } }, --  TODO: continue
+  -- Git hunk reset
+  { ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
+  { ["<D-U>"] = { "keymap", "<leader>hR", { "n", "v" } } },
+  -- buffer/Window closing.
+  { ["<D-w>"] = { "keymap", "<leader>bd", { "n", "v" } } },
+  { ["<D-W>"] = { "keymap", "<leader>wd", { "n", "v" } } },
+  -- Splitting
+  { ["<D-x>"] = { "keymap", "<leader>|", { "n", "v" } } },
+  { ["<D-X>"] = { "keymap", "<leader>-", { "n", "v" } } },
+  -- Yanky list.
+  { ["<D-y>"] = { "keymap", "<leader>fp", { "n", "v" } } },
+  --    Spare: D-Y
+  -- Zoxide navigation.
+  { ["<D-z>"] = { "keymap", "<leader>zz", { "n", "v" } } },
+  --    Spare: D-Z
+  { ["<D-/>"] = { "keymap", "<leader>/", { "n", "v" } } },
 }
 
 -- TODO: Make mappings from the list.
+for _, km in pairs(cmd_mappings) do
+  for key, value in pairs(km) do
+    local pattern, shortcut, modes = value[1], value[2], value[3]
+    if pattern == "keymap" then
+      vim.keymap.set(modes, key, function ()
+        local keymap = shortcut:gsub("<leader>", " ")
+        local refined_keymap = vim.api.nvim_replace_termcodes(keymap, true, false, true)
+        vim.api.nvim_feedkeys(refined_keymap, 'm', false)
+      end)
+    else
+      vim.keymap.set(modes, key, shortcut, { noremap = true, silent = true })
+    end
+  end
+end
 
 --[[
 vim.keymap.set("n", "<leader>sn", function()

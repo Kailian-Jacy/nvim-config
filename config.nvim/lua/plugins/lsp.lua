@@ -129,6 +129,20 @@ return {
   },
   {
     "smjonas/inc-rename.nvim",
+    keys = {
+      {
+        "<leader>rn",
+        "<cmd>IncRename<CR>",
+        mode = "n",
+        desc = "n",
+      },
+      {
+        "<leader>rN",
+        "<leader>cR", -- rename file.
+        mode = "n",
+        desc = "n",
+      },
+    },
     config = function()
       require("inc_rename").setup({})
     end,
