@@ -32,7 +32,8 @@ return {
   },
   {
     "oflisback/obsidian-bridge.nvim",
-    enabled = vim.g.obsidian_functions_enabled,
+    enabled = false,
+    -- enabled = vim.g.obsidian_functions_enabled,
     opts = {
       -- your config here
       scroll_sync = true,
