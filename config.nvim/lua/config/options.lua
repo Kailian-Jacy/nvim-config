@@ -42,7 +42,7 @@ vim.g.LAST_WORKING_DIRECTORY = "~"
 
 -- Background color transparency. 0 fully transparent.
 -- FIXME: Setting this option to none-zero makes border disappear.
-vim.g.transparency = 1
+vim.g.transparency = 0.86
 -- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
 vim.g.neovide_background_color = "#13103d" .. alpha()
 
@@ -56,8 +56,8 @@ vim.g.neovide_padding_bottom = 10
 vim.g.neovide_window_blurred = false
 
 -- Setting floating blur amount.
-vim.g.neovide_floating_blur_amount_x = 3
-vim.g.neovide_floating_blur_amount_y = 3
+vim.g.neovide_floating_blur_amount_x = 5
+vim.g.neovide_floating_blur_amount_y = 5
 
 
 -- Paste to cmd + v
