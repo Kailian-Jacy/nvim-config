@@ -24,17 +24,33 @@ return {
     },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "azure", -- Recommend using Claude
-      auto_suggestions_provider = "azure", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
-      azure = {
-        endpoint = "https://openai-vlaa-westus.openai.azure.com/",
-        deployment = "gpt-4o-0806-nofilter",
-        model = "gpt-4o-0806-nofilter",
-        api_version = "2024-02-15-preview",
-        timeout = 30000,
-        temperature = 0.7,
-        max_tokens = 10000,
-        ["local"] = false,
+      provider = "4o", -- Recommend using Claude
+      auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
+      azure = {},
+      vendors = {
+        o1 = {
+          __inherited_from = "azure",
+          endpoint = "https://vlaa-openai-eastus2.openai.azure.com/",
+          deployment = "o1-preview-0912-nofilter",
+          model = "o1-preview-0912-nofilter",
+          api_key_name = "AZURE_OPENAI_O1_API_KEY",
+          api_version = "2024-02-15-preview",
+          timeout = 300000,
+          max_tokens = 128000,
+          ["local"] = false,
+        },
+        ["4o"] = {
+          __inherited_from = "azure",
+          endpoint = "https://openai-vlaa-westus.openai.azure.com/",
+          deployment = "gpt-4o-0806-nofilter",
+          model = "gpt-4o-0806-nofilter",
+          api_key_name = "AZURE_OPENAI_API_KEY",
+          api_version = "2024-02-15-preview",
+          timeout = 30000,
+          temperature = 0.7,
+          max_tokens = 10000,
+          ["local"] = false,
+        },
       },
       behaviour = {
         auto_suggestions = false, -- Experimental stage
@@ -51,26 +67,28 @@ return {
           all_theirs = "ca",
           both = "cb",
           cursor = "cc",
-          next = "]x",
-          prev = "[x",
+          next = "]]",
+          prev = "[[",
         },
-        suggestion = {
+        --[[suggestion = {
           accept = "<M-l>",
           next = "<M-]>",
           prev = "<M-[>",
           dismiss = "<C-]>",
-        },
-        jump = {
-          next = "]]",
-          prev = "[[",
-        },
+        },]]
+        -- jump = {
+        --   next = "]]",
+        --   prev = "[[",
+        -- },
         submit = {
           normal = "<CR>",
           insert = "<C-s>",
         },
         sidebar = {
-          switch_windows = "<Tab>",
-          reverse_switch_windows = "<S-Tab>",
+          apply_all = "A",
+          apply_cursor = "a",
+          --[[switch_windows = "<Tab>",
+          reverse_switch_windows = "<S-Tab>",]]
         },
       },
       hints = { enabled = true },
@@ -97,7 +115,7 @@ return {
         autojump = true,
         ---@type string | fun(): any
         list_opener = "copen",
-      }
+      },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     build = "make",
