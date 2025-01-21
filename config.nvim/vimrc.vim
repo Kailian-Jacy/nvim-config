@@ -138,7 +138,6 @@ autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 "vnoremap <silent> <leader>j :HopVerticalAC<CR>
 "vnoremap <silent> <leader>k :HopVerticalBC<CR>
 
-vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 """ nmap \ <leader>q
 """ nmap <leader>r :so ~/.config/nvim/init.vim<CR>
 """ nmap <leader>t :call TrimWhitespace()<CR>
@@ -171,9 +170,6 @@ vnoremap <silent> <leader>cc :call nerdcommenter#Comment('x', 'toggle')<CR>
 
 """ nnoremap <leader>/ <cmd>Telescope current_bufer_fuzzy_find<cr>
 """ vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
-nnoremap <leader>/ <cmd>Telescope live_grep<cr>
-vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
-vnoremap <leader>? "zy:Telescope live_grep default_text=<C-r>z<cr>
 
 nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
 nnoremap <leader>lt <cmd>TodoTelescope <cr>
@@ -185,9 +181,6 @@ nnoremap <leader>lt <cmd>TodoTelescope <cr>
 nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
 nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
 
-""" reference and jumping
-nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-
 vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
 nnoremap gr <cmd>Telescope lsp_references<cr>
 vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
@@ -196,15 +189,6 @@ vnoremap <leader>gi "zy:Telescope lsp_implementations default_text=<C-r>z<cr>
 nnoremap gd <cmd>Telescope lsp_definitions<cr>
 vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
-
-""" """ file browser
-nnoremap <leader>ff <cmd>Telescope find_files no_ignore=false<cr>
-nnoremap <leader>fF <cmd>Telescope find_files no_ignore=true<cr>
-nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
-nnoremap <leader>fE <cmd>Telescope file_browser path=%:p:h select_buffer=true no_ignore=true<cr>
-nnoremap <leader>fe <cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>
-nnoremap <leader>ee <cmd>Telescope file_browser select_buffer=true<cr>
-nnoremap <leader>eE <cmd>Telescope file_browser select_buffer=true no_ignore=true<cr>
 
 """ Debugging related
 nnoremap <leader>sd <cmd>Telescope dap commands<cr>

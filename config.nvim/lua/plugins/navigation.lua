@@ -1,6 +1,28 @@
 return {
   {
     "nvim-telescope/telescope-file-browser.nvim",
+    keys = {
+      {
+        "<leader>ee",
+        "<cmd>Telescope file_browser select_buffer=true<cr>",
+        mode = "n",
+      },
+      {
+        "<leader>eE",
+        "<cmd>Telescope file_browser select_buffer=true no_ignore=true<cr>",
+        mode = "n",
+      },
+      {
+        "<leader>fe",
+        "<cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>",
+        mode = "n",
+      },
+      {
+        "<leader>fE",
+        "<cmd>Telescope file_browser path=%:p:h select_buffer=true no_ignore=true<cr>",
+        mode = "n",
+      },
+    },
     dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
     config = function()
       require("telescope").setup({

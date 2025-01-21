@@ -2,7 +2,7 @@
 return {
   -- from ai store.
   {
-    "github/copilot.vim"
+    "github/copilot.vim",
   },
   -- tencent copilot (gongfeng).
   --[[{
@@ -12,7 +12,16 @@ return {
     "yetone/avante.nvim",
     event = "VeryLazy",
     lazy = false,
-    commit = "e98fa46", -- set this if you want to always pull the latest change
+    -- commit = "e98fa46", -- set this if you want to always pull the latest change
+    keys = {
+      {
+        "<leader>aa",
+        "<cmd>AvanteChat<CR>",
+        mode = { "n" },
+        -- mode = { "n", "i" }, -- it could not be insert mode. It's causing space being very slow.
+        desc = "n",
+      },
+    },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "azure", -- Recommend using Claude

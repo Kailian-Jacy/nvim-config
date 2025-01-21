@@ -4,7 +4,7 @@
 vim.g.mapleader = " "
 
 -- Commenting keymaps
-vim.keymap.set("v", "<leader>cm", function ()
+vim.keymap.set("v", "<leader>cm", function()
   vim.api.nvim_input("gc")
 end)
 
@@ -25,13 +25,6 @@ end, { noremap = true })
 -- Git related
 vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
 
--- message history display
---vim.keymap.set({ "n", "v" }, "<leader>snh", function()
---  vim.cmd([[ new ]])
---  vim.cmd([[ resize ]] .. math.floor(vim.o.lines * 0.3))
---  vim.api.nvim_buf_set_keymap(0, "n", "q", "<cmd>bdelete!<CR>", { noremap = true, silent = true })
---  vim.cmd([[put =execute('messages')]])
---end)
 
 -- Navigation: Cursor wandering around
 vim.keymap.set({ "n", "v" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
@@ -222,6 +215,40 @@ end
 
 vim.keymap.set("n", "<leader>DD", NoUIGeneircDebug)
 vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
+
+-- Cmd-related mappings.
+local cmd_mappings = {
+  -- Ai related.
+  { ["<D-a>"] = { "<leader>ae", { "v" } } },
+  { ["<D-A>"] = { "<leader>aa", { "n", "v" } } },
+  { ["<D-A>"] = {
+    function()
+      vim.cmd([[ AvanteChat<CR> ]])
+    end,
+    { "i" },
+  } },
+  -- Buffer related.
+  { ["<D-b>"] = { "<leader>fb", { "n", "i" } } },
+  -- Comment related.
+  { ["<D-c>"] = { "<leader>cm", { "v" } } },
+  -- Directory/file related
+  { ["<D-e>"] = { "<leader>fe", { "n" } } },
+  { ["<D-E>"] = { "<leader>ee", { "n" } } },
+  { ["<D-f>"] = { "<leader>ff", { "n" } } },
+  { ["<D-F>"] = { "<leader>fF", { "n" } } }, -- todo search.
+  -- Git 
+  -- Spare: D-g
+  { ["<D-G>"] = { "<leader>gg", { "n" } } },
+  -- help tag (can't be used in macos though.)
+  { ["<D-h>"] = { "<leader>fh", { "n" } } },
+  -- messages
+  { ["<D-i>"] = { "<leader>im", { "n" } } },
+  { ["<D-I>"] = { "<cmd>iM", { "n" } } },
+  -- Search
+  { ["<D-/>"] = { "<leader>/", { "n", "v" } } },
+}
+
+-- TODO: Make mappings from the list.
 
 --[[
 vim.keymap.set("n", "<leader>sn", function()

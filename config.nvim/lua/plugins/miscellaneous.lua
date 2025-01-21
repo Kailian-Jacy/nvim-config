@@ -77,6 +77,33 @@ return {
   -- change some telescope options and a keymap to browse plugin files
   {
     "nvim-telescope/telescope.nvim",
+    keys= {
+      {
+        "<leader>ff",
+        "<cmd>Telescope find_files no_ignore=false<CR>",
+        mode = { "n" },
+      },
+      {
+        "<leader>fh",
+        "<cmd>Telescope help_tags<CR>",
+        mode = { "n" },
+      },
+      {
+        "<leader>fh",
+        "\"zy:Telescope help_tags default_text=<C-r>z<CR>",
+        mode = { "v" },
+      },
+      {
+        "<leader>fF",
+        "<cmd>Telescope find_files no_ignore=true<CR>",
+        mode = { "n" },
+      },
+      {
+        "<leader>fo",
+        "<cmd>Telescope oldfiles<cr>",
+        mode = { "n" },
+      }
+    },
     -- keys = {
     -- add a keymap to browse plugin files
     -- stylua: ignore
@@ -126,6 +153,18 @@ return {
   },
   {
     "nvim-telescope/telescope-live-grep-args.nvim",
+    keys = {
+      {
+        "<leader>/",
+        "<cmd>Telescope live_grep<cr>",
+        mode = "n",
+      },
+      {
+        "<leader>/",
+        "\"zy:Telescope live_grep default_text=<C-r>z<cr>",
+        mode = "v",
+      },
+    },
     version = "^1.0.0",
     config = function ()
       local t = require("telescope")
