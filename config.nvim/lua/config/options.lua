@@ -68,7 +68,8 @@ vim.api.nvim_set_keymap("t", "<D-v>", '<C-\\><C-o>"+p', { noremap = true, silent
 vim.api.nvim_set_keymap("v", "<D-v>", "<C-R>+", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("c", "<D-v>", "<C-r>+", { noremap = true, silent = true })
 
-
+-- copilot endpoint
+vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
 
 
 -- [ These are the Options needs to be set when migration to new machine. ]
