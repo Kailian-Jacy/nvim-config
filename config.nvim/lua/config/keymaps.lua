@@ -3,6 +3,14 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
+-- terminal exiting.
+local Util = require("lazyvim.util")
+local lazyterm = function()
+  Util.terminal({ "tmux", "new", "-As0" }, { cwd = Util.root() })
+end
+vim.keymap.set("n", "<C-/>", lazyterm, { desc = "Terminal (root dir)" })
+vim.keymap.set("t", "<C-/>", "<cmd>close<cr>", { desc = "Hide Terminal" })
+
 -- Commenting keymaps
 vim.keymap.set("v", "<leader>cm", function()
   vim.api.nvim_input("gc")
@@ -263,13 +271,14 @@ local cmd_mappings = {
   { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" } } },
   { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" } } },
   -- Terminal.
-  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v" } } }, -- TODO: Start new session.
-  -- { ["<D-T>"] = { "keymap", "<C-?>", { "n", "v" } } }, --  TODO: continue
+  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v", "t" } } }, 
+  --    Spare: D-T
   -- Git hunk reset
   { ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
   { ["<D-U>"] = { "keymap", "<leader>hR", { "n", "v" } } },
   -- buffer/Window closing.
   { ["<D-w>"] = { "keymap", "<leader>bd", { "n", "v" } } },
+  { ["<D-w>"] = { "keymap", "<C-/>", { "t" } } }, -- can be used for term close.
   { ["<D-W>"] = { "keymap", "<leader>wd", { "n", "v" } } },
   -- Splitting
   { ["<D-x>"] = { "keymap", "<leader>|", { "n", "v" } } },
@@ -288,10 +297,10 @@ for _, km in pairs(cmd_mappings) do
   for key, value in pairs(km) do
     local pattern, shortcut, modes = value[1], value[2], value[3]
     if pattern == "keymap" then
-      vim.keymap.set(modes, key, function ()
+      vim.keymap.set(modes, key, function()
         local keymap = shortcut:gsub("<leader>", " ")
         local refined_keymap = vim.api.nvim_replace_termcodes(keymap, true, false, true)
-        vim.api.nvim_feedkeys(refined_keymap, 'm', false)
+        vim.api.nvim_feedkeys(refined_keymap, "m", false)
       end)
     else
       vim.keymap.set(modes, key, shortcut, { noremap = true, silent = true })
