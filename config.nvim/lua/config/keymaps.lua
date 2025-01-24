@@ -243,6 +243,8 @@ local cmd_mappings = {
   -- { ["<D-F>"] = { "keymap", "<leader>fF", { "n" } } }, -- todo search.
   -- Git
   -- Spare: D-g
+  { ["<D-g>"] = { "keymap", "<leader>hp", { "n", "v" } } }, -- preview hunk.
+  { ["<D-g>"] = { "keymap", "<Cmd>Gitsign preview_hunk<CR>", { "i" } } }, -- preview hunk even in insertion mode.
   { ["<D-G>"] = { "keymap", "<leader>gg", { "n" } } },
   --    Not usable: D-h/H
   -- Messages

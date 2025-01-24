@@ -15,6 +15,7 @@ return {
       {
         "<leader>hp",
         "<Cmd>preview_hunk<CR>",
+        "<Cmd>Gitsigns preview_hunk<CR>",
         mode = "n",
         desc = "n",
       },
