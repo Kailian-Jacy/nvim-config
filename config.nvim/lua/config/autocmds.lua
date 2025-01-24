@@ -12,6 +12,11 @@ vim.api.nvim_create_autocmd({
   command = "startinsert",
 })
 
+-- multiple instances of neovide.
+vim.api.nvim_create_user_command("NeovideNew", function ()
+  vim.cmd[[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]]
+end, {})
+
 -- Start at the last place exited.
 -- Seems like "VimEnter" function not working in autocmds.lua.
 vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))

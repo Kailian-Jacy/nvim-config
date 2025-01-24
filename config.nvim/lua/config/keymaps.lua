@@ -258,6 +258,7 @@ local cmd_mappings = {
   --    Not usable: D-m/M
   --    Spare: D-L
   --    Spare: D-n/N
+  { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" } } },
   { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" } } },
   --    Spare: D-O
   -- Command History:
