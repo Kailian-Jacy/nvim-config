@@ -1,6 +1,10 @@
 return {
   {
     "williamboman/mason.nvim",
+    -- disable mason keymaps.
+    keys = function(_)
+      return {}
+    end,
     opts = {
       ensure_installed = {
         -- rust

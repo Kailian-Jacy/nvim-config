@@ -12,8 +12,14 @@ vim.keymap.set("n", "<C-/>", lazyterm, { desc = "Terminal (root dir)" })
 vim.keymap.set("t", "<C-/>", "<cmd>close<cr>", { desc = "Hide Terminal" })
 
 -- Commenting keymaps
-vim.keymap.set("v", "<leader>cm", function()
-  vim.api.nvim_input("gc")
+vim.keymap.set({ "v", "n" }, "<leader>cm", function()
+  if vim.fn.mode() == "n" then
+    vim.api.nvim_input("gcc")
+  else
+    -- Comment and do not cancel last visual selection
+    vim.api.nvim_input("gc")
+    vim.api.nvim_input("gv")
+  end
 end)
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
@@ -234,7 +240,7 @@ local cmd_mappings = {
   { ["<D-b>"] = { "keymap", "<leader>fb", { "n" } } },
   { ["<D-B>"] = { "script", "<cmd>new<CR>", { "n", "i" } } },
   -- Comment related.
-  { ["<D-c>"] = { "keymap", "<leader>cm", { "v" } } },
+  { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" } } }, -- TODO: When in normal mode.
   --    Spare: D-C
   -- Directory/file related
   { ["<D-e>"] = { "keymap", "<leader>fe", { "n" } } },
