@@ -3,7 +3,7 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
--- terminal exiting.
+-- terminal related.
 local Util = require("lazyvim.util")
 local lazyterm = function()
   Util.terminal({ "tmux", "new", "-As0" }, { cwd = Util.root() })
@@ -248,7 +248,6 @@ local cmd_mappings = {
   { ["<D-f>"] = { "keymap", "<leader>ff", { "n" } } },
   -- { ["<D-F>"] = { "keymap", "<leader>fF", { "n" } } }, -- todo search.
   -- Git
-  -- Spare: D-g
   { ["<D-g>"] = { "keymap", "<leader>hp", { "n", "v" } } }, -- preview hunk.
   { ["<D-g>"] = { "keymap", "<Cmd>Gitsign preview_hunk<CR>", { "i" } } }, -- preview hunk even in insertion mode.
   { ["<D-G>"] = { "keymap", "<leader>gg", { "n" } } },
@@ -280,7 +279,7 @@ local cmd_mappings = {
   { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" } } },
   { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" } } },
   -- Terminal.
-  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v", "t" } } }, 
+  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v", "t" } } },
   --    Spare: D-T
   -- Git hunk reset
   { ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
