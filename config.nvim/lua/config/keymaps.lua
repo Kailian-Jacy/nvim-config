@@ -238,7 +238,7 @@ local cmd_mappings = {
   } },
   -- Buffer related.
   { ["<D-b>"] = { "keymap", "<leader>fb", { "n" } } },
-  { ["<D-B>"] = { "script", "<cmd>new<CR>", { "n", "i" } } },
+  --    Spare: D-B
   -- Comment related.
   { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" } } }, -- TODO: When in normal mode.
   --    Spare: D-C
@@ -265,7 +265,7 @@ local cmd_mappings = {
   { ["<D-l>"] = { "keymap", "<leader>ll", { "n" } } },
   --    Not usable: D-m/M
   --    Spare: D-L
-  --    Spare: D-n/N
+  { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" } } },
   { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" } } },
   { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" } } },
   --    Spare: D-O
