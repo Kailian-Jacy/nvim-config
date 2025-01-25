@@ -229,89 +229,93 @@ vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 -- Cmd-related mappings.
 local cmd_mappings = {
   -- Ai related.
-  { ["<D-a>"] = { "keymap", "<leader>ae", { "v" } } },
-  { ["<D-A>"] = { "keymap", "<leader>aa", { "n", "v" } } },
+  { ["<D-a>"] = { "keymap", "<leader>ae", { "v" }, "Revoke ai to modify" } },
+  { ["<D-A>"] = { "keymap", "<leader>aa", { "n", "v" }, "AI panel" } },
   { ["<D-A>"] = {
     "script",
     "<cmd>AvanteChat<CR>",
     { "i" },
+    "AI panel.",
   } },
   -- Buffer related.
-  { ["<D-b>"] = { "keymap", "<leader>fb", { "n" } } },
+  { ["<D-b>"] = { "keymap", "<leader>fb", { "n" }, "Telescope all buffers." } },
   --    Spare: D-B
   -- Comment related.
-  { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" } } }, -- TODO: When in normal mode.
+  { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" }, "Comment" } }, -- TODO: When in normal mode.
   --    Spare: D-C
   -- Directory/file related
-  { ["<D-e>"] = { "keymap", "<leader>fe", { "n" } } },
-  { ["<D-E>"] = { "keymap", "<leader>ee", { "n" } } },
-  { ["<D-f>"] = { "keymap", "<leader>ff", { "n" } } },
+  { ["<D-e>"] = { "keymap", "<leader>fe", { "n" }, "Telescope directory on current dir." } },
+  { ["<D-E>"] = { "keymap", "<leader>ee", { "n" }, "Telescope directory on Working directory." } },
+  { ["<D-f>"] = { "keymap", "<leader>ff", { "n" }, "Telescope all files." } },
   -- { ["<D-F>"] = { "keymap", "<leader>fF", { "n" } } }, -- todo search.
   -- Git
-  { ["<D-g>"] = { "keymap", "<leader>hp", { "n", "v" } } }, -- preview hunk.
-  { ["<D-g>"] = { "keymap", "<Cmd>Gitsign preview_hunk<CR>", { "i" } } }, -- preview hunk even in insertion mode.
-  { ["<D-G>"] = { "keymap", "<leader>gg", { "n" } } },
+  { ["<D-g>"] = { "keymap", "<leader>hp", { "n", "v" }, "Preview Hunk" } }, -- preview hunk.
+  { ["<D-g>"] = { "keymap", "<Cmd>Gitsign preview_hunk<CR>", { "i" }, "Preview Hunk" } }, -- preview hunk even in insertion mode.
+  { ["<D-G>"] = { "keymap", "<leader>gg", { "n" }, "Lazygit" } },
   --    Not usable: D-h/H
   -- Messages
-  { ["<D-i>"] = { "keymap", "<leader>im", { "n" } } },
-  { ["<D-I>"] = { "keymap", "<leader>iM", { "n" } } },
+  { ["<D-i>"] = { "keymap", "<leader>im", { "n" }, "History messages" } },
+  { ["<D-I>"] = { "keymap", "<leader>iM", { "n" }, "History messages" } }, -- TODO: Combine these two and map one as history clear.
   -- Bookmarks
-  { ["<D-j>"] = { "keymap", "<leader>jj", { "n" } } },
-  { ["<D-J>"] = { "keymap", "<leader>jJ", { "n" } } }, -- TODO: Debug: not working.
+  { ["<D-j>"] = { "keymap", "<leader>jj", { "n" }, "Add quick bookmark" } },
+  { ["<D-J>"] = { "keymap", "<leader>jJ", { "n" }, "Bookmark details" } }, -- TODO: Debug: not working.
   -- Keymaps
-  { ["<D-k>"] = { "keymap", "<leader>sk", { "n" } } },
+  { ["<D-k>"] = { "keymap", "<leader>sk", { "n" }, "Telescope keymaps" } },
   --    Spare: D-K
-  { ["<D-l>"] = { "keymap", "<leader>ll", { "n" } } },
+  { ["<D-l>"] = { "keymap", "<leader>ll", { "n" }, "Telescope all bookmarks" } },
   --    Not usable: D-m/M
   --    Spare: D-L
-  { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" } } },
-  { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" } } },
-  { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" } } },
+  { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" }, "New buffer." } },
+  { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" }, "New neovide instance." } },
+  { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" }, "Toggle maximize window" } },
   --    Spare: D-O
   -- Command History:
-  { ["<D-p>"] = { "keymap", "<leader>sc", { "n", "v" } } },
-  { ["<D-P>"] = { "keymap", "<leader>sC", { "n", "v" } } },
+  { ["<D-p>"] = { "keymap", "<leader>sc", { "n", "v" }, "Telescope history command" } },
+  { ["<D-P>"] = { "keymap", "<leader>sC", { "n", "v" }, "Telescope all available command" } },
   --    Not usable: D-q/Q
   -- Search
-  { ["<D-r>"] = { "keymap", "<leader>rn", { "n" } } },
-  { ["<D-R>"] = { "keymap", "<leader>rN", { "n", "v" } } },
+  { ["<D-r>"] = { "keymap", "<leader>rn", { "n" }, "LSP: Rename variable." } },
+  { ["<D-R>"] = { "keymap", "<leader>rN", { "n", "v" }, "Rename file" } },
   -- Symbols
-  { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" } } },
-  { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" } } },
+  { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" }, "Telescope symbols (In Buffer)" } },
+  { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" }, "Telescope symbols (Global)" } },
   -- Terminal.
-  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v", "t" } } },
-  --    Spare: D-T
+  { ["<D-t>"] = { "keymap", "<C-/>", { "n", "v", "t" }, "Floating terminal in tmux." } },
+  -- Telescope recover.
+  { ["<D-T>"] = { "keymap", "<leader>tt", { "n" }, "Telescope continue the last" } },
   -- Git hunk reset
-  { ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
-  { ["<D-U>"] = { "keymap", "<leader>hR", { "n", "v" } } },
+  --    Spare: D-u
+  --{ ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
+  --    Spare: D-U
+  -- { ["<D-U>"] = { "keymap", "<leader>hR", { "n", "v" }, "Reset whole buffer." } }, -- TODO: Reset whole should not be easily done.
   -- buffer/Window closing.
-  { ["<D-w>"] = { "keymap", "<leader>bd", { "n", "v" } } },
-  { ["<D-w>"] = { "keymap", "<C-/>", { "t" } } }, -- can be used for term close.
-  { ["<D-W>"] = { "keymap", "<leader>wd", { "n", "v" } } },
+  { ["<D-w>"] = { "keymap", "<leader>bd", { "n", "v" }, "Close buffer" } },
+  { ["<D-w>"] = { "keymap", "<C-/>", { "t" }, "Close buffer" } }, -- can be used for term close.
+  { ["<D-W>"] = { "keymap", "<leader>wd", { "n", "v" }, "Close window" } },
   -- Splitting
-  { ["<D-x>"] = { "keymap", "<leader>|", { "n", "v" } } },
-  { ["<D-X>"] = { "keymap", "<leader>-", { "n", "v" } } },
+  { ["<D-x>"] = { "keymap", "<leader>-", { "n", "v" }, "Split horizontally" } },
+  { ["<D-X>"] = { "keymap", "<leader>|", { "n", "v" }, "Split vertically" } },
   -- Yanky list.
-  { ["<D-y>"] = { "keymap", "<leader>fp", { "n", "v" } } },
+  { ["<D-y>"] = { "keymap", "<leader>fp", { "n", "v" }, "Telescope Yanky list." } },
   --    Spare: D-Y
   -- Zoxide navigation.
-  { ["<D-z>"] = { "keymap", "<leader>zz", { "n", "v" } } },
+  { ["<D-z>"] = { "keymap", "<leader>zz", { "n", "v" }, "Telescope Cd with Zeoxide" } },
   --    Spare: D-Z
-  { ["<D-/>"] = { "keymap", "<leader>/", { "n", "v" } } },
+  { ["<D-/>"] = { "keymap", "<leader>/", { "n", "v" }, "Telescope Search (Global)" } },
 }
 
 -- TODO: Make mappings from the list.
 for _, km in pairs(cmd_mappings) do
   for key, value in pairs(km) do
-    local pattern, shortcut, modes = value[1], value[2], value[3]
+    local pattern, shortcut, modes, desc = value[1], value[2], value[3], value[4]
     if pattern == "keymap" then
       vim.keymap.set(modes, key, function()
         local keymap = shortcut:gsub("<leader>", " ")
         local refined_keymap = vim.api.nvim_replace_termcodes(keymap, true, false, true)
         vim.api.nvim_feedkeys(refined_keymap, "m", false)
-      end)
+      end, { desc = desc })
     else
-      vim.keymap.set(modes, key, shortcut, { noremap = true, silent = true })
+      vim.keymap.set(modes, key, shortcut, { noremap = true, silent = true, desc = desc })
     end
   end
 end
