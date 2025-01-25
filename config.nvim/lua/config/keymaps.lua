@@ -241,7 +241,7 @@ local cmd_mappings = {
   { ["<D-b>"] = { "keymap", "<leader>fb", { "n" }, "Telescope all buffers." } },
   --    Spare: D-B
   -- Comment related.
-  { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" }, "Comment" } }, -- TODO: When in normal mode.
+  { ["<D-c>"] = { "keymap", "<leader>cm", { "v", "n" }, "Comment" } },
   --    Spare: D-C
   -- Directory/file related
   { ["<D-e>"] = { "keymap", "<leader>fe", { "n" }, "Telescope directory on current dir." } },
@@ -265,6 +265,7 @@ local cmd_mappings = {
   { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" }, "New buffer." } },
   { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" }, "New neovide instance." } },
   { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" }, "Toggle maximize window" } },
+  { ["<D-O>"] = { "keymap", "<leader>fo", { "n", "v" }, "Visited files" } },
   --    Spare: D-O
   -- Command History:
   { ["<D-p>"] = { "keymap", "<leader>sc", { "n", "v" }, "Telescope history command" } },
@@ -281,10 +282,7 @@ local cmd_mappings = {
   -- Telescope recover.
   { ["<D-T>"] = { "keymap", "<leader>tt", { "n" }, "Telescope continue the last" } },
   -- Git hunk reset
-  --    Spare: D-u
-  --{ ["<D-u>"] = { "keymap", "<leader>hr", { "n", "v" } } },
-  --    Spare: D-U
-  -- { ["<D-U>"] = { "keymap", "<leader>hR", { "n", "v" }, "Reset whole buffer." } }, -- TODO: Reset whole should not be easily done.
+  --    Spare: D-u/U
   -- buffer/Window closing.
   { ["<D-w>"] = { "keymap", "<leader>bd", { "n", "v" }, "Close buffer" } },
   { ["<D-w>"] = { "keymap", "<C-/>", { "t" }, "Close buffer" } }, -- can be used for term close.
