@@ -272,7 +272,7 @@ local cmd_mappings = {
   --    Not usable: D-q/Q
   -- Search
   { ["<D-r>"] = { "keymap", "<leader>rn", { "n" }, "LSP: Rename variable." } },
-  { ["<D-R>"] = { "keymap", "<leader>rN", { "n", "v" }, "Rename file" } },
+  { ["<D-R>"] = { "keymap", "<leader>cR", { "n", "v" }, "Rename file" } },
   -- Symbols
   { ["<D-s>"] = { "keymap", "<leader>ss", { "n", "v" }, "Telescope symbols (In Buffer)" } },
   { ["<D-S>"] = { "keymap", "<leader>sS", { "n", "v" }, "Telescope symbols (Global)" } },

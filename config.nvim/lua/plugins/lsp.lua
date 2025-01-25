@@ -132,10 +132,11 @@ return {
     keys = {
       {
         "<leader>rn",
-        "<cmd>IncRename<CR>",
+        ":IncRename ",
         mode = "n",
         desc = "n",
       },
+      -- FIXME: Not working now.
       {
         "<leader>rN",
         "<leader>cR", -- rename file.
