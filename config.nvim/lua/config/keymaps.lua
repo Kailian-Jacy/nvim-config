@@ -256,15 +256,16 @@ local cmd_mappings = {
   -- Messages
   { ["<D-i>"] = { "keymap", "<leader>im", { "n" }, "History messages" } },
   { ["<D-I>"] = { "keymap", "<leader>iM", { "n" }, "History messages" } }, -- TODO: Combine these two and map one as history clear.
-  -- Bookmarks
-  { ["<D-j>"] = { "keymap", "<leader>jj", { "n" }, "Add quick bookmark" } },
-  { ["<D-J>"] = { "keymap", "<leader>jJ", { "n" }, "Bookmark details" } }, -- TODO: Debug: not working.
+  --    Spare: D-j/J
   -- Keymaps
   { ["<D-k>"] = { "keymap", "<leader>sk", { "n" }, "Telescope keymaps" } },
   --    Spare: D-K
-  { ["<D-l>"] = { "keymap", "<leader>ll", { "n" }, "Telescope all bookmarks" } },
+  --    Spare: D-l/L
+  -- Bookmarks
+  -- Now making quick mark and extended marks are m/M in normal mode.
+  { ["<D-m>"] = { "keymap", "<leader>mm", { "n" }, "All bookmarks" } },
+  --    Spare: D-M
   --    Not usable: D-m/M
-  --    Spare: D-L
   { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" }, "New buffer." } },
   { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" }, "New neovide instance." } },
   { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" }, "Toggle maximize window" } },

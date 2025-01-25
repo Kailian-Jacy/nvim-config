@@ -81,19 +81,13 @@ return {
     },
     keys = {
       {
-        "<leader>ll",
+        "<leader>mm",
         function()
           vim.cmd([[ BookmarksLists ]])
         end,
       },
       {
-        "<leader>lL",
-        function()
-          vim.cmd([[ BookmarksNewList ]])
-        end,
-      },
-      {
-        "<leader>jj",
+        "m", -- normal mode m for making quick note
         function()
           vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
             if input then
@@ -105,7 +99,7 @@ return {
         end,
       },
       {
-        "<leader>jJ",
+        "M",
         function()
           vim.cmd([[ BookmarksDesc ]])
         end,
