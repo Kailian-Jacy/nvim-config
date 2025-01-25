@@ -80,10 +80,11 @@ return {
       { "stevearc/dressing.nvim" }, -- optional: to have the same UI shown in the GIF
     },
     keys = {
+      -- Make it compatible as vim native.
       {
-        "<leader>mm",
+        "'",
         function()
-          vim.cmd([[ BookmarksLists ]])
+          vim.cmd([[ BookmarksGoto ]])
         end,
       },
       {

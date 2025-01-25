@@ -261,11 +261,7 @@ local cmd_mappings = {
   { ["<D-k>"] = { "keymap", "<leader>sk", { "n" }, "Telescope keymaps" } },
   --    Spare: D-K
   --    Spare: D-l/L
-  -- Bookmarks
-  -- Now making quick mark and extended marks are m/M in normal mode.
-  { ["<D-m>"] = { "keymap", "<leader>mm", { "n" }, "All bookmarks" } },
-  --    Spare: D-M
-  --    Not usable: D-m/M
+  --    Spare: D-m/M
   { ["<D-n>"] = { "script", "<cmd>enew<CR>", { "n", "i" }, "New buffer." } },
   { ["<D-N>"] = { "keymap", "<cmd>NeovideNew<CR>", { "n", "v", "i", "t" }, "New neovide instance." } },
   { ["<D-o>"] = { "keymap", "<leader>wm", { "n", "v" }, "Toggle maximize window" } },
