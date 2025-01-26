@@ -102,9 +102,10 @@ function dependencies() {
 
 function todo() {
     echo "you can choose to clean up:"
-    echo "1. login to github copilot to use avante;"
+    echo "1. set ai keys and login to github copilot to use avante;"
     echo "2. uncomment corresponding mason ensure_install after setting up language envs."
     echo "3. go to options.lua and set options."
+    echo "4. set env variables to ~/.zprofile."
 }
 
 install_neovim

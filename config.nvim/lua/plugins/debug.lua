@@ -152,20 +152,6 @@ return {
       end
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
-
-      -- Setting up python debugger.
-      local pythonPath = function()
-        return require("venv-selector").python()
-      end
-      require("dap-python").setup(pythonPath())
-      table.insert(dap.configurations.python, {
-        type = "debugpy",
-        request = "launch",
-        name = "Python Debug Current File",
-        program = "${file}",
-        stopOnEntry = true,
-        console = "integratedTerminal",
-      })
     end,
   },
   --[[{
