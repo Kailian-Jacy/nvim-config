@@ -17,7 +17,11 @@ return {
   {
     -- "Kailian-Jacy/visual-surround.nvim",
     "NStefan002/visual-surround.nvim",
-    config = true,
+    -- TODO: For "<" and ">" to work, I need to comment out line 75-76 in `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/config/keymaps.lua`
+    opts = {
+      enable_wrapped_deletion = true,
+      surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`", "<", ">" },
+    },
   },
   -- Now replaced with simpler plugin
   --[[{
