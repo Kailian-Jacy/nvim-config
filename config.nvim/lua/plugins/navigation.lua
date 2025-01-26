@@ -77,6 +77,12 @@ return {
                 end,
                 after_action = notification,
               },
+              ["<D-CR>"] = {
+                action = function(selection)
+                  vim.cmd.cd(selection.path)
+                end,
+                after_action = notification,
+              },
               ["<C-CR>"] = {
                 action = function(selection)
                   vim.cmd.cd(selection.path)
