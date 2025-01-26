@@ -1,13 +1,23 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
+-- Optional Features
+--------------------------------------------------
+-- If reading binary with xxd and show as human-readable text.
+--
+-- Disabled for now. Generally, reading binary in vim does not make any sense.
+-- Loading and converting the binary is very heavy work for vim.
+-- I'll leave an option here to allow enabling it when needed.
+vim.g.read_binary_with_xxd = false
+--------------------------------------------------
+
 -- [[ Helper functions. Just skip them. ]]
 local function obsidian_app_exists()
   if vim.fn.has("mac") == 1 then
     if vim.fn.isdirectory(vim.g.obsidian_executable) == 1 then
       return true
     end
-  -- as I don't use other os as desktop, the others are not implemented yet.
+    -- as I don't use other os as desktop, the others are not implemented yet.
   end
   return false
 end
@@ -59,7 +69,6 @@ vim.g.neovide_window_blurred = false
 vim.g.neovide_floating_blur_amount_x = 5
 vim.g.neovide_floating_blur_amount_y = 5
 
-
 -- Paste to cmd + v
 vim.g.neovide_input_use_logo = 1
 vim.api.nvim_set_keymap("", "<D-v>", "+p<CR>", { noremap = true, silent = true })
@@ -71,11 +80,10 @@ vim.api.nvim_set_keymap("c", "<D-v>", "<C-r>+", { noremap = true, silent = true 
 -- copilot endpoint
 vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
 
-
 -- [ These are the Options needs to be set when migration to new machine. ]
 
 -- Some would load env from someplace out of bash or zshrc. If non specified, just leave nil.
-vim.g.dotenv_dir = vim.fn.expand('$HOME/')
+vim.g.dotenv_dir = vim.fn.expand("$HOME/")
 
 -- obsidian related settings.
 -- obsidian functionalities could not be enabled on the remote side. So compatibility out of macos is not considerd.

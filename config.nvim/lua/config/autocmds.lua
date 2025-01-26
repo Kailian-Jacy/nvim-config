@@ -13,14 +13,14 @@ vim.api.nvim_create_autocmd({
 })
 
 -- multiple instances of neovide.
-vim.api.nvim_create_user_command("NeovideNew", function ()
-  vim.cmd[[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]]
+vim.api.nvim_create_user_command("NeovideNew", function()
+  vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
 end, {})
 
 -- Start at the last place exited.
 -- Seems like "VimEnter" function not working in autocmds.lua.
 vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))
-vim.api.nvim_create_autocmd( "VimLeavePre", {
+vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
     vim.g.LAST_WORKING_DIRECTORY = vim.fn.getcwd()
   end,
@@ -166,20 +166,22 @@ vim.diagnostic.config({
 })
 
 -- Hex and binary autocmds.
-local before_open_hex = function()
-  require("hex").dump()
+if vim.g.read_binary_with_xxd or false then
+  local before_open_hex = function()
+    require("hex").dump()
+  end
+  vim.api.nvim_create_autocmd("BufReadPost", {
+    pattern = { "*.bin", "*.o", "*.exe", "*.a" },
+    callback = function()
+      vim.cmd("setfiletype xxd")
+      before_open_hex()
+    end,
+  })
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "xxd",
+    callback = before_open_hex,
+  })
 end
-vim.api.nvim_create_autocmd("BufReadPost", {
-  pattern = { "*.bin", "*.o", "*.exe", "*.a" },
-  callback = function()
-    vim.cmd("setfiletype xxd")
-    before_open_hex()
-  end,
-})
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "xxd",
-  callback = before_open_hex,
-})
 
 -- OSC52 to sync remote to local.
 -- When yank triggered, it got wrapped by special chars, and iterm2 recognize it as
