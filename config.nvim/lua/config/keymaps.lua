@@ -40,6 +40,7 @@ vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = 
 vim.keymap.set({ "n", "v" }, "<C-J>", "<C-W>j", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<C-H>", "<C-W>h", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<C-L>", "<C-W>l", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-L>", "<C-L>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "<C-K>", "<C-W>k", { noremap = true, silent = true })
 vim.keymap.set({ "i" }, "<C-J>", "<esc><C-W>jli", { noremap = true, silent = true })
 vim.keymap.set({ "i" }, "<C-H>", "<esc><C-W>hli", { noremap = true, silent = true })
@@ -297,6 +298,7 @@ local cmd_mappings = {
   { ["<D-z>"] = { "keymap", "<leader>zz", { "n", "v" }, "Telescope Cd with Zeoxide" } },
   --    Spare: D-Z
   { ["<D-/>"] = { "keymap", "<leader>/", { "n", "v" }, "Telescope Search (Global)" } },
+  { ["<D-CR>"] = { "keymap", "<leader><CR>", { "n", "v" }, "@Conform.format()" } },
 }
 
 -- TODO: Make mappings from the list.
