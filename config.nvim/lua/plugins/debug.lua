@@ -152,6 +152,27 @@ return {
       end
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
+
+      -- Register Codelldb adapter here: for rust and cpp.
+      local function get_codelldb_path()
+        local codelldb_path = vim.fn.trim(vim.fn.system("which codelldb"))
+
+        -- Check if codelldb is found
+        if codelldb_path == "" then
+          -- If not found, show a notification and panic
+          vim.notify("codelldb is not installed. Please install it to use the debugger.", vim.log.levels.ERROR)
+        else
+          -- Return the absolute path of codelldb
+          return codelldb_path
+        end
+      end
+      dap.adapters.codelldb = {
+        type = "executable",
+        -- Developer says it's important to have absolute path.
+        command = get_codelldb_path(),
+        -- env = {},
+        name = "codelldb",
+      }
     end,
   },
   --[[{
