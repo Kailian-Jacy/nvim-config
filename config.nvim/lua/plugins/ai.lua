@@ -19,7 +19,13 @@ return {
         "<cmd>AvanteChat<CR>",
         mode = { "n" },
         -- mode = { "n", "i" }, -- it could not be insert mode. It's causing space being very slow.
-        desc = "n",
+        desc = "Start avante Chat",
+      },
+      {
+        "<leader>ae",
+        "V<cmd>AvanteEdit<CR>",
+        mode = { "n" },
+        desc = "Start code completion."
       },
     },
     opts = {
