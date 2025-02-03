@@ -71,11 +71,11 @@ return {
           "<Cmd>NoiceHistory<CR>",
           mode = "n",
         },
-        {
-          "<leader>iM",
-          "<Cmd>messages<CR>",
-          mode = "n",
-        },
+        -- {
+        --   "<leader>iM",
+        --   "<Cmd>messages<CR>",
+        --   mode = "n",
+        -- },
       }
     end,
     config = function()
@@ -93,6 +93,7 @@ return {
       ]]
       --
       require("noice").setup({
+        -- Styling
         presets = {
           bottom_search = true,
           command_palette = false,
@@ -116,27 +117,15 @@ return {
               height = "auto",
             },
           },
-          --[[
-          popupmenu = {
-            relative = "editor",
-            position = {
-              row = 8,
-              col = "50%",
-            },
-            size = {
-              width = 60,
-              height = 10,
-            },
-            border = {
-              style = "rounded",
-              padding = { 0, 1 },
-            },
-            win_options = {
-              winhighlight = { Normal = "Normal", FloatBorder = "DiagnosticInfo" },
-            },
-          },]]
         },
       })
+      -- Integrates the older vim.print to new pipeline.
+      --  Without this, vim.print() can only be seen from ":messages"
+      vim.print = function(...)
+        for _, value in ipairs({ ... }) do
+          vim.notify("[vim.print] " .. value, vim.log.levels.INFO)
+        end
+      end
     end,
   },
   -- the opts function can also be used to change the default opts:

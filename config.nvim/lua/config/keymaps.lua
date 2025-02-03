@@ -256,7 +256,7 @@ local cmd_mappings = {
   --    Not usable: D-h/H
   -- Messages
   { ["<D-i>"] = { "keymap", "<leader>im", { "n" }, "History messages" } },
-  { ["<D-I>"] = { "keymap", "<leader>iM", { "n" }, "History messages" } }, -- TODO: Combine these two and map one as history clear.
+  -- { ["<D-I>"] = { "keymap", "<leader>iM", { "n" }, "History messages" } }, -- TODO: Combine these two and map one as history clear.
   --    Spare: D-j/J
   -- Keymaps
   { ["<D-k>"] = { "keymap", "<leader>sk", { "n" }, "Telescope keymaps" } },
