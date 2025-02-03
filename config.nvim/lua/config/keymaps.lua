@@ -233,7 +233,7 @@ vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 -- Cmd-related mappings.
 local cmd_mappings = {
   -- Ai related.
-  { ["<D-a>"] = { "keymap", "<leader>ae", { "v" }, "Revoke ai to modify" } },
+  { ["<D-a>"] = { "keymap", "<leader>ae", { "n", "v" }, "Revoke ai to modify" } },
   { ["<D-A>"] = { "keymap", "<leader>aa", { "n", "v" }, "AI panel" } },
   { ["<D-A>"] = {
     "script",
