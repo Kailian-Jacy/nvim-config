@@ -69,6 +69,7 @@ vim.api.nvim_create_user_command("Cd", function(opts)
   opts = opts or ""
   vim.cmd('silent !zoxide add "' .. opts.args .. '"')
   vim.cmd("cd " .. opts.args)
+  vim.cmd("pwd")
 end, { nargs = "?" })
 
 -- Trigger linter
