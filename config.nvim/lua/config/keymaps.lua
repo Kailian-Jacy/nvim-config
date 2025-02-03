@@ -73,20 +73,25 @@ vim.g.copilot_no_maps = true
 vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
 
 -- buffer related
+local close_buf_but_leave_window = function()
+  vim.cmd([[ bp | sp | bn | bd! ]])
+end
+local close_buf_and_window = function()
+  vim.cmd([[ bd! ]])
+end
 vim.keymap.set("n", "<leader>bd", function()
-  if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
-    vim.notify("last buf", vim.log.levels.INFO)
-  elseif #vim.fn.getbufinfo({ bufloaded = true }) == 1 then
-    local choice = vim.fn.confirm("Last buf. Close tab?", "&Yes\n&No", 2)
-    if choice == 1 then
-      vim.cmd("tabclose")
-    else
-      vim.api.nvim_echo({ { "Abort.", "WarningMsg" } }, true, {})
-    end
-  else
-    vim.cmd([[ bp | sp | bn | bd ]])
+  -- Closing debugging terminal. Close without confirmation.
+  if vim.fn.bufname() == "[dap-terminal] Debug" then
+    close_buf_and_window()
+    return
   end
-end, { noremap = true, silent = true })
+  -- TODO: Not sure this is correct... but it works for now. Just leave it.
+  if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
+    vim.notify("last buf.", vim.log.levels.WARN)
+    return
+  end
+  close_buf_but_leave_window()
+end, { noremap = true, silent = false })
 
 -- Tab-related.
 vim.keymap.set("n", "<tab>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
