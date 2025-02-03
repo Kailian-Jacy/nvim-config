@@ -2,6 +2,20 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
+-- VimEnter does not work here.
+-- vim.api.nvim_create_autocmd("VimEnter", {
+--   callback = function()
+--     vim.fn.writefile({ "111" }, "/Users/kailianjacy/test.txt")
+--   end,
+-- })
+-- To do something similar, just do it here.
+--
+-- Start a tmux session in the background if none.
+-- TODO: Not sure if working.
+vim.schedule(function()
+  vim.fn.system("tmux", { "new", "-As0" })
+end)
+
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
 vim.api.nvim_create_autocmd({
