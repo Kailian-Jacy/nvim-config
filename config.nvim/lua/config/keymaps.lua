@@ -94,13 +94,11 @@ vim.keymap.set("n", "<leader>bd", function()
 end, { noremap = true, silent = false })
 
 -- Tab-related.
-vim.keymap.set("n", "<tab>t", "<cmd>Telescope telescope-tabs list_tabs<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>c", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab><tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<S-tab><S-tab>", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>n", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>p", "<cmd>tabprevious<CR>", { noremap = true, silent = true })
+-- Migrate to normal-tabbing switching.
+vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<S-C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
