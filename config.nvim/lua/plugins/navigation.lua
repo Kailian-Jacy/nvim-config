@@ -89,6 +89,17 @@ return {
                 end,
                 after_action = notification,
               },
+              -- create new tab and start there.
+              ["<c-t>"] = {
+                action = function(selection)
+                  vim.cmd[[ tabnew ]]
+                  vim.cmd.tcd(selection.path)
+                end,
+                after_action = notification,
+              },
+              ["<C-x>"] = {
+                action = z_utils.create_basic_command("split"),
+              },
               ["<C-b>"] = {
                 keepinsert = true,
                 action = function(selection)
