@@ -85,6 +85,10 @@ vim.keymap.set("n", "<leader>bd", function()
     close_buf_and_window()
     return
   end
+  if vim.bo.modified then
+    vim.notify("To close edited buf, use :bd! to confirm.", vim.log.levels.INFO)
+    return
+  end
   -- TODO: Not sure this is correct... but it works for now. Just leave it.
   if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
     vim.notify("last buf.", vim.log.levels.WARN)
