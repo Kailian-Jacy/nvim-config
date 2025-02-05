@@ -88,6 +88,8 @@ return {
         function()
           require("conform").format()
           require("lint").try_lint()
+          vim.cmd([[ :w ]]) -- triggers lsp updating.
+          require("scrollbar").render() -- try to update the scrollbar.
           vim.print_silent("@conform.format")
         end,
         mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
