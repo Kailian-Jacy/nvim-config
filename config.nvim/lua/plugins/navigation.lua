@@ -98,7 +98,22 @@ return {
                 after_action = notification,
               },
               ["<C-x>"] = {
-                action = z_utils.create_basic_command("split"),
+                action = function(selection)
+                  vim.cmd[[ split ]]
+                  vim.cmd.lcd(selection.path)
+                end
+              },
+              ["<C-X>"] = {
+                action = function(selection)
+                  vim.cmd[[ vsplit ]]
+                  vim.cmd.lcd(selection.path)
+                end
+              },
+              ["<C-v>"] = {
+                action = function(selection)
+                  vim.cmd[[ vsplit ]]
+                  vim.cmd.lcd(selection.path)
+                end
               },
               ["<C-b>"] = {
                 keepinsert = true,
