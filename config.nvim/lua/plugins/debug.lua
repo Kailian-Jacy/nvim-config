@@ -130,7 +130,7 @@ return {
 
       -- setup keymap before debug session begins.
       dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
-        vim.print("Debug Session intialized ")
+        vim.print_silent("Debug Session intialized ")
         vim.g.debugging_status = "DebugOthers"
         require("lualine").refresh()
         NoUIKeyMap()
@@ -146,7 +146,7 @@ return {
       -- unmap keymap after that.
       dap.listeners.before["event_terminated"]["nvim-dap-noui"] = function(_, _)
         vim.g.debugging_status = "NoDebug"
-        vim.print("Debug Session terminated.")
+        vim.print_silent("Debug Session terminated ")
         require("lualine").refresh()
         NoUIUnmap()
       end

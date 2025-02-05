@@ -106,7 +106,7 @@ vim.keymap.set("n", "<S-C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = 
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
-  vim.print(require("nvim-navic").get_location())
+  vim.print_silent(require("nvim-navic").get_location())
 end)
 
 -- Mapping and unmapping during debugging.
@@ -219,7 +219,7 @@ function NoUIGeneircDebug()
   -- Choose debug file for debugging.
   -- Set Keymap for debugging
   if isInDebugging() then
-    vim.print("Session is already activated.")
+    vim.print_silent("Session is already activated.")
   end
   -- (Re-)reads launch.json if present
   if vim.fn.filereadable(".vscode/launch.json") then
