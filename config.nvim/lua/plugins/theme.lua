@@ -233,7 +233,10 @@ return {
                   end
                   return ""
                 end
-                return "{} | " .. sys_sign() .. debug_sign() .. ""
+                local cwd = function()
+                  return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+                end
+                return "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
               end,
             },
           },
