@@ -62,11 +62,6 @@ return {
     keys = function()
       return {
         {
-          "<leader>sn",
-          "",
-          desc = "+noice",
-        },
-        {
           "<leader>im",
           "<Cmd>NoiceHistory<CR>",
           mode = "n",
@@ -119,11 +114,13 @@ return {
           },
         },
       })
+      -- add another silent print ( that don't leave history ) as old one.
+      vim.print_silent = vim.print
       -- Integrates the older vim.print to new pipeline.
       --  Without this, vim.print() can only be seen from ":messages"
       vim.print = function(...)
         for _, value in ipairs({ ... }) do
-          vim.notify("[vim.print] " .. value, vim.log.levels.INFO)
+          vim.notify("[vim.print] " .. vim.inspect(value), vim.log.levels.INFO)
         end
       end
     end,
