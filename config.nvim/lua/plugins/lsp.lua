@@ -165,25 +165,6 @@ return {
         mode = { "n" },
         desc = "Move up to next function call.",
       },
-      {
-        -- no visual mode for this keymap. just use lsp gd.
-        "<leader>ss",
-        "<cmd>Telescope aerial<cr>",
-        mode = { "n" },
-        desc = "Navigate symbols in buffer.",
-      },
-      {
-        "<leader>fs",
-        "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>",
-        mode = { "n" },
-        desc = "Show all symbols in working directory.",
-      },
-      {
-        "<leader>fs",
-        "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>",
-        mode = { "v" },
-        desc = "Show all symbols in working directory.",
-      },
     },
     config = function()
       require("aerial").setup({

@@ -102,7 +102,26 @@ return {
         "<leader>fo",
         "<cmd>Telescope oldfiles<cr>",
         mode = { "n" },
-      }
+      },
+      {
+        "<leader>ss",
+        "<cmd>lua require(\"telescope.builtin\").lsp_document_symbols()<cr>",
+        mode = { "n" },
+        desc = "Navigate symbols in buffer.",
+      },
+      -- migrate from lsp_dynamic_workspace_symbols, which can't use tag search :object:
+      {
+        "<leader>sS",
+        "<cmd>Telescope lsp_workspace_symbols<cr>",
+        mode = { "n" },
+        desc = "Navigate symbols in the Workspace.",
+      },
+      {
+        "<leader>sS",
+        "zy:Telescope lsp_workspace_symbols default_text=<C-r>z<cr>",
+        mode = { "v" },
+        desc = "Navigate symbols in the Workspace.",
+      },
     },
     -- keys = {
     -- add a keymap to browse plugin files
