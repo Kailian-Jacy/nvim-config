@@ -305,15 +305,5 @@ return {
   },
   {
     "cohama/lexima.vim"
-  },
-  {
-    "gbprod/yanky.nvim",
-    config = function() 
-        require("yanky").setup({})
-        require("telescope").load_extension("yank_history")
-    end,
-    keys = {
-      { "<leader>fp", function() require("telescope").extensions.yank_history.yank_history() end, desc = "Yanky History"}
-    }
-  },
+  }
 }

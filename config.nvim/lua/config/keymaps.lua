@@ -340,8 +340,6 @@ local cmd_mappings = {
     description = "Split vertically",
     back_to_insert = true,
   },
-  -- Yanky list.
-  { cmdKeymap = "<D-y>", leaderKeymap = "<leader>fp", modes = { "n", "v" }, description = "Telescope Yanky list." },
   -- Zoxide navigation.
   { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Telescope Cd with Zeoxide" },
   { cmdKeymap = "<D-/>", leaderKeymap = "<leader>/", modes = { "n", "v" }, description = "Telescope Search (Global)" },
