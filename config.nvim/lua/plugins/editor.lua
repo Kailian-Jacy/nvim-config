@@ -23,38 +23,25 @@ return {
       surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`", "<", ">" },
     },
   },
-  -- Now replaced with simpler plugin
-  --[[{
-    "kylechui/nvim-surround",
-    version = "*", -- Use for stability; omit to use `main` branch for the latest features
-    event = "VeryLazy",
-    config = function()
-      require("nvim-surround").setup({
-        -- Configuration here, or leave empty to use defaults
-        keymaps = {
-          visual = 's',
-          visual_line = 'S'
-        }
-      })
-    end
-  },]]
+  -- Refine indentation logic.
+  -- TODO: It's not working now because copilot is mapping <Tab> overriding which.
   {
     "vidocqh/auto-indent.nvim",
     config = function()
       require("auto-indent").setup({
-        indentexpr = function(lnum)
-          return require("nvim-treesitter.indent").get_indent(lnum)
-        end,
+        -- indentexpr = function(lnum)
+        --   return require("nvim-treesitter.indent").get_indent(lnum)
+        -- end,
       })
     end,
     opts = {},
   },
-  {
-    "NMAC427/guess-indent.nvim",
-    config = function()
-      require("guess-indent").setup({})
-    end,
-  },
+  -- {
+  --   "NMAC427/guess-indent.nvim",
+  --   config = function()
+  --     require("guess-indent").setup({})
+  --   end,
+  -- },
   -- TODO: Migrate mini.pair to nvim-autopairs. At leat choose one.
   {
     "windwp/nvim-autopairs",

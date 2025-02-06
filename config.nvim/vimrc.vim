@@ -12,8 +12,7 @@ filetype plugin indent on
 " set autochdir
 " tab
 set expandtab
-set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
-"set expandtab
+" set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
 set incsearch ignorecase smartcase hlsearch
 set wildmode=longest,list,full wildmenu
 

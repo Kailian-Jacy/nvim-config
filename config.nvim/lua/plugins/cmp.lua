@@ -4,6 +4,14 @@ return {
   },
   {
     "hrsh7th/nvim-cmp",
+    dependencies = {
+      -- TODO: LuaSnip not working.
+      { "L3MON4D3/LuaSnip", lazy = true },
+      { "FelipeLema/cmp-async-path", lazy = true },
+      { "hrsh7th/cmp-nvim-lsp-signature-help", lazy = true },
+      -- any keymap involving tab should be done before this plugin loaded.
+      { "vidocqh/auto-indent.nvim" },
+    },
     config = function()
       --[[local has_words_before = function()
         unpack = unpack or table.unpack
@@ -33,7 +41,7 @@ return {
         -- Docs has example about how to set for copilot compatibility:
         mapping = cmp.mapping.preset.insert({
           -- Tab will only be used to expand when item being selected. Else you can be sure to tab expand snippets.
-          ["<Tab>"] = function(_)
+          ["<Tab>"] = function(fallback)
             if cmp.visible() and cmp.get_selected_entry() then
               cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Replace })
             elseif luasnip.expandable() then
@@ -41,11 +49,11 @@ return {
             elseif luasnip.locally_jumpable(1) then
               luasnip.jump(1)
             else
-              vim.api.nvim_feedkeys(
-                vim.fn["copilot#Accept"](vim.api.nvim_replace_termcodes("<Tab>", true, true, true)),
-                "n",
-                true
-              )
+              -- TODO: It's working bad, i know. but I can't make it fetch the original <Tab> rhs.
+              vim.fn["copilot#Accept"](function()
+                -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("\t", true, true, true), "n", true) -- should be "n" mode to break infinite loop.
+                fallback()
+              end)
             end
           end,
           ["<S-Tab>"] = cmp.mapping(function(fallback)
@@ -113,8 +121,13 @@ return {
         experimental = {
           ghost_text = false, -- this feature conflict with copilot.vim's preview.
         },
-        sources = {
-          { name = "luasnip" },
+        sources = cmp.config.sources({
+          {
+            name = "luasnip",
+            priority = 150,
+            group_index = 1,
+            option = { show_autosnippets = true, use_show_condition = false },
+          },
           {
             name = "cmp_tabnine",
             group_index = 1,
@@ -122,9 +135,28 @@ return {
           {
             name = "nvim_lsp",
           },
-          { name = "buffer" },
-          { name = "nvim_lua" },
-          { name = "path" },
+          {
+            name = "nvim_lsp_signature_help",
+            priority = 100,
+            group_index = 1,
+          },
+          {
+            name = "buffer",
+          },
+          {
+            name = "nvim_lua",
+            entry_filter = function()
+              if vim.bo.filetype ~= "lua" then
+                return false
+              end
+              return true
+            end,
+            priority = 150,
+            group_index = 1,
+          },
+          {
+            name = "async_path",
+          },
           {
             name = "dotenv",
             -- Defaults
@@ -143,7 +175,7 @@ return {
               end,
             },
           },
-        },
+        }),
         sorting = {
           priority_weight = 100,
           comparators = {
@@ -261,7 +293,7 @@ return {
           end,
         }),]]
         sources = cmp.config.sources({
-          { name = "path" },
+          { name = "async_path" },
         }, {
           { name = "cmdline" },
         }),
