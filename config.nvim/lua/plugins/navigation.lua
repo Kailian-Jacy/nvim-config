@@ -93,8 +93,7 @@ return {
                 after_action = notification,
               },
               -- create new tab and start there.
-              -- FIXME: It's not working sometimes. copilot.vim
-              ["<c-t>"] = {
+              ["<C-t>"] = {
                 action = function(selection)
                   vim.cmd[[ tabnew ]]
                   vim.cmd.tcd(selection.path)
