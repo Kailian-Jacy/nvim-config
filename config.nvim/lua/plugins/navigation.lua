@@ -71,25 +71,29 @@ return {
           zoxide = {
             prompt_title = "Navigating To",
             mappings = {
+              -- It's rare to lcd some certain window. Normally, use c-x to create a new window
+              -- and lcd there.
+              -- Normally, just set global pwd.
               default = {
                 action = function(selection)
-                  vim.cmd.lcd(selection.path)
+                  vim.cmd.cd(selection.path)
                 end,
                 after_action = notification,
               },
               ["<D-CR>"] = {
                 action = function(selection)
-                  vim.cmd.cd(selection.path)
+                  vim.cmd.lcd(selection.path)
                 end,
                 after_action = notification,
               },
               ["<C-CR>"] = {
                 action = function(selection)
-                  vim.cmd.cd(selection.path)
+                  vim.cmd.lcd(selection.path)
                 end,
                 after_action = notification,
               },
               -- create new tab and start there.
+              -- FIXME: It's not working sometimes. copilot.vim
               ["<c-t>"] = {
                 action = function(selection)
                   vim.cmd[[ tabnew ]]
