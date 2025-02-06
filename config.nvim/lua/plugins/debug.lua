@@ -44,6 +44,8 @@ return {
         "luacheck",
         "stylua",
         "luaformatter",
+        -- vim script
+        "vim-language-server",
         -- markdown
         "markdown-toc",
         "markdownlint-cli2",
