@@ -28,10 +28,13 @@ return {
   {
     "vidocqh/auto-indent.nvim",
     config = function()
+      -- In cmp.nvim we don't need to feed \t anymore but to use fallback to auto-indent <tab>
+      -- keymap.
+      vim.g._auto_indent_used = true
       require("auto-indent").setup({
-        -- indentexpr = function(lnum)
-        --   return require("nvim-treesitter.indent").get_indent(lnum)
-        -- end,
+        indentexpr = function(lnum)
+          return require("nvim-treesitter.indent").get_indent(lnum)
+        end,
       })
     end,
     opts = {},
