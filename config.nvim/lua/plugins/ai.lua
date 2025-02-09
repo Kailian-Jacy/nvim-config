@@ -25,15 +25,28 @@ return {
         "<leader>ae",
         "V<cmd>AvanteEdit<CR>",
         mode = { "n" },
-        desc = "Start code completion."
+        desc = "Start code completion.",
       },
     },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "4o", -- Recommend using Claude
-      auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
+      -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
       azure = {},
       vendors = {
+        -- Weak support for local llms like ollama. But it's unnecessary for now.
+        -- They are just too weak to do anything.
+        ["4omini"] = {
+          __inherited_from = "openai",
+          api_key_name = "OPENAI_API_KEY",
+          model = "gpt-4o-mini",
+        },
+        deepseek = {
+          __inherited_from = "openai",
+          endpoint = "https://api.deepseek.com/",
+          api_key_name = "DEEPSEEK_API_KEY",
+          model = "deepseek-chat",
+        },
         o1 = {
           __inherited_from = "azure",
           endpoint = "https://vlaa-openai-eastus2.openai.azure.com/",
@@ -76,16 +89,16 @@ return {
           next = "]]",
           prev = "[[",
         },
-        --[[suggestion = {
-          accept = "<M-l>",
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<C-]>",
-        },]]
-        -- jump = {
-        --   next = "]]",
-        --   prev = "[[",
+        -- suggestion = {
+        --   accept = "<M-l>",
+        --   next = "<M-]>",
+        --   prev = "<M-[>",
+        --   dismiss = "<C-]>",
         -- },
+        -- jump = {
+        --     next = "]]",
+        --    prev = "[[",
+        --  },
         submit = {
           normal = "<CR>",
           insert = "<C-s>",
@@ -93,6 +106,7 @@ return {
         sidebar = {
           apply_all = "A",
           apply_cursor = "a",
+          close = { "q" }, -- <Esc> should be doing nothing.
           --[[switch_windows = "<Tab>",
           reverse_switch_windows = "<S-Tab>",]]
         },
