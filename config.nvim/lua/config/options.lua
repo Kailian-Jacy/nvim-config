@@ -36,6 +36,7 @@ vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
   DebugOthers = "DebugOthers",
   NoDebug = "NoDebug"]]
 vim.g.debugging_status = "NoDebug"
+vim.g.recording_status = false
 
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true

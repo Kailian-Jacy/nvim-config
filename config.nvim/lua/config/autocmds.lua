@@ -31,6 +31,23 @@ vim.api.nvim_create_user_command("NeovideNew", function()
   vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
 end, {})
 
+-- Macro recording related.
+vim.api.nvim_create_autocmd("RecordingEnter", {
+  callback = function()
+    vim.g.recording_status = true
+    require("lualine").refresh()
+    vim.print_silent("Macro recording.")
+  end,
+})
+
+vim.api.nvim_create_autocmd("RecordingLeave", {
+  callback = function()
+    vim.g.recording_status = false
+    require("lualine").refresh()
+    vim.print_silent("End recording.")
+  end,
+})
+
 -- Start at the last place exited.
 -- Seems like "VimEnter" function not working in autocmds.lua.
 vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))

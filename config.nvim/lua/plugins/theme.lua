@@ -208,6 +208,13 @@ return {
                     return "" -- Default case, no icon
                   end
                 end
+                local recording = function()
+                  if vim.g.recording_status == true then
+                    return "[q] "
+                  else 
+                    return ""
+                  end
+                end
                 local debug_sign = function()
                   if vim.g.debugging_status == "NoDebug" then
                     return ""
@@ -226,7 +233,7 @@ return {
                 local cwd = function()
                   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
                 end
-                return "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
+                return recording() .. "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
               end,
             },
           },
