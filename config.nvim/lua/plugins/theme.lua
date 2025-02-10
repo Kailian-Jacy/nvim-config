@@ -18,6 +18,9 @@ return {
         overrides = function(colors)
           return {
             -- Basics
+            SnacksPickerDir = { link = "SnacksPickerFile" },
+            -- SnacksPickerDir = { link = "Delimiter" },
+            SnacksPickerMatch = { link = "Search" },
             -- Completion/documentation Pmenu border color when using bordered windows
             Pmenu = { bg = "" },
             PmenuSbar = { bg = "" },

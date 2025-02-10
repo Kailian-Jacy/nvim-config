@@ -52,13 +52,260 @@ return {
   },
   {
     "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    keys = {
+      { "<leader>.", function() Snacks.picker.buffers() end, desc = "Buffers" },
+      { "<leader>.", function() Snacks.picker.grep_buffers({ search = vim.g.function_get_selected_content() }) end, desc = "Grep Open Buffers", mode = {"v"} },
+
+      -- Search
+      -- { "<leader>/", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
+      { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
+      { "<leader>/", function() Snacks.picker.grep({ search = vim.g.function_get_selected_content() }) end, desc = "Grep", mode = "v" },
+      { "<leader>ll", function() Snacks.picker.lines() end, desc = "Line inspect" },
+      { "<leader>ll", function() Snacks.picker.lines({ pattern = vim.g.function_get_selected_content() }) end, desc = "Line inspect", mode = "v"},
+
+      -- File browsing.
+      { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" }, -- TODO: Amend explorer style.
+      { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
+      { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
+      { "<leader>fo", function() Snacks.picker.recent() end, desc = "Recent" },
+
+      -- Symbol browsing
+      { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
+      { "<leader>ss", function() Snacks.picker.lsp_symbols({ pattern = vim.g.function_get_selected_content() }) end, desc = "LSP Symbols", mode = "v" },
+      { "<leader>sS", function() Snacks.picker.lsp_workspace_symbols() end, desc = "LSP Workspace Symbols" },
+      { "<leader>sS", function() Snacks.picker.lsp_workspace_symbols({ pattern = vim.g.function_get_selected_content()}) end, desc = "LSP Workspace Symbols", mode = "v" },
+
+      -- Git diffing
+      { "<leader>gd", function() Snacks.picker.git_diff() end, desc = "Git Diff (Hunks)" },
+
+      -- Help browsing
+      { "<leader>fh", function() Snacks.picker.help() end, desc = "Help Pages" },
+      { "<leader>fh", function() Snacks.picker.help({ pattern = vim.g.function_get_selected_content()}) end, desc = "Help Pages", mode = "v" },
+
+      -- Keymap browsing.
+      { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
+
+      -- Diagnostics browsing.
+      { "<leader>jJ", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
+      { "<leader>jj", function() Snacks.picker.diagnostics_buffer() end, desc = "Buffer Diagnostics" },
+
+      -- LSP related browsing.
+      { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
+      { "gy", function() Snacks.picker.lsp_type_definitions({ pattern = vim.g.function_get_selected_content()}) end, desc = "Goto T[y]pe Definition", mode = "v" },
+      { "gd", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
+      { "gd", function() Snacks.picker.lsp_definitions({ pattern = vim.g.function_get_selected_content()}) end, desc = "Goto Definition", mode = "v" },
+      { "gr", function() Snacks.picker.lsp_references() end, nowait = true, desc = "References" },
+      { "gr", function() Snacks.picker.lsp_references({ pattern = vim.g.function_get_selected_content()}) end, nowait = true, desc = "References", mode = "v" },
+      { "gi", function() Snacks.picker.lsp_implementations() end, desc = "Goto Implementation" },
+      { "gi", function() Snacks.picker.lsp_implementations({ pattern = vim.g.function_get_selected_content()}) end, desc = "Goto Implementation", mode = "v" },
+
+      -- Redo
+      { "<leader>tt", function() Snacks.picker.resume() end, desc = "Resume" },
+
+      -- { "gD", function() Snacks.picker.lsp_declarations() end, desc = "Goto Declaration" },
+      -- Command.
+      { "<leader>pp", function() Snacks.picker.command_history() end, desc = "Command History" },
+      { "<leader>pp", function() Snacks.picker.command_history({ pattern = vim.g.function_get_selected_content()}) end, desc = "Command History", mode = "v" },
+      { "<leader>pP", function() Snacks.picker.commands() end, desc = "Commands" },
+      { "<leader>pP", function() Snacks.picker.commands({ pattern = vim.g.function_get_selected_content()}) end, desc = "Commands", mode = "v" },
+
+      -- Navigation
+      { "<leader>zz", function() Snacks.picker.zoxide() end, desc = "Zoxide cwd navigation" },
+      { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
+    },
     opts = {
-      notify = { enabled = false },
-      notifier = {
-        enabled = false,
-        timeout = 3000,
+      bigfile = { enabled = false },
+      dashboard = { enabled = false },
+      explorer = {
+        enabled = true
       },
-      words = { enabled = true },
+      -- indent = { enabled = false },
+      input = { enabled = false },
+      indent = { enabled = false },
+      notify = { enabled = false },
+      notifier = { enabled = false },
+      quickfile = { enabled = false },
+      scope = { enabled = false },
+      scroll = { enabled = false },
+      -- statuscolumn = { enabled = false },
+      words = { enabled = false },
+      picker = {
+        layout = { preset = "dropdown" },
+        win = {
+          input = {
+            keys = {
+              ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+
+              -- Window switching
+              ["<C-w>"] = {"to_preview", mode = {"n", "i"}},
+              ["w"] = "to_preview",
+
+              -- ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["o"] = "toggle_maximize",
+              ["x"] = "edit_split",
+              ["v"] = "edit_vsplit",
+              ["p"] = "inspect",
+            }
+          },
+          list = {
+            keys = {
+              ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              -- Window switching
+              ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
+              ["w"] = "cycle_win",
+
+              ["o"] = "toggle_maximize",
+              ["x"] = "edit_split",
+              ["v"] = "edit_vsplit",
+              ["p"] = "inspect",
+              ["A"] = "toggle_focus",
+              ["a"] = "toggle_focus",
+            }
+          },
+          preview = {
+            keys = {
+              ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+
+              -- Window switching
+              ["<C-w>"] = {"to_input", mode = {"n", "i"}},
+              ["w"] = "to_input",
+
+              ["o"] = "toggle_maximize",
+              ["x"] = "edit_split",
+              ["v"] = "edit_vsplit",
+              ["p"] = "inspect",
+              ["A"] = "toggle_focus",
+              ["a"] = "toggle_focus",
+            }
+          }
+        },
+        actions = {
+          test = function(self, item)
+            vim.print("triggered")
+          end,
+          to_preview = function(picker, _)
+            if vim.api.nvim_win_is_valid(picker.preview.win.win) then
+              vim.api.nvim_set_current_win(picker.preview.win.win)
+            else
+              vim.notify("Target window is not valid.", vim.log.levels.WARN)
+            end
+          end,
+          to_input = function(picker, _)
+            if vim.api.nvim_win_is_valid(picker.input.win.win) then
+              vim.api.nvim_set_current_win(picker.input.win.win)
+            else
+              vim.notify("Target window is not valid.", vim.log.levels.WARN)
+            end
+            vim.api.nvim_set_current_win(picker.input.win.win)
+          end,
+          new_tab_here = function(_, item)
+            vim.cmd[[ tabnew ]]
+            Snacks.picker.actions.tcd(_, item)
+            vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+          end,
+          v_new_win_here = function (_, item)
+            vim.cmd[[ vsplit ]]
+            vim.cmd.lcd(item._path)
+            -- Snacks.picker.actions.lcd(_, item)
+          end,
+          x_new_win_here = function (_, item)
+            vim.cmd[[ split ]]
+            vim.cmd.lcd(item._path)
+            -- Snacks.picker.actions.lcd(_, item)
+          end
+        },
+        sources = {
+          buffers = {
+            win = {
+              preview = {
+                keys = {
+                  -- FIXME: Not working for now. Seems like it's acting like normal buffer.
+                  ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
+                }
+              },
+              input = {
+                keys = {
+                  ["<c-x>"] = { "edit_split", mode = { "n", "i" } },
+                  ["<c-d>"] = { "bufdelete", mode = { "n", "i" } },
+                }
+              }
+            }
+          },
+          keymaps = {
+            actions = {
+              go_to_if_possible = function (_, item)
+                if item._path and #item._path ~= 0 then
+                    vim.cmd[[ tabnew ]]
+                    Snacks.picker.actions.tcd(_, item)
+                    vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+                    vim.cmd("e " .. item._path)
+                  else
+                    vim.notify("No path for keymap.")
+                  end
+                end
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<c-t>"] = { "go_to_if_possible" , mode={"n", "i"}}
+                }
+              }
+            }
+          },
+          explorer = {
+            -- your explorer picker configuration comes here
+            -- or leave it empty to use the default settings
+            layout = { preset = "dropdown", preview = true },
+            diagnostics_open = true,
+            auto_close = true,
+            win = {
+              input = {
+                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["x"] = {"edit_split", mode={"n"}},
+                  ["v"] = {"edit_vsplit", mode={"n"}},
+              },
+              preview = {
+                keys = {
+                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["x"] = {"edit_split", mode={"n"}},
+                  ["v"] = {"edit_vsplit", mode={"n"}},
+                }
+              },
+              list = {
+                keys = {
+                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["x"] = {"edit_split", mode={"n"}},
+                  ["v"] = {"edit_vsplit", mode={"n"}},
+                }
+              }
+            }
+          },
+          zoxide = {
+            layout = { preset = "vscode", preview = false },
+            win = {
+              input = {
+                keys = {
+                  -- ["<c-t>"] = {"test", mode={"n", "i"}},
+                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+                  -- FIXME: They won't work for now.
+                  --
+                  ["<c-x>"] = {"x_new_win_here", mode={"n", "i"}},
+                  ["<c-v>"] = {"v_new_win_here", mode={"n", "i"}},
+                  ["<c-X>"] = {"v_new_win_here", mode={"n", "i"}},
+                }
+              }
+            }
+          }
+        }
+      }
     },
     -- No need for now. Now use nvim build in * to navigate.
     -- keys = {
@@ -77,51 +324,59 @@ return {
   -- change some telescope options and a keymap to browse plugin files
   {
     "nvim-telescope/telescope.nvim",
-    keys= {
-      {
-        "<leader>ff",
-        "<cmd>Telescope find_files no_ignore=false<CR>",
-        mode = { "n" },
-      },
-      {
-        "<leader>fh",
-        "<cmd>Telescope help_tags<CR>",
-        mode = { "n" },
-      },
-      {
-        "<leader>fh",
-        "\"zy:Telescope help_tags default_text=<C-r>z<CR>",
-        mode = { "v" },
-      },
-      {
-        "<leader>fF",
-        "<cmd>Telescope find_files no_ignore=true<CR>",
-        mode = { "n" },
-      },
-      {
-        "<leader>fo",
-        "<cmd>Telescope oldfiles<cr>",
-        mode = { "n" },
-      },
-      {
-        "<leader>ss",
-        "<cmd>lua require(\"telescope.builtin\").lsp_document_symbols()<cr>",
-        mode = { "n" },
-        desc = "Navigate symbols in buffer.",
-      },
+    keys = {
+      -- {
+      --   "<leader>ff",
+      --   "<cmd>Telescope find_files no_ignore=false<CR>",
+      --   mode = { "n" },
+      -- },
+
+      -- files
+      { "<leader>fe", false },
+      { "<leader>ff", false },
+      { "<leader>fb", false },
+      { "<leader>fc", false },
+      { "<leader>fo", false },
+
+      -- Symbols
+      { "<leader>ss", false },
+      { "<leader>sS", false },
+      { "<leader>sk", false },
+
+      -- Command
+      { "<leader>sc", false },
+      { "<leader>sC", false },
+
+      -- LSP.
+      { "gy", false },
+      { "gd", false },
+      { "gi", false },
+      { "gr", false },
+
+      { "<leader>fh", false },
+
+      -- Search
+      { "<leader>/", false },
+      -- { "<leader>/", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
+      -- {
+      --   "<leader>ss",
+      --   "<cmd>lua require(\"telescope.builtin\").lsp_document_symbols()<cr>",
+      --   mode = { "n" },
+      --   desc = "Navigate symbols in buffer.",
+      -- },
       -- migrate from lsp_dynamic_workspace_symbols, which can't use tag search :object:
-      {
-        "<leader>sS",
-        "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>",
-        mode = { "n" },
-        desc = "Navigate symbols in the Workspace.",
-      },
-      {
-        "<leader>sS",
-        "\"zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>",
-        mode = { "v" },
-        desc = "Navigate symbols in the Workspace.",
-      },
+      -- {
+      --   "<leader>sS",
+      --   "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>",
+      --   mode = { "n" },
+      --   desc = "Navigate symbols in the Workspace.",
+      -- },
+      -- {
+      --   "<leader>sS",
+      --   "\"zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>",
+      --   mode = { "v" },
+      --   desc = "Navigate symbols in the Workspace.",
+      -- },
     },
     -- keys = {
     -- add a keymap to browse plugin files
@@ -133,12 +388,12 @@ return {
     -- },
     -- },
     dependencies = {
-      {
-        "nvim-telescope/telescope-live-grep-args.nvim",
+      -- {
+        -- "nvim-telescope/telescope-live-grep-args.nvim",
+        -- version = "^1.0.0",
         -- This will not install any breaking changes.
         -- For major updates, this must be adjusted manually.
-        version = "^1.0.0",
-      },
+      -- },
       {
         "nvim-telescope/telescope-fzf-native.nvim",
       }
@@ -169,47 +424,6 @@ return {
         }
       }
     },
-  },
-  {
-    "nvim-telescope/telescope-live-grep-args.nvim",
-    keys = {
-      {
-        "<leader>/",
-        "<cmd>Telescope live_grep<cr>",
-        mode = "n",
-      },
-      {
-        "<leader>/",
-        "\"zy:Telescope live_grep default_text=<C-r>z<cr>",
-        mode = "v",
-      },
-    },
-    version = "^1.0.0",
-    config = function ()
-      local t = require("telescope")
-      local lga_actions = require("telescope-live-grep-args.actions")
-      t.setup({
-        extensions = {
-          live_grep_args = {
-            auto_quoting = true, -- enable/disable auto-quoting
-            -- define mappings, e.g.
-            mappings = { -- extend mappings
-              i = {
-                ["<C-k>"] = lga_actions.quote_prompt(),
-                ["<C-i>"] = lga_actions.quote_prompt({ postfix = " --iglob " }),
-                -- freeze the current list and start a fuzzy search in the frozen list
-                --["<C-space>"] = actions.to_fuzzy_refine,
-              },
-            },
-            -- ... also accepts theme settings, for example:
-            -- theme = "dropdown", -- use dropdown theme
-            -- theme = { }, -- use own theme spec
-            -- layout_config = { mirror=true }, -- mirror preview pane
-          }
-        }
-      })
-      t.load_extension("live_grep_args")
-    end
   },
   {
     'nvim-telescope/telescope-fzf-native.nvim',

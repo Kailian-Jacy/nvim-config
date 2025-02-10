@@ -49,13 +49,12 @@ vim.keymap.set({ "i" }, "<C-K>", "<esc><C-W>kli", { noremap = true, silent = tru
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
-vim.keymap.set("n", "<leader>/", require("telescope").extensions.live_grep_args.live_grep_args, { noremap = true })
-vim.keymap.set(
-  "v",
-  "<leader>/",
-  require("telescope-live-grep-args.shortcuts").grep_visual_selection,
-  { noremap = true }
-)
+-- vim.keymap.set(
+--   "v",
+--   "<leader>/",
+--   require("telescope-live-grep-args.shortcuts").grep_visual_selection,
+--   { noremap = true }
+-- )
 -- nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 -- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
 vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
@@ -69,12 +68,10 @@ vim.keymap.del("n", "<leader>L")
 -- copilot mapping: copilot mapping are all migrated to the configuration part of nvim-cmp.
 vim.g.copilot_no_maps = true
 
--- telescope based:
-vim.keymap.set("n", "<leader>tt", "<cmd>Telescope resume<CR>", { noremap = true, silent = true })
-
 -- buffer related
 local close_buf_but_leave_window = function()
-  vim.cmd([[ bp | sp | bn | bd! ]])
+  -- vim.cmd([[ bp | sp | bn | bd! ]])
+  Snacks.bufdelete()
 end
 local close_buf_and_window = function()
   vim.cmd([[ bd! ]])
@@ -248,8 +245,6 @@ local cmd_mappings = {
   -- Ai related.
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
   { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "AI panel" },
-  -- Buffer related.
-  { cmdKeymap = "<D-b>", leaderKeymap = "<leader>fb", modes = { "n" }, description = "Telescope all buffers." },
   -- Comment related.
   { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "v", "n" }, description = "Comment" },
   -- Directory/file related
@@ -257,22 +252,36 @@ local cmd_mappings = {
     cmdKeymap = "<D-e>",
     leaderKeymap = "<leader>fe",
     modes = { "n", "i" },
-    description = "Telescope directory on current dir.",
+    description = "List directory on current dir.",
   },
-  {
-    cmdKeymap = "<D-E>",
-    leaderKeymap = "<leader>ee",
-    modes = { "n", "i" },
-    description = "Telescope directory on Working directory.",
-  },
+  -- TODO: Directory from the current opened buffer.
+  -- {
+  --   cmdKeymap = "<D-E>",
+  --   leaderKeymap = "<leader>ee",
+  --   modes = { "n", "i" },
+  --   description = "Telescope directory on Working directory.",
+  -- },
   { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n" }, description = "Telescope all files." },
+  -- { cmdKeymap = "<D-F>", leaderKeymap = "<leader>fF", modes = { "n" }, description = "Search in the working directory" },
   -- Git
-  { cmdKeymap = "<D-g>", leaderKeymap = "<leader>hp", modes = { "n", "v" }, description = "Preview Hunk" },
-  { cmdKeymap = "<D-G>", leaderKeymap = "<leader>gg", modes = { "n" }, description = "Lazygit" },
+  {
+    cmdKeymap = "<D-g>",
+    leaderKeymap = "<leader>hp",
+    modes = { "n" },
+    description = "Preview Hunk",
+    back_to_insert = true,
+  },
+  { cmdKeymap = "<D-G>", leaderKeymap = "<leader>gd", modes = { "n" }, description = "Git diffing" },
   -- Messages
   { cmdKeymap = "<D-i>", leaderKeymap = "<leader>im", modes = { "n" }, description = "History messages" },
+  -- Diagnostics
+  { cmdKeymap = "<D-j>", leaderKeymap = "<leader>jj", modes = { "n" }, description = "Show buffer diagnostics" },
+  { cmdKeymap = "<D-J>", leaderKeymap = "<leader>jJ", modes = { "n" }, description = "Workspace diagnostics" },
   -- Keymaps
-  { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "Telescope keymaps" },
+  { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
+  -- Inspect
+  { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "List keymaps" },
+  -- New buffer/instances.
   { cmdKeymap = "<D-n>", leaderKeymap = "<cmd>enew<CR>", modes = { "n" }, description = "New buffer." },
   {
     cmdKeymap = "<D-N>",
@@ -288,29 +297,29 @@ local cmd_mappings = {
     back_to_insert = true,
   },
   { cmdKeymap = "<D-O>", leaderKeymap = "<leader>fo", modes = { "n", "v" }, description = "Visited files" },
-  -- Command History:
-  { cmdKeymap = "<D-p>", leaderKeymap = "<leader>sc", modes = { "n", "v" }, description = "Telescope history command" },
+  -- Command related.
+  { cmdKeymap = "<D-p>", leaderKeymap = "<leader>pp", modes = { "n", "v" }, description = "List history command" },
   {
     cmdKeymap = "<D-P>",
-    leaderKeymap = "<leader>sC",
+    leaderKeymap = "<leader>pP",
     modes = { "n", "v" },
-    description = "Telescope all available command",
+    description = "All available command",
   },
   -- Search
-  { cmdKeymap = "<D-r>", leaderKeymap = "<leader>rn", modes = { "n" }, description = "LSP: Rename variable." },
+  { cmdKeymap = "<D-r>", leaderKeymap = "<leader>rn", modes = { "n" }, description = "LSP rename variable." },
   { cmdKeymap = "<D-R>", leaderKeymap = "<leader>cR", modes = { "n", "v" }, description = "Rename file" },
   -- Symbols
   {
     cmdKeymap = "<D-s>",
     leaderKeymap = "<leader>ss",
     modes = { "n", "v" },
-    description = "Telescope symbols (In Buffer)",
+    description = "List symbols (In Buffer)",
   },
   {
     cmdKeymap = "<D-S>",
     leaderKeymap = "<leader>sS",
     modes = { "n", "v" },
-    description = "Telescope symbols (Global)",
+    description = "List symbols (Workspace)",
   },
   -- Terminal.
   {
@@ -320,10 +329,10 @@ local cmd_mappings = {
     description = "Floating terminal in tmux.",
   },
   -- Telescope recover.
-  { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tt", modes = { "n" }, description = "Telescope continue the last" },
+  { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tt", modes = { "n" }, description = "Reshow the last list" },
   -- buffer/Window closing.
   { cmdKeymap = "<D-w>", leaderKeymap = "<leader>bd", modes = { "n", "v" }, description = "Close buffer" },
-  { cmdKeymap = "<D-w>", leaderKeymap = "<C-/>", modes = { "t" }, description = "Close buffer" },
+  { cmdKeymap = "<D-w>", leaderKeymap = "<C-/>", modes = { "t" }, description = "Close floating terminal" },
   { cmdKeymap = "<D-W>", leaderKeymap = "<leader>wd", modes = { "n", "v" }, description = "Close window" },
   -- Splitting
   {
@@ -342,11 +351,14 @@ local cmd_mappings = {
   },
   -- Zoxide navigation.
   { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Telescope Cd with Zeoxide" },
+  -- Searching
   { cmdKeymap = "<D-/>", leaderKeymap = "<leader>/", modes = { "n", "v" }, description = "Telescope Search (Global)" },
+  -- Buffer related.
+  { cmdKeymap = "<D-.>", leaderKeymap = "<leader>.", modes = { "n" }, description = "Telescope all buffers." },
   {
     cmdKeymap = "<D-CR>",
     leaderKeymap = "<leader><CR>",
-    modes = { "n", "v", "i" },
+    modes = { "n", "v" },
     description = "@Conform.format()",
     back_to_insert = true,
   },
