@@ -5,10 +5,16 @@ return {
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
-      -- TODO: LuaSnip not working.
-      { "L3MON4D3/LuaSnip", lazy = true },
+      -- LuaSnip
+      { "L3MON4D3/LuaSnip", build = "make install_jsregexp", lazy = true },
+      { "saadparwaiz1/cmp_luasnip", lazy = true },
+      -- Cmdline
+      { "hrsh7th/cmp-cmdline" },
+      { "dmitmel/cmp-cmdline-history", lazy = true },
+      -- Path
       { "FelipeLema/cmp-async-path", lazy = true },
-      { "hrsh7th/cmp-nvim-lsp-signature-help", lazy = true },
+      { "hrsh7th/cmp-nvim-lsp-signature-help" },
+      { "chrisgrieser/cmp_yanky" },
       -- any keymap involving tab should be done before this plugin loaded.
       { "vidocqh/auto-indent.nvim" },
     },
@@ -137,19 +143,25 @@ return {
             option = { show_autosnippets = true, use_show_condition = false },
           },
           {
-            name = "cmp_tabnine",
-            group_index = 1,
+            name = "cmp_yanky",
+            priority = 150,
+            option = {
+              minLength = 3,
+              onlyCurrentFiletype = false,
+            },
           },
           {
             name = "nvim_lsp",
+            priority = 150,
           },
           {
             name = "nvim_lsp_signature_help",
-            priority = 100,
+            priority = 150,
             group_index = 1,
           },
           {
             name = "buffer",
+            priority = 120,
           },
           {
             name = "nvim_lua",
@@ -159,14 +171,16 @@ return {
               end
               return true
             end,
-            priority = 150,
+            priority = 110,
             group_index = 1,
           },
           {
             name = "async_path",
+            priority = 100,
           },
           {
             name = "dotenv",
+            priority = 100,
             -- Defaults
             option = {
               path = vim.g.dotenv_dir,
@@ -182,6 +196,11 @@ return {
                 return a:upper() < b:upper()
               end,
             },
+          },
+          {
+            name = "cmp_tabnine",
+            priority = 90,
+            group_index = 1,
           },
         }),
         sorting = {
@@ -302,8 +321,8 @@ return {
         }),]]
         sources = cmp.config.sources({
           { name = "async_path" },
-        }, {
           { name = "cmdline" },
+          { name = "cmdline_history" },
         }),
       })
     end,
