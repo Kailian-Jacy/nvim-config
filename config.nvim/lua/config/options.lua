@@ -22,6 +22,14 @@ local function obsidian_app_exists()
   return false
 end
 
+vim.g.function_get_selected_content = function()
+  local esc = vim.api.nvim_replace_termcodes("<esc>", true, false, true)
+  vim.api.nvim_feedkeys(esc, "x", false)
+  local vstart = vim.fn.getpos("'<")
+  local vend = vim.fn.getpos("'>")
+  return table.concat(vim.fn.getregion(vstart, vend), "\n")
+end
+
 vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 --[[Running = "Running",
   Stopped = "Stopped",
