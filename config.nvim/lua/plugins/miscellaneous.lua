@@ -303,6 +303,27 @@ return {
                 }
               }
             }
+          },
+          command_history = {
+            actions = {
+              modify = function (_, item)
+                local cmd;
+                if vim.fn.mode() == "i" then
+                  cmd = "<esc>:" .. item.cmd
+                elseif vim.fn.mod() == "n" then
+                  cmd = ":" .. item.cmd
+                end
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
+              end
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<C-CR>"] = { "modify", mode = {"n", "i"} },
+                  ["<D-CR>"] = { "modify", mode = {"n", "i"} }
+                }
+              },
+            }
           }
         }
       }
