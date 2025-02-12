@@ -138,6 +138,7 @@ return {
             keys = {
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Window switching
               ["<C-w>"] = {"to_preview", mode = {"n", "i"}},
@@ -155,6 +156,7 @@ return {
           list = {
             keys = {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               -- Window switching
               ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
               ["w"] = "cycle_win",
@@ -170,6 +172,7 @@ return {
           preview = {
             keys = {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Window switching
               ["<C-w>"] = {"to_input", mode = {"n", "i"}},
@@ -207,6 +210,11 @@ return {
             vim.cmd[[ tabnew ]]
             Snacks.picker.actions.tcd(_, item)
             vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+            item.dir = item.dir or false
+            -- If possible, open the file there.
+            if not item.dir then
+              vim.cmd("e " .. item._path)
+            end
           end,
           v_new_win_here = function (_, item)
             vim.cmd[[ vsplit ]]
@@ -261,7 +269,13 @@ return {
             -- your explorer picker configuration comes here
             -- or leave it empty to use the default settings
             layout = { preset = "dropdown", preview = true },
+            actions = {
+              move_pwd_here = function (_, item)
+                vim.cmd.lcd(item._path)
+              end
+            },
             diagnostics_open = true,
+            focus = "input",
             auto_close = true,
             win = {
               input = {
@@ -269,6 +283,7 @@ return {
                   ["<c-x>"] = {"edit_split", mode={"n", "i"}},
                   ["x"] = {"edit_split", mode={"n"}},
                   ["v"] = {"edit_vsplit", mode={"n"}},
+                  ["t"] = {"edit_vsplit", mode={"n"}},
               },
               preview = {
                 keys = {
