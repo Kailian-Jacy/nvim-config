@@ -16,6 +16,29 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Surroudings workaround
+require("visual-surround").setup({
+  surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`" },
+})
+
+for _, key in ipairs({ "<", ">" }) do
+  vim.keymap.set("x", key, function()
+    local mode = vim.api.nvim_get_mode().mode
+    -- do not change the default behavior of '<' and '>' in visual-line mode
+    if mode == "V" then
+      return key .. "gv"
+    else
+      vim.schedule(function()
+        require("visual-surround").surround(key)
+      end)
+      return "<ignore>"
+    end
+  end, {
+    desc = "[visual-surround] Surround selection with " .. key .. " (visual mode and visual block mode)",
+    expr = true,
+  })
+end
+
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
 vim.api.nvim_create_autocmd({
