@@ -3,6 +3,10 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
+-- Local workaround for osc52 copy from remote.
+vim.keymap.set({"n", "v"} ,"D", "\"*d")
+vim.keymap.set({"n", "v"} ,"Y", "\"*y")
+
 -- terminal related.
 local Util = require("lazyvim.util")
 local lazyterm = function()
