@@ -345,6 +345,7 @@ return {
   -- change some telescope options and a keymap to browse plugin files
   {
     "nvim-telescope/telescope.nvim",
+    enabled = false,
     keys = {
       -- {
       --   "<leader>ff",
@@ -415,9 +416,9 @@ return {
         -- This will not install any breaking changes.
         -- For major updates, this must be adjusted manually.
       -- },
-      {
-        "nvim-telescope/telescope-fzf-native.nvim",
-      }
+      -- {
+      --   "nvim-telescope/telescope-fzf-native.nvim",
+      -- }
     },
     -- change some options
     opts = {
@@ -440,21 +441,21 @@ return {
           "Session.vim",
         },
         mappings = {
-          i = { ["<c-t>"] = require("trouble.sources.telescope").open},
-          n = { ["<c-t>"] = require("trouble.sources.telescope").open },
+          -- i = { ["<c-t>"] = require("trouble.sources.telescope").open},
+          -- n = { ["<c-t>"] = require("trouble.sources.telescope").open },
         }
       }
     },
   },
-  {
-    'nvim-telescope/telescope-fzf-native.nvim',
-    build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release',
-    config = function ()
-      -- To get fzf loaded and working with telescope, you need to call
-      -- load_extension, somewhere after setup function:
-      require('telescope').load_extension('fzf')
-    end
-  },
+  -- {
+  --   'nvim-telescope/telescope-fzf-native.nvim',
+  --   build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release',
+  --   config = function ()
+  --     -- To get fzf loaded and working with telescope, you need to call
+  --     -- load_extension, somewhere after setup function:
+  --     require('telescope').load_extension('fzf')
+  --   end
+  -- },
   --[[{
     'nvimdev/dashboard-nvim',
     event = 'VimEnter',
@@ -518,7 +519,7 @@ return {
 
     build = ":TSUpdate html",
     dependencies = {
-      "nvim-telescope/telescope.nvim",
+      -- "nvim-telescope/telescope.nvim",
       "nvim-lua/plenary.nvim", -- required by telescope
       "MunifTanjim/nui.nvim",
 
