@@ -179,14 +179,6 @@ nnoremap <leader>lt <cmd>TodoTelescope <cr>
 """ Diagnostics
 nnoremap <leader>le <cmd>Telescope diagnostics severity=1<cr> 
 nnoremap <leader>lw <cmd>Telescope diagnostics severity=2<cr>
-
-vnoremap <leader>fs "zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>
-nnoremap gr <cmd>Telescope lsp_references<cr>
-vnoremap <leader>gr "zy:Telescope lsp_references default_text=<C-r>z<cr>
-nnoremap gi <cmd>Telescope lsp_implementations<cr>
-vnoremap <leader>gi "zy:Telescope lsp_implementations default_text=<C-r>z<cr>
-nnoremap gd <cmd>Telescope lsp_definitions<cr>
-vnoremap <leader>gd "zy:Telescope lsp_definitions default_text=<C-r>z<cr>
 nnoremap gh <cmd>vim.lsp.buf.hover()<cr>
 
 """ Debugging related
