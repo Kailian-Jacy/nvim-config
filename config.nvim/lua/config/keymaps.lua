@@ -4,8 +4,8 @@
 vim.g.mapleader = " "
 
 -- Local workaround for osc52 copy from remote.
-vim.keymap.set({"n", "v"} ,"D", "\"*d")
-vim.keymap.set({"n", "v"} ,"Y", "\"*y")
+vim.keymap.set({ "n", "v" }, "D", '"*d')
+vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
 -- terminal related.
 local Util = require("lazyvim.util")
@@ -250,12 +250,12 @@ local cmd_mappings = {
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
   { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "AI panel" },
   -- Comment related.
-  { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "v", "n" }, description = "Comment" },
+  { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "n", "v" }, description = "Comment" },
   -- Directory/file related
   {
     cmdKeymap = "<D-e>",
     leaderKeymap = "<leader>fe",
-    modes = { "n", "i" },
+    modes = { "n", "v" },
     description = "List directory on current dir.",
   },
   -- TODO: Directory from the current opened buffer.
@@ -265,7 +265,7 @@ local cmd_mappings = {
   --   modes = { "n", "i" },
   --   description = "Telescope directory on Working directory.",
   -- },
-  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n" }, description = "Telescope all files." },
+  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n", "v" }, description = "Telescope all files." },
   -- { cmdKeymap = "<D-F>", leaderKeymap = "<leader>fF", modes = { "n" }, description = "Search in the working directory" },
   -- Git
   {
