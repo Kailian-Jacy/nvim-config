@@ -49,6 +49,15 @@ vim.api.nvim_create_autocmd({
   command = "startinsert",
 })
 
+-- Temporary workaround for tencent gbk encodings.
+vim.api.nvim_create_autocmd({
+  "BufReadPost",
+}, {
+  command = ":e ++enc=gb2312",
+})
+
+vim.g.clipboard = nil
+
 -- multiple instances of neovide.
 vim.api.nvim_create_user_command("NeovideNew", function()
   vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
