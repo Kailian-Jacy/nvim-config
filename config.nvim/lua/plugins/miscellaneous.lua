@@ -360,12 +360,22 @@ return {
             }
           },
           command_history = {
+            confirm = "modify",
             actions = {
+              execute_without_modification = function (_, item)
+                local cmd;
+                if vim.fn.mode() == "i" then
+                  cmd = "<esc>:" .. item.cmd
+                elseif vim.fn.mode() == "n" then
+                  cmd = ":" .. item.cmd
+                end
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd .. "<cr>", true, false, true), "n", false)
+              end,
               modify = function (_, item)
                 local cmd;
                 if vim.fn.mode() == "i" then
                   cmd = "<esc>:" .. item.cmd
-                elseif vim.fn.mod() == "n" then
+                elseif vim.fn.mode() == "n" then
                   cmd = ":" .. item.cmd
                 end
                 vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
@@ -374,8 +384,8 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<C-CR>"] = { "modify", mode = {"n", "i"} },
-                  ["<D-CR>"] = { "modify", mode = {"n", "i"} }
+                  ["<C-CR>"] = { "execute_without_modification", mode = {"n", "i"} },
+                  ["<D-CR>"] = { "execute_without_modification", mode = {"n", "i"} }
                 }
               },
             }
