@@ -142,6 +142,11 @@ return {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
+              -- Searching from the directory.
+              ["/"] = {"search_here", mode={"n"}},
+              ["<c-/>"] = {"search_here", mode={"n", "i"}},
+              ["<D-/>"] = {"search_here", mode={"n", "i"}},
+
               -- Window switching
               ["<C-w>"] = {"to_preview", mode = {"n", "i"}},
               ["w"] = "to_preview",
@@ -159,6 +164,12 @@ return {
             keys = {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+
+              -- Search from the directory
+              ["/"] = {"search_here", mode={"n"}},
+              ["<c-/>"] = {"search_here", mode={"n", "i"}},
+              ["<D-/>"] = {"search_here", mode={"n", "i"}},
+
               -- Window switching
               ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
               ["w"] = "cycle_win",
@@ -227,6 +238,19 @@ return {
             vim.cmd[[ split ]]
             vim.cmd.lcd(item._path)
             -- Snacks.picker.actions.lcd(_, item)
+          end,
+          search_here = function(picker, item)
+            item.dir = item.dir or false
+            if not item.dir then
+              vim.print_silent("not directory. Could not search here.")
+              return
+            end
+            vim.schedule(function()
+              picker:close()
+              Snacks.picker.grep({
+                cwd = item._path
+              })
+            end)
           end
         },
         sources = {
@@ -274,23 +298,26 @@ return {
             actions = {
               move_pwd_here = function (_, item)
                 vim.cmd.lcd(item._path)
-              end
+              end,
             },
             diagnostics_open = true,
             focus = "input",
             auto_close = true,
             win = {
               input = {
+                keys = {
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
                   ["<c-x>"] = {"edit_split", mode={"n", "i"}},
                   ["x"] = {"edit_split", mode={"n"}},
                   ["v"] = {"edit_vsplit", mode={"n"}},
                   ["t"] = {"edit_vsplit", mode={"n"}},
+                }
               },
               preview = {
                 keys = {
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
                   ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["<c-/>"] = {"search_here", mode={"n"}},
                   ["x"] = {"edit_split", mode={"n"}},
                   ["v"] = {"edit_vsplit", mode={"n"}},
                 }
@@ -301,6 +328,8 @@ return {
                   ["<c-x>"] = {"edit_split", mode={"n", "i"}},
                   ["x"] = {"edit_split", mode={"n"}},
                   ["v"] = {"edit_vsplit", mode={"n"}},
+                  ["/"] = {"search_here", mode={"n"}},
+                  ["<c-/>"] = {"search_here", mode={"n"}},
                 }
               }
             }
@@ -485,9 +514,9 @@ return {
           project = { enable = true, limit = 8, icon = 'your icon', label = '', action = 'Telescope find_files cwd=' },
           mru = { limit = 10, icon = 'your icon', label = '', cwd_only = false },
           shortcut = {
-            { desc = '󰊳 Update', group = '@property', action = 'Lazy update', key = 'u' },
+            { desc = '�?? Update', group = '@property', action = 'Lazy update', key = 'u' },
             {
-              icon = ' ',
+              icon = '??? ',
               icon_hl = '@variable',
               desc = 'Files',
               group = 'Label',
@@ -495,13 +524,13 @@ return {
               key = 'f',
             },
             {
-              desc = ' Apps',
+              desc = '??? Apps',
               group = 'DiagnosticHint',
               action = 'Telescope app',
               key = 'a',
             },
             {
-              desc = ' dotfiles',
+              desc = '�? dotfiles',
               group = 'Number',
               action = 'Telescope dotfiles',
               key = 'd',
