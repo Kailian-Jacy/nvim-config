@@ -170,9 +170,6 @@ autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 """ nnoremap <leader>/ <cmd>Telescope current_bufer_fuzzy_find<cr>
 """ vnoremap <leader>/ "zy:Telescope current_buffer_fuzzy_find default_text=<C-r>z<cr>
 
-nnoremap <leader>lT <cmd>TodoTelescope keywords=TODO<cr>
-nnoremap <leader>lt <cmd>TodoTelescope <cr>
-
 """ keymap finding has been replaced with <leader>sk
 """ nnoremap <leader>fk <cmd>Telescope keymaps<cr>
 
