@@ -587,13 +587,13 @@ return {
   {
     "cohama/lexima.vim"
   },
-  {
-    "gbprod/yanky.nvim",
-    dependencies = {
-      { "kkharji/sqlite.lua" }
-    },
-    opts = {
-      ring = { storage = "sqlite" },
-    },
-  }
+  -- {
+  --   "gbprod/yanky.nvim",
+  --   dependencies = {
+  --     { "kkharji/sqlite.lua" }
+  --   },
+  --   opts = {
+  --     ring = { storage = "sqlite" },
+  --   },
+  -- }
 }
