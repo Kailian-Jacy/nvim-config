@@ -54,6 +54,12 @@ return {
     "folke/snacks.nvim",
     priority = 1000,
     lazy = false,
+    dependencies = {
+      "folke/todo-comments.nvim",
+      config = function()
+          require("todo-comments").setup({})
+      end,
+    },
     keys = {
       { "<leader>.", function() Snacks.picker.buffers() end, desc = "Buffers" },
       { "<leader>.", function() Snacks.picker.grep_buffers({ search = vim.g.function_get_selected_content() }) end, desc = "Grep Open Buffers", mode = {"v"} },
@@ -83,6 +89,9 @@ return {
       -- Help browsing
       { "<leader>fh", function() Snacks.picker.help() end, desc = "Help Pages" },
       { "<leader>fh", function() Snacks.picker.help({ pattern = vim.g.function_get_selected_content()}) end, desc = "Help Pages", mode = "v" },
+
+      -- Todo browsing. 
+      { "<leader>lt", function() Snacks.picker.todo_comments() end, desc = "List Todo Comments" },
 
       -- Keymap browsing.
       { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
