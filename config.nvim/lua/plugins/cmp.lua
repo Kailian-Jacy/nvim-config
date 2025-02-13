@@ -18,7 +18,7 @@ return {
       -- Path
       { "FelipeLema/cmp-async-path", lazy = true },
       { "hrsh7th/cmp-nvim-lsp-signature-help" },
-      { "chrisgrieser/cmp_yanky" },
+      -- { "chrisgrieser/cmp_yanky" },
       -- any keymap involving tab should be done before this plugin loaded.
       { "vidocqh/auto-indent.nvim" },
     },
@@ -146,14 +146,14 @@ return {
             group_index = 1,
             option = { show_autosnippets = true, use_show_condition = false },
           },
-          {
-            name = "cmp_yanky",
-            priority = 150,
-            option = {
-              minLength = 3,
-              onlyCurrentFiletype = false,
-            },
-          },
+          -- {
+          --   name = "cmp_yanky",
+          --   priority = 150,
+          --   option = {
+          --     minLength = 3,
+          --     onlyCurrentFiletype = false,
+          --   },
+          -- },
           {
             name = "nvim_lsp",
             priority = 150,
