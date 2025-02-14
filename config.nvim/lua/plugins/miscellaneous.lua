@@ -362,7 +362,7 @@ return {
           command_history = {
             confirm = "modify",
             actions = {
-              execute_without_modification = function (_, item)
+              execute_without_modification = function (picker, item)
                 local cmd;
                 if vim.fn.mode() == "i" then
                   cmd = "<esc>:" .. item.cmd
@@ -370,8 +370,9 @@ return {
                   cmd = ":" .. item.cmd
                 end
                 vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd .. "<cr>", true, false, true), "n", false)
+                picker:close()
               end,
-              modify = function (_, item)
+              modify = function (picker, item)
                 local cmd;
                 if vim.fn.mode() == "i" then
                   cmd = "<esc>:" .. item.cmd
@@ -379,6 +380,7 @@ return {
                   cmd = ":" .. item.cmd
                 end
                 vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
+                picker:close()
               end
             },
             win = {
