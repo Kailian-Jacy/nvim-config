@@ -22,7 +22,7 @@ set cmdheight=0 noshowmode noruler noshowcmd laststatus=0
 set showbreak=↪\
 set list listchars=tab:→\ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨
 set wrap breakindent
-set encoding=utf-8
+""" set encoding=utf-8
 set textwidth=0
 set hidden
 set number relativenumber
