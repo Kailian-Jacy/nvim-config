@@ -86,7 +86,9 @@ return {
         "<leader><CR>",
         -- conform formatting
         function()
-          require("conform").format()
+          if not (vim.g.do_not_format_all and vim.fn.mode() == "n") then
+            require("conform").format()
+          end
           require("lint").try_lint()
           vim.cmd([[ :w ]]) -- triggers lsp updating.
           require("scrollbar").render() -- try to update the scrollbar.
