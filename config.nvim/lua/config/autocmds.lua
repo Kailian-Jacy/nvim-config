@@ -59,6 +59,30 @@ vim.api.nvim_create_user_command("NeovideNew", function()
   vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
 end, {})
 
+-- current file path into clipboard.
+vim.api.nvim_create_user_command("CopyFilePath", function(opt)
+  if #opt.args == 0 then
+    opt = "full"
+  else
+    opt = opt.args
+  end
+  if opt == "full" then
+    local full_path = vim.fn.expand("%:p")
+    vim.fn.setreg("*", full_path)
+  elseif opt == "relative" then
+    local relative_path = vim.fn.expand("%:p"):gsub(vim.fn.getcwd() .. "/", "")
+    vim.fn.setreg("*", relative_path)
+  elseif opt == "dir" then
+    local workdir = vim.fn.getcwd()
+    vim.fn.setreg("*", workdir)
+  elseif opt == "filename" then
+    local filename = vim.fn.expand("%:t")
+    vim.fn.setreg("*", filename)
+  else
+    vim.notify("Invalid option: " .. opt, vim.log.levels.ERROR)
+  end
+end, { nargs = "?" })
+
 -- Macro recording related.
 vim.api.nvim_create_autocmd("RecordingEnter", {
   callback = function()
