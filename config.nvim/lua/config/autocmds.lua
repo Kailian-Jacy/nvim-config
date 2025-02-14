@@ -2,6 +2,11 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
+-- Sometimes we want to have different settings across nvim deployments.
+local nvim_conf_dir = (...):match("(.-)[^%.]+$")
+-- Load the local config to set something locally.
+local _, _ = pcall(require, nvim_conf_dir .. "local") -- handle the local module with error tolerance.
+
 -- VimEnter does not work here.
 -- vim.api.nvim_create_autocmd("VimEnter", {
 --   callback = function()
@@ -48,15 +53,6 @@ vim.api.nvim_create_autocmd({
   pattern = "term://*",
   command = "startinsert",
 })
-
--- Temporary workaround for tencent gbk encodings.
-vim.api.nvim_create_autocmd({
-  "BufReadPost",
-}, {
-  command = ":e ++enc=gb2312",
-})
-
-vim.g.clipboard = nil
 
 -- multiple instances of neovide.
 vim.api.nvim_create_user_command("NeovideNew", function()
