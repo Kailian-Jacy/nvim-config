@@ -28,6 +28,9 @@ return {
             -- Completion/documentation Pmenu border color when using bordered windows
             Pmenu = { bg = "" },
             PmenuSbar = { bg = "" },
+            PmenuSel = { link = "Visual" },
+            -- PmenuMatch = { link = "Visual" },
+            -- PmenuMatchSel = { link = "Visual" },
             CmpPmenuBorder = { link = "Comment" },
             CompeDocumentationBorder = { link = "Comment" },
             -- System wide borders color.

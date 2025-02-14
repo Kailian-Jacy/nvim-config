@@ -39,12 +39,12 @@ return {
         window = {
           completion = {
             border = "rounded",
-            winhighlight = "Normal:Pmenu,FloatBorder:CompeDocumentationBorder",
+            winhighlight = "Normal:Pmenu,FloatBorder:CompeDocumentationBorder,CursorLine:PmenuSel,Search:Visual",
             winblend = 0,
           },
           documentation = {
             border = "rounded",
-            winhighlight = "Normal:Pmenu,FloatBorder:CompeDocumentationBorder",
+            winhighlight = "Normal:Pmenu,FloatBorder:CompeDocumentationBorder,CursorLine:PmenuSel,Search:Visual",
             winblend = 0,
           },
         },
