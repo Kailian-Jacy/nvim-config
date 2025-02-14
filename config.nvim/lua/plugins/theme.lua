@@ -17,10 +17,14 @@ return {
         italic_comment = true,
         overrides = function(colors)
           return {
+            -- Set cursorline to be empty rather than using :set cursorline.
+            -- If wanting to use any cursorline linked to this, need manually setting.
+            CursorLine = { bg = "" },
             -- Basics
             SnacksPickerDir = { link = "SnacksPickerFile" },
             -- SnacksPickerDir = { link = "Delimiter" },
             SnacksPickerMatch = { link = "Search" },
+            SnacksPickerPreviewCursorLine = { link = "Visual" },
             -- Completion/documentation Pmenu border color when using bordered windows
             Pmenu = { bg = "" },
             PmenuSbar = { bg = "" },
@@ -211,7 +215,7 @@ return {
                 local recording = function()
                   if vim.g.recording_status == true then
                     return "[q] "
-                  else 
+                  else
                     return ""
                   end
                 end

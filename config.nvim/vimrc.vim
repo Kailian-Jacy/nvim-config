@@ -28,8 +28,8 @@ set hidden
 set number relativenumber
 set title
 """ Only highlight the current line number
-set cursorline
-set cursorlineopt=number
+"set cursorline
+"set cursorlineopt=number
 set linebreak
 set smoothscroll
 
