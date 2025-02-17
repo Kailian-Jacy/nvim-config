@@ -345,14 +345,22 @@ return {
           },
           zoxide = {
             layout = { preset = "vscode", preview = false },
+            -- By default, zoxide only changes the current tab cwd.
+            confirm = "zoxide_tcd",
+            actions = {
+              zoxide_tcd = function (picker, item)
+                vim.cmd.tcd(item._path)
+                picker:close()
+              end
+            },
             win = {
               input = {
                 keys = {
                   -- ["<c-t>"] = {"test", mode={"n", "i"}},
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
-                  -- FIXME: They won't work for now.
-                  --
-                  ["<c-x>"] = {"x_new_win_here", mode={"n", "i"}},
+                  ["<c-cr>"] = {"new_tab_here", mode={"n", "i"}},
+                  ["<d-cr>"] = {"new_tab_here", mode={"n", "i"}},
+                  -- FIXME: Split won't work for now. could because it's on the input window, and split could not be done easily.
                   ["<c-v>"] = {"v_new_win_here", mode={"n", "i"}},
                   ["<c-X>"] = {"v_new_win_here", mode={"n", "i"}},
                 }
