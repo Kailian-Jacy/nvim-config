@@ -147,7 +147,11 @@ return {
         win = {
           input = {
             keys = {
+              -- navigation.
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
+
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
@@ -158,15 +162,15 @@ return {
 
               -- Window switching
               ["<C-w>"] = {"to_preview", mode = {"n", "i"}},
-              ["w"] = "to_preview",
 
               -- ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize",
-              ["x"] = "edit_split",
-              ["v"] = "edit_vsplit",
-              ["p"] = "inspect",
+
+              -- Inspecting.
+              ["<c-p>"] = "inspect",
+
+              ["o"] = "toggle_maximize", -- Input shall not have new line.
             }
           },
           list = {
@@ -180,9 +184,9 @@ return {
               ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
               -- Window switching
-              ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
-              ["w"] = "cycle_win",
-
+              ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["o"] = "toggle_maximize",
               ["x"] = "edit_split",
               ["v"] = "edit_vsplit",
@@ -196,10 +200,9 @@ return {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
-              -- Window switching
-              ["<C-w>"] = {"to_input", mode = {"n", "i"}},
-              ["w"] = "to_input",
-
+              ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["o"] = "toggle_maximize",
               ["x"] = "edit_split",
               ["v"] = "edit_vsplit",
@@ -238,6 +241,23 @@ return {
               vim.cmd("e " .. item._path)
             end
           end,
+          -- cycle with some order. TODO: Not tested. Rethink if we do really need it.
+          reverse_cycle_win = function (picker)
+            local wins = { picker.input.win.win, picker.list.win.win, picker.preview.win.win }
+            wins = vim.tbl_filter(function(w)
+              return vim.api.nvim_win_is_valid(w)
+            end, wins)
+            local win = vim.api.nvim_get_current_win()
+            local idx = 1
+            for i, w in ipairs(wins) do
+              if w == win then
+                idx = i
+                break
+              end
+            end
+            win = wins[idx % #wins + 1] or 1 -- cycle
+            vim.api.nvim_set_current_win(win)
+          end,
           v_new_win_here = function (_, item)
             vim.cmd[[ vsplit ]]
             vim.cmd.lcd(item._path)
@@ -263,22 +283,6 @@ return {
           end
         },
         sources = {
-          buffers = {
-            win = {
-              preview = {
-                keys = {
-                  -- FIXME: Not working for now. Seems like it's acting like normal buffer.
-                  ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
-                }
-              },
-              input = {
-                keys = {
-                  ["<c-x>"] = { "edit_split", mode = { "n", "i" } },
-                  ["<c-d>"] = { "bufdelete", mode = { "n", "i" } },
-                }
-              }
-            }
-          },
           keymaps = {
             actions = {
               go_to_if_possible = function (_, item)
@@ -305,6 +309,7 @@ return {
             -- or leave it empty to use the default settings
             layout = { preset = "dropdown", preview = true },
             actions = {
+              -- TODO: Design and finish this.
               move_pwd_here = function (_, item)
                 vim.cmd.lcd(item._path)
               end,
@@ -315,32 +320,9 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
-                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
-                  ["x"] = {"edit_split", mode={"n"}},
-                  ["v"] = {"edit_vsplit", mode={"n"}},
-                  ["t"] = {"edit_vsplit", mode={"n"}},
+                  ["<c-m>"] = {"move_pwd_here", mode={"n"}},
                 }
               },
-              preview = {
-                keys = {
-                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
-                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
-                  ["<c-/>"] = {"search_here", mode={"n"}},
-                  ["x"] = {"edit_split", mode={"n"}},
-                  ["v"] = {"edit_vsplit", mode={"n"}},
-                }
-              },
-              list = {
-                keys = {
-                  ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
-                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
-                  ["x"] = {"edit_split", mode={"n"}},
-                  ["v"] = {"edit_vsplit", mode={"n"}},
-                  ["/"] = {"search_here", mode={"n"}},
-                  ["<c-/>"] = {"search_here", mode={"n"}},
-                }
-              }
             }
           },
           zoxide = {
