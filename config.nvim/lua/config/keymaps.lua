@@ -249,6 +249,9 @@ local cmd_mappings = {
   -- Ai related.
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
   { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "AI panel" },
+  -- Buffer related.
+  { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
+  { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
   -- Comment related.
   { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "n", "v" }, description = "Comment" },
   -- Directory/file related
@@ -265,7 +268,7 @@ local cmd_mappings = {
   --   modes = { "n", "i" },
   --   description = "Telescope directory on Working directory.",
   -- },
-  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n", "v" }, description = "Telescope all files." },
+  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n", "v" }, description = "List all files." },
   -- { cmdKeymap = "<D-F>", leaderKeymap = "<leader>fF", modes = { "n" }, description = "Search in the working directory" },
   -- Git
   {
@@ -354,11 +357,9 @@ local cmd_mappings = {
     back_to_insert = true,
   },
   -- Zoxide navigation.
-  { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Telescope Cd with Zeoxide" },
+  { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Navigate Cd with Zeoxide" },
   -- Searching
-  { cmdKeymap = "<D-/>", leaderKeymap = "<leader>/", modes = { "n", "v" }, description = "Telescope Search (Global)" },
-  -- Buffer related.
-  { cmdKeymap = "<D-.>", leaderKeymap = "<leader>.", modes = { "n" }, description = "Telescope all buffers." },
+  { cmdKeymap = "<D-/>", leaderKeymap = "<leader>/", modes = { "n", "v" }, description = "Search (Global)" },
   {
     cmdKeymap = "<D-CR>",
     leaderKeymap = "<leader><CR>",
