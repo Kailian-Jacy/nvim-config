@@ -15,7 +15,7 @@ vim.g.read_binary_with_xxd = false
 -- According to neovim doc, set encoding= option is deprecated.
 -- Just list possible encodings in the fileencodings, and neovim will decide.
 -- gb2312 can't be placed after latin1. Don't know why. Possibly because detect failure.
-vim.cmd[[ set fileencodings=ucs-bom,utf-8,gb2312,latin1,euc-cn ]]
+-- vim.cmd[[ set fileencodings=ucs-bom,utf-8,gb2312,latin1,euc-cn ]]
 
 -- [[ Helper functions. Just skip them. ]]
 local function obsidian_app_exists()

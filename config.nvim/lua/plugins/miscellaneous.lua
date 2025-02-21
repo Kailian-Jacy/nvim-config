@@ -61,8 +61,10 @@ return {
       end,
     },
     keys = {
-      { "<leader>.", function() Snacks.picker.buffers() end, desc = "Buffers" },
-      { "<leader>.", function() Snacks.picker.grep_buffers({ search = vim.g.function_get_selected_content() }) end, desc = "Grep Open Buffers", mode = {"v"} },
+      { "<leader>bb", function() Snacks.picker.buffers() end, desc = "Buffers" },
+      { "<leader>bb", function() Snacks.picker.buffers({ search = vim.g.function_get_selected_content() }) end, desc = "Buffers", mode = {"v"} }, -- maybe not to be used.. but let's just leave it here.
+      { "<leader>bB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
+      { "<leader>bB", function() Snacks.picker.grep_buffers({ search = vim.g.function_get_selected_content() }) end, desc = "Grep Open Buffers", mode = {"v"} },
 
       -- Search
       -- { "<leader>/", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
