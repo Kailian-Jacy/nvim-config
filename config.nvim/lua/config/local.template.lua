@@ -1,16 +1,12 @@
--- This is a lua file that contains local settings
+-- This is a lua file that contains local settings.
 -- It will not be synchronized between git repos.
+-- Rename this file to local.lua to make it take effect.
 
 M = {}
 
 -- Temporary workaround for tencent gbk encodings.
--- vim.api.nvim_create_autocmd({
---   "BufReadPost",
--- }, {
---   command = ":e ++enc=gb2312",
--- })
---
 -- vim.g.clipboard = nil
 -- vim.g.do_not_format_all = true
+-- vim.cmd[[ set fileencodings=ucs-bom,gb2312,utf-8,latin1,euc-cn ]]
 
 return M
