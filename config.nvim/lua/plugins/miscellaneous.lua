@@ -155,6 +155,10 @@ return {
               ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
 
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Searching from the directory.
@@ -170,6 +174,7 @@ return {
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
 
               -- Inspecting.
+              ["<c-z>"] = "picker_print",
               ["<c-p>"] = "inspect",
 
               ["o"] = "toggle_maximize", -- Input shall not have new line.
@@ -178,6 +183,10 @@ return {
           list = {
             keys = {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Search from the directory
@@ -195,11 +204,17 @@ return {
               ["p"] = "inspect",
               ["A"] = "toggle_focus",
               ["a"] = "toggle_focus",
+
+              ["<c-z>"] = "picker_print",
             }
           },
           preview = {
             keys = {
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
@@ -211,12 +226,15 @@ return {
               ["p"] = "inspect",
               ["A"] = "toggle_focus",
               ["a"] = "toggle_focus",
+
+              ["<c-z>"] = "picker_print",
             }
           }
         },
         actions = {
-          test = function(self, item)
-            vim.print("triggered")
+          picker_print = function(picker, _)
+            vim.print_silent("111")
+            vim.print(picker)
           end,
           to_preview = function(picker, _)
             if vim.api.nvim_win_is_valid(picker.preview.win.win) then
@@ -283,6 +301,8 @@ return {
             end)
           end
         },
+        -- FIXME: Some special prewview types will not accept keymaps.
+        -- BUFFERS BUFFER_DIAGNOSTICS LINESEARCH
         sources = {
           keymaps = {
             actions = {
@@ -301,6 +321,30 @@ return {
               input = {
                 keys = {
                   ["<c-t>"] = { "go_to_if_possible" , mode={"n", "i"}}
+                }
+              }
+            }
+          },
+          diagnostics = {
+            win = {
+              preview = {
+                keys = {
+                  ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+                  ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
+                  ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+                  ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+                }
+              }
+            }
+          },
+          diagnostics_buffer = {
+            win = {
+              preview = {
+                keys = {
+                  ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
+                  ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
+                  ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+                  ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
                 }
               }
             }
@@ -326,6 +370,7 @@ return {
               },
             }
           },
+          -- FIXME: When left input line and goes back, the buffer will lose focus.
           zoxide = {
             layout = { preset = "vscode", preview = false },
             -- By default, zoxide only changes the current tab cwd.
