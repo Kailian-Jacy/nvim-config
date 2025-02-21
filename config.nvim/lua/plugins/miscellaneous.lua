@@ -235,11 +235,10 @@ return {
           end,
           new_tab_here = function(_, item)
             vim.cmd[[ tabnew ]]
-            Snacks.picker.actions.tcd(_, item)
-            vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
-            item.dir = item.dir or false
-            -- If possible, open the file there.
-            if not item.dir then
+            if item.dir then
+              Snacks.picker.actions.tcd(_, item)
+              vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+            else
               vim.cmd("e " .. item._path)
             end
           end,
