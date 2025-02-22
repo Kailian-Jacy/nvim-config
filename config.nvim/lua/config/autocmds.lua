@@ -88,6 +88,39 @@ vim.api.nvim_create_user_command("FlipHeaderAndImpl", function()
   end
 end, {})
 
+-- Drop buf some where and reveal the last.
+vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
+  if #opt.args == 0 then
+    opt = "l"
+  else
+    opt = opt.args
+  end
+  local buf = vim.api.nvim_get_current_buf()
+  if not vim.tbl_contains({ "h", "j", "k", "l" }, opt) then
+    vim.notify("Invalid direction: " .. opt, vim.log.levels.WARN)
+  end
+  if vim.fn.winnr() ~= vim.fn.winnr(opt) then
+    -- exists. Just throw.
+    vim.cmd("wincmd " .. opt)
+  else
+    -- create new window if none exists.
+    if opt == "l" then
+      vim.cmd("vsplit")
+    elseif opt == "h" then
+      vim.cmd("vsplit")
+      vim.cmd("wincmd h")
+    elseif opt == "j" then
+      vim.cmd("split")
+    elseif opt == "k" then
+      vim.cmd("split")
+      vim.cmd("wincmd k")
+    end
+  end
+  vim.cmd("b " .. buf)
+  vim.cmd("wincmd p") -- go to the last win.
+  require("bufjump").backward()
+end, { nargs = "?" })
+
 -- current file path into clipboard.
 vim.api.nvim_create_user_command("CopyFilePath", function(opt)
   if #opt.args == 0 then

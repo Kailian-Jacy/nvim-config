@@ -31,10 +31,12 @@ vim.keymap.del({ "n", "i", "v" }, "<M-k>")
 vim.keymap.del({ "n", "i", "v" }, "<M-j>")
 
 vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")
--- Keymap Line
+
+-- Exit keymap.
 vim.keymap.set("n", "ZA", function()
   vim.cmd([[ wqa ]])
 end, { noremap = true })
+
 -- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
@@ -45,8 +47,14 @@ vim.keymap.set({ "n", "v", "i" }, "<C-J>", "<cmd>wincmd j<cr>", { noremap = true
 vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<cmd>wincmd h<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<cmd>wincmd l<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<cmd>wincmd k<cr>", { noremap = true, silent = true })
--- vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
+vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
 vim.keymap.set({ "t" }, "<C-L>", "<C-L>", { noremap = true, silent = true })
+
+-- Throw buffer and reveal.
+vim.keymap.set({ "n", "v", "i"}, "<C-S-l>", "<cmd>ThrowAndReveal l<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i"}, "<C-S-k>", "<cmd>ThrowAndReveal k<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i"}, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i"}, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
