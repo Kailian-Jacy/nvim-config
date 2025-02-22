@@ -30,7 +30,8 @@ return {
     },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "4o", -- Recommend using Claude
+      provider = "azure4omini", -- Recommend using Claude
+      -- provider = "4omini", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
       azure = {},
       vendors = {
@@ -58,11 +59,11 @@ return {
           max_tokens = 128000,
           ["local"] = false,
         },
-        ["4o"] = {
+        ["azure4omini"] = {
           __inherited_from = "azure",
-          endpoint = "https://openai-vlaa-westus.openai.azure.com/",
-          deployment = "gpt-4o-0806-nofilter",
-          model = "gpt-4o-0806-nofilter",
+          endpoint = "https://openai-vlaa-eastus.openai.azure.com/",
+          deployment = "gpt-4o-mini-0718-nofilter",
+          model = "gpt-4o-mini-0718-nofilter",
           api_key_name = "AZURE_OPENAI_API_KEY",
           api_version = "2024-02-15-preview",
           timeout = 30000,
