@@ -1,5 +1,29 @@
 return {
   {
+    "kwkarlwang/bufjump.nvim",
+    keys = {
+      {
+        "H",
+        function()
+          require("bufjump").backward()
+        end,
+        mode = "n",
+        desc = "jump to last buffer.",
+      },
+      {
+        "L",
+        function()
+          require("bufjump").forward()
+        end,
+        mode = "n",
+        desc = "jump to last buffer.",
+      },
+    },
+    config = function()
+      require("bufjump").setup({})
+    end,
+  },
+  {
     "L3MON4D3/LuaSnip",
     -- follow latest release.
     version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
