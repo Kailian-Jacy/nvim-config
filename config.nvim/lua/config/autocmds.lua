@@ -21,6 +21,19 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Bookmark removing.
+vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
+  local location = require("bookmarks.domain.location").get_current_location()
+  local node = require("bookmarks.domain.repo").find_node_by_location(location)
+  if not node then
+    vim.notify("No node found at cursor position", vim.log.levels.WARN)
+    return
+  end
+  vim.print(node.id)
+  require("bookmarks.domain.service").delete_node(node.id)
+  require("bookmarks.sign").safe_refresh_signs()
+end, { desc = "Remove the bookmark at cursor line." })
+
 -- Surroudings workaround
 require("visual-surround").setup({
   surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`" },
