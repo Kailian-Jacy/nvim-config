@@ -29,7 +29,6 @@ vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
     vim.notify("No node found at cursor position", vim.log.levels.WARN)
     return
   end
-  vim.print(node.id)
   require("bookmarks.domain.service").delete_node(node.id)
   require("bookmarks.sign").safe_refresh_signs()
 end, { desc = "Remove the bookmark at cursor line." })
