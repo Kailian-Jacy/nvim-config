@@ -8,7 +8,7 @@ return {
         animate = {
           enabled = false,
         },
-        debounce_timeout = 500
+        debounce_timeout = 500,
       })
     end,
   },
@@ -54,15 +54,34 @@ return {
   {
     -- "Kailian-Jacy/visual-surround.nvim",
     "NStefan002/visual-surround.nvim",
-    -- TODO: For "<" and ">" to work, I need to comment out line 75-76 in `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/config/keymaps.lua`
-    --
-    -- opts = {
-    --   enable_wrapped_deletion = true,
-    --   surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`", "<", ">" },
-    -- },
+    opts = {
+      enable_wrapped_deletion = true,
+      surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`", "<", ">" },
+    },
+    config = function()
+      require("visual-surround").setup({
+        surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`" },
+      })
+
+      for _, key in ipairs({ "<", ">" }) do
+        vim.keymap.set("x", key, function()
+          local mode = vim.api.nvim_get_mode().mode
+          -- do not change the default behavior of '<' and '>' in visual-line mode
+          if mode == "V" then
+            return key .. "gv"
+          else
+            vim.schedule(function()
+              require("visual-surround").surround(key)
+            end)
+            return "<ignore>"
+          end
+        end, {
+          desc = "[visual-surround] Surround selection with " .. key .. " (visual mode and visual block mode)",
+          expr = true,
+        })
+      end
+    end,
   },
-  -- Refine indentation logic.
-  -- TODO: It's not working now because copilot is mapping <Tab> overriding which.
   {
     "vidocqh/auto-indent.nvim",
     config = function()
@@ -153,5 +172,17 @@ return {
       local opts = {}
       require("bookmarks").setup(opts)
     end,
+  },
+  {
+    "declancm/maximize.nvim",
+    keys = {
+      {
+        "<leader>wm",
+        "<cmd>Maximize<CR>",
+        { "n", "v" },
+        desc = "Maximize current window.",
+      },
+    },
+    config = true,
   },
 }

@@ -7,13 +7,21 @@ vim.g.mapleader = " "
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
+-- Some useful keymaps:
+vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
+vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
+vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
+vim.keymap.set({ "n", "v" }, "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit." })
+
 -- terminal related.
-local Util = require("lazyvim.util")
-local lazyterm = function()
-  Util.terminal({ "tmux", "new", "-As0" }, { cwd = Util.root() })
-end
-vim.keymap.set("n", "<C-/>", lazyterm, { desc = "Terminal (root dir)" })
-vim.keymap.set("t", "<C-/>", "<cmd>close<cr>", { desc = "Hide Terminal" })
+-- TODO: Implement floating terminal without lazyvim.
+--
+-- local Util = require("lazyvim.util")
+-- local lazyterm = function()
+--   Util.terminal({ "tmux", "new", "-As0" }, { cwd = Util.root() })
+-- end
+-- vim.keymap.set("n", "<C-/>", lazyterm, { desc = "Terminal (root dir)" })
+-- vim.keymap.set("t", "<C-/>", "<cmd>close<cr>", { desc = "Hide Terminal" })
 
 -- Commenting keymaps
 vim.keymap.set({ "v", "n" }, "<leader>cm", function()
@@ -27,8 +35,8 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
 end)
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
-vim.keymap.del({ "n", "i", "v" }, "<M-k>")
-vim.keymap.del({ "n", "i", "v" }, "<M-j>")
+-- vim.keymap.del({ "n", "i", "v" }, "<M-k>")
+-- vim.keymap.del({ "n", "i", "v" }, "<M-j>")
 
 vim.keymap.set({ "n", "i", "v" }, "<c-i>", "<c-i>")
 
@@ -49,12 +57,15 @@ vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<cmd>wincmd l<cr>", { noremap = true
 vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<cmd>wincmd k<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
 vim.keymap.set({ "t" }, "<C-L>", "<C-L>", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-H>", "<C-H>", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-J>", "<C-J>", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-K>", "<C-K>", { noremap = true, silent = true })
 
 -- Throw buffer and reveal.
-vim.keymap.set({ "n", "v", "i"}, "<C-S-l>", "<cmd>ThrowAndReveal l<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i"}, "<C-S-k>", "<cmd>ThrowAndReveal k<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i"}, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i"}, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<cmd>ThrowAndReveal l<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<cmd>ThrowAndReveal k<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
@@ -71,8 +82,8 @@ vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap 
 vim.keymap.set("n", "ga", "<cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
 
 -- disable lazyim default keymaps.
-vim.keymap.del("n", "<leader>l")
-vim.keymap.del("n", "<leader>L")
+-- vim.keymap.del("n", "<leader>l")
+-- vim.keymap.del("n", "<leader>L")
 
 -- copilot mapping: copilot mapping are all migrated to the configuration part of nvim-cmp.
 vim.g.copilot_no_maps = true
@@ -112,7 +123,7 @@ vim.keymap.set("n", "<S-C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = 
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
-  vim.print_silent(require("nvim-navic").get_location())
+  vim.print_silent(require("nvim-navic").get_location() or "N.A.")
 end)
 
 -- Mapping and unmapping during debugging.
@@ -290,7 +301,7 @@ local cmd_mappings = {
   { cmdKeymap = "<D-j>", leaderKeymap = "<leader>jj", modes = { "n" }, description = "Show buffer diagnostics" },
   { cmdKeymap = "<D-J>", leaderKeymap = "<leader>jJ", modes = { "n" }, description = "Workspace diagnostics" },
   -- Keymaps
-  { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
+  -- { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
   -- Inspect
   { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "List keymaps" },
   -- New buffer/instances.
@@ -336,12 +347,12 @@ local cmd_mappings = {
   -- Terminal.
   {
     cmdKeymap = "<D-t>",
-    leaderKeymap = "<C-/>",
-    modes = { "n", "v", "t" },
+    leaderKeymap = "<leader>tt",
+    modes = { "n", "v" },
     description = "Floating terminal in tmux.",
   },
   -- Telescope recover.
-  { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tt", modes = { "n" }, description = "Reshow the last list" },
+  { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
   -- buffer/Window closing.
   { cmdKeymap = "<D-w>", leaderKeymap = "<leader>bd", modes = { "n", "v" }, description = "Close buffer" },
   { cmdKeymap = "<D-w>", leaderKeymap = "<C-/>", modes = { "t" }, description = "Close floating terminal" },

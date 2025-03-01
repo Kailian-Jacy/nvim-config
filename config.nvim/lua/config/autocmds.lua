@@ -2,24 +2,34 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Sometimes we want to have different settings across nvim deployments.
-local nvim_conf_dir = (...):match("(.-)[^%.]+$")
--- Load the local config to set something locally.
-local _, _ = pcall(require, nvim_conf_dir .. "local") -- handle the local module with error tolerance.
-
--- VimEnter does not work here.
--- vim.api.nvim_create_autocmd("VimEnter", {
---   callback = function()
---     vim.fn.writefile({ "111" }, "/Users/kailianjacy/test.txt")
---   end,
--- })
--- To do something similar, just do it here.
---
 -- Start a tmux session in the background if none.
 -- TODO: Not sure if working.
 vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
+
+-- Help page closing.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "help", "man" },
+  callback = function()
+    vim.keymap.set(
+      "n",
+      "q",
+      "<c-w>c",
+      { desc = "Using q to close help and man page.", silent = true, buffer = true, noremap = false }
+    )
+  end,
+})
+
+-- Highlight yanking
+vim.api.nvim_create_autocmd("TextYankPost", {
+  group = vim.api.nvim_create_augroup("highlight_yank", {}),
+  desc = "Hightlight selection on yank",
+  pattern = "*",
+  callback = function()
+    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 100 })
+  end,
+})
 
 -- Bookmark removing.
 vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
@@ -29,33 +39,9 @@ vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
     vim.notify("No node found at cursor position", vim.log.levels.WARN)
     return
   end
-  vim.print(node.id)
   require("bookmarks.domain.service").delete_node(node.id)
   require("bookmarks.sign").safe_refresh_signs()
 end, { desc = "Remove the bookmark at cursor line." })
-
--- Surroudings workaround
-require("visual-surround").setup({
-  surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`" },
-})
-
-for _, key in ipairs({ "<", ">" }) do
-  vim.keymap.set("x", key, function()
-    local mode = vim.api.nvim_get_mode().mode
-    -- do not change the default behavior of '<' and '>' in visual-line mode
-    if mode == "V" then
-      return key .. "gv"
-    else
-      vim.schedule(function()
-        require("visual-surround").surround(key)
-      end)
-      return "<ignore>"
-    end
-  end, {
-    desc = "[visual-surround] Surround selection with " .. key .. " (visual mode and visual block mode)",
-    expr = true,
-  })
-end
 
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
@@ -177,7 +163,14 @@ vim.api.nvim_create_autocmd("RecordingLeave", {
 
 -- Start at the last place exited.
 -- Seems like "VimEnter" function not working in autocmds.lua.
-vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    if vim.g.LAST_WORKING_DIRECTORY then
+      -- vim.print_silent("Workdir: " .. vim.g.LAST_WORKING_DIRECTORY)
+      vim.cmd("cd " .. (vim.g.LAST_WORKING_DIRECTORY or ""))
+    end
+  end,
+})
 vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
     vim.g.LAST_WORKING_DIRECTORY = vim.fn.getcwd()

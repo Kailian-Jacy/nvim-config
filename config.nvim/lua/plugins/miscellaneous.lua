@@ -10,11 +10,75 @@
 -- * override the configuration of LazyVim plugins
 return {
   -- Disable some of the builtin plugins.
+  -- {
+  --   "LazyVim/LazyVim",
+  --   version = "12.44.1",
+  --   opts = {
+  --     colorscheme = "dracula",
+  --   },
+  -- },
   {
-    "LazyVim/LazyVim",
-    version = "12.44.1",
+    "folke/which-key.nvim",
+    -- Disabled since snacks.nvim works even it's not here.
+    enabled = false,
+    event = "VeryLazy",
+    opts_extend = { "spec" },
     opts = {
-      colorscheme = "dracula",
+      preset = "helix",
+      defaults = {},
+      spec = {
+        -- {
+        --   mode = { "n", "v" },
+        --   { "<leader><tab>", group = "tabs" },
+        --   { "<leader>c", group = "code" },
+        --   { "<leader>d", group = "debug" },
+        --   { "<leader>dp", group = "profiler" },
+        --   { "<leader>f", group = "file/find" },
+        --   { "<leader>g", group = "git" },
+        --   { "<leader>gh", group = "hunks" },
+        --   { "<leader>q", group = "quit/session" },
+        --   { "<leader>s", group = "search" },
+        --   { "<leader>u", group = "ui", icon = { icon = "¿ ", color = "cyan" } },
+        --   { "<leader>x", group = "diagnostics/quickfix", icon = { icon = "¿ ", color = "green" } },
+        --   { "[", group = "prev" },
+        --   { "]", group = "next" },
+        --   { "g", group = "goto" },
+        --   { "z", group = "fold" },
+        --   {
+        --     "<leader>b",
+        --     group = "buffer",
+        --     expand = function()
+        --       return require("which-key.extras").expand.buf()
+        --     end,
+        --   },
+        --   {
+        --     "<leader>w",
+        --     group = "windows",
+        --     proxy = "<c-w>",
+        --     expand = function()
+        --       return require("which-key.extras").expand.win()
+        --     end,
+        --   },
+        --   -- better descriptions
+        --   { "gx", desc = "Open with system app" },
+        -- },
+      },
+    },
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({ global = false })
+        end,
+        desc = "Buffer Keymaps (which-key)",
+      },
+      {
+        "<c-w><space>",
+        function()
+          require("which-key").show({ keys = "<c-w>", loop = true })
+        end,
+        desc = "Window Hydra Mode (which-key)",
+      },
     },
   },
   {
@@ -70,8 +134,8 @@ return {
       -- { "<leader>/", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
       { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
       { "<leader>/", function() Snacks.picker.grep({ search = vim.g.function_get_selected_content() }) end, desc = "Grep", mode = "v" },
-      { "<leader>ll", function() Snacks.picker.lines() end, desc = "Line inspect" },
-      { "<leader>ll", function() Snacks.picker.lines({ pattern = vim.g.function_get_selected_content() }) end, desc = "Line inspect", mode = "v"},
+      { "<c-/>", function() Snacks.picker.lines() end, desc = "Line inspect" },
+      { "<c-/>", function() Snacks.picker.lines({ pattern = vim.g.function_get_selected_content() }) end, desc = "Line inspect", mode = "v"},
 
       -- File browsing.
       { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" },
@@ -115,7 +179,7 @@ return {
       { "gi", function() Snacks.picker.lsp_implementations({ pattern = vim.g.function_get_selected_content()}) end, desc = "Goto Implementation", mode = "v" },
 
       -- Redo
-      { "<leader>tt", function() Snacks.picker.resume() end, desc = "Resume" },
+      { "<leader>tT", function() Snacks.picker.resume() end, desc = "Resume" },
 
       -- { "gD", function() Snacks.picker.lsp_declarations() end, desc = "Goto Declaration" },
       -- Command.
@@ -127,12 +191,55 @@ return {
       -- Navigation
       { "<leader>zz", function() Snacks.picker.zoxide() end, desc = "Zoxide cwd navigation" },
       { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
+
+      -- Floating terminal.
+      { "<leader>tt", function() Snacks.terminal({"tmux", "new", "-As0"}) end, mode = {"n", "v"}, desc = "Tmux floating window terminal."} 
     },
     opts = {
       bigfile = { enabled = false },
       dashboard = { enabled = false },
       explorer = {
         enabled = true
+      },
+      styles = {
+        terminal = {
+          keys = {
+            ["<D-t>"] = {
+              function(self)
+                 self:hide()
+              end,
+              mode = "t",
+              expr = true,
+            },
+            gf = function(self)
+              local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
+              if f == "" then
+                Snacks.notify.warn("No file under cursor")
+              else
+                self:hide()
+                vim.schedule(function()
+                  vim.cmd("e " .. f)
+                end)
+              end
+            end,
+            term_normal = {
+              "<esc>",
+              function(self)
+                self.esc_timer = self.esc_timer or (vim.uv or vim.loop).new_timer()
+                if self.esc_timer:is_active() then
+                  self.esc_timer:stop()
+                  vim.cmd("stopinsert")
+                else
+                  self.esc_timer:start(200, 0, function() end)
+                  return "<esc>"
+                end
+              end,
+              mode = "t",
+              expr = true,
+              desc = "Double escape to normal mode",
+            },
+          }
+        }
       },
       -- indent = { enabled = false },
       input = { enabled = false },
@@ -153,44 +260,51 @@ return {
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
+              ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
+              ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
+              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
 
+              -- Windows switching.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
 
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Searching from the directory.
-              ["/"] = {"search_here", mode={"n"}},
-              ["<c-/>"] = {"search_here", mode={"n", "i"}},
+              ["<C-/>"] = {"search_here", mode={"n", "i"}},
               ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
-              -- Window switching
-              ["<C-w>"] = {"to_preview", mode = {"n", "i"}},
-
-              -- ["<C-w>"] = {"cycle_win", mode = {"n", "i"}},
+              -- Maximize.
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["o"] = "toggle_maximize", -- Input shall not have new line.
 
               -- Inspecting.
-              ["<c-z>"] = "picker_print",
               ["<c-p>"] = "inspect",
-
-              ["o"] = "toggle_maximize", -- Input shall not have new line.
+              ["<d-p>"] = "inspect",
             }
           },
           list = {
             keys = {
+              -- Window switching.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
 
+              -- Tab open.
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+              ["t"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Search from the directory
-              ["/"] = {"search_here", mode={"n"}},
               ["<c-/>"] = {"search_here", mode={"n", "i"}},
               ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
@@ -198,36 +312,72 @@ return {
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize",
+              ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
+              ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
+              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["x"] = "edit_split",
+              ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",
+
+              -- Maximize.
+              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["o"] = "toggle_maximize",
+
+              -- Inspecting.
+              ["<c-p>"] = "inspect",
+              ["<d-p>"] = "inspect",
               ["p"] = "inspect",
+
               ["A"] = "toggle_focus",
               ["a"] = "toggle_focus",
-
-              ["<c-z>"] = "picker_print",
+              ["i"] = "toggle_focus",
+              ["I"] = "toggle_focus",
             }
           },
           preview = {
             keys = {
+              -- Window shifting.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
+              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
 
+              -- Tab Opening.
+              ["t"] = {"new_tab_here", mode={"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize",
+              ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
+              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["x"] = "edit_split",
+              ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",
+
+              -- Maximize.
+              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
+              ["o"] = "toggle_maximize",
+
+              -- Print.
+              ["<c-p>"] = "inspect",
+              ["<d-p>"] = "inspect",
               ["p"] = "inspect",
+
+              -- Focus.
               ["A"] = "toggle_focus",
               ["a"] = "toggle_focus",
-
-              ["<c-z>"] = "picker_print",
+              ["i"] = "toggle_focus",
+              ["I"] = "toggle_focus",
             }
           }
         },
@@ -353,21 +503,33 @@ return {
             -- your explorer picker configuration comes here
             -- or leave it empty to use the default settings
             layout = { preset = "dropdown", preview = true },
-            actions = {
-              -- TODO: Design and finish this.
-              move_pwd_here = function (_, item)
-                vim.cmd.lcd(item._path)
-              end,
-            },
             diagnostics_open = true,
             focus = "input",
             auto_close = true,
             win = {
               input = {
                 keys = {
-                  ["<c-m>"] = {"move_pwd_here", mode={"n"}},
+                  ["<c-p>"] = "inspect",
+                  ["<d-p>"] = "inspect",
                 }
               },
+              list = {
+                keys = {
+                  ["<c-p>"] = "inspect",
+                  ["<d-p>"] = "inspect",
+                  ["p"] = "inspect",
+                }
+              },
+            }
+          },
+          buffers = {
+            win = {
+              input = {
+                keys = {
+                  ["<c-w>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<d-w>"] = {"bufdelete", mode={"n", "i"}},
+                }
+              }
             }
           },
           -- FIXME: When left input line and goes back, the buffer will lose focus.

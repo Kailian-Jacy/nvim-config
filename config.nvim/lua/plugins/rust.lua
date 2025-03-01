@@ -1,16 +1,31 @@
 return {
   {
     "mrcjkb/rustaceanvim",
-    opts = function(_, opts)
-      opts.server = opts.server or {}
-      opts.server.settings = opts.server.settings or {}
-      opts.server.settings["rust-analyzer"] = opts.server.settings["rust-analyzer"] or {}
-      opts.server.settings["rust-analyzer"].procMacro = { enable = true }
-      -- opts.server.settings["rust-analyzer"].diagnostics = {
+    version = "^5", -- Recommended
+    lazy = false, -- This plugin is already lazy
+    config = function()
+      vim.g.rustaceanvim = {
+        server = {
+          setting = {
+            ["rust-analyzer"] = {
+              procMacro = { enabled = true },
+            },
+          },
+        },
+      }
+      -- vim.g.rustaceanvim.server.settings["rust-analyzer"].diagnostics = {
       --   enable = true,
       --   disabled = { "unresolved-proc-macro", "unresolved-macro-call" },
       --   enableExperimental = true,
       -- }
+    end,
+  },
+  {
+    "saecki/crates.nvim",
+    tag = "stable",
+    event = { "BufRead Cargo.toml" },
+    config = function()
+      require("crates").setup({})
     end,
   },
 }

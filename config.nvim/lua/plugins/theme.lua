@@ -55,11 +55,24 @@ return {
           color = "#2D4263",
         },
       })
+      vim.cmd([[ colorscheme dracula ]])
     end,
   },
   {
     "folke/noice.nvim",
     enabled = true,
+    lazy = false,
+    init = function()
+      -- add another silent print ( that don't leave history ) as old one.
+      vim.print_silent = vim.print
+      -- Integrates the older vim.print to new pipeline.
+      --  Without this, vim.print() can only be seen from ":messages"
+      vim.print = function(...)
+        for _, value in ipairs({ ... }) do
+          vim.notify("[vim.print] " .. vim.inspect(value), vim.log.levels.INFO)
+        end
+      end
+    end,
     -- replace the keymap
     keys = function()
       return {
@@ -116,15 +129,6 @@ return {
           },
         },
       })
-      -- add another silent print ( that don't leave history ) as old one.
-      vim.print_silent = vim.print
-      -- Integrates the older vim.print to new pipeline.
-      --  Without this, vim.print() can only be seen from ":messages"
-      vim.print = function(...)
-        for _, value in ipairs({ ... }) do
-          vim.notify("[vim.print] " .. vim.inspect(value), vim.log.levels.INFO)
-        end
-      end
     end,
   },
   -- the opts function can also be used to change the default opts:
@@ -184,6 +188,7 @@ return {
       require("lualine").setup({
         options = {
           theme = theme,
+          global_status = true,
         },
         sections = {
           -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
@@ -217,12 +222,25 @@ return {
                     return "" -- Default case, no icon
                   end
                 end
+                local maximized = function()
+                  if vim.t.maximized then
+                    return "m"
+                  end
+                  return ""
+                end
                 local recording = function()
                   if vim.g.recording_status == true then
-                    return "[q] "
+                    return "q"
                   else
                     return ""
                   end
+                end
+                local status_sign = function()
+                  local signs = recording() .. maximized()
+                  if #signs > 0 then
+                    return "[" .. signs .. "] "
+                  end
+                  return ""
                 end
                 local debug_sign = function()
                   if vim.g.debugging_status == "NoDebug" then
@@ -242,7 +260,7 @@ return {
                 local cwd = function()
                   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
                 end
-                return recording() .. "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
+                return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
               end,
             },
           },

@@ -6,6 +6,11 @@ return {
     "hrsh7th/cmp-nvim-lsp",
   },
   {
+    "tzachar/cmp-tabnine",
+    build = "./install.sh",
+    dependencies = "hrsh7th/nvim-cmp",
+  },
+  {
     "hrsh7th/nvim-cmp",
     dependencies = {
       { "hrsh7th/cmp-nvim-lsp" },
@@ -21,6 +26,9 @@ return {
       -- { "chrisgrieser/cmp_yanky" },
       -- any keymap involving tab should be done before this plugin loaded.
       { "vidocqh/auto-indent.nvim" },
+      { "hrsh7th/cmp-buffer" },
+      { "hrsh7th/cmp-git" },
+      { "hrsh7th/cmp-path" },
     },
     config = function()
       --[[local has_words_before = function()

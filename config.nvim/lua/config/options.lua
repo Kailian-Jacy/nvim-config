@@ -11,6 +11,20 @@
 vim.g.read_binary_with_xxd = false
 --------------------------------------------------
 
+-- Make sure to setup `mapleader` and `maplocalleader` before
+-- loading lazy.nvim so that mappings are correct.
+-- This is also a good place to setup other settings (vim.opt)
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
+-- UI related.
+vim.cmd([[ set laststatus=3 ]]) -- Global lualine across each windows.
+vim.cmd([[ set signcolumn=yes:1 ]]) -- Constant status column indentation.
+vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
+
+-- Undo history even when the file is closed.
+vim.opt.undofile = true
+
 -- Making neovim comaptible with possible gbk encodings.
 -- According to neovim doc, set encoding= option is deprecated.
 -- Just list possible encodings in the fileencodings, and neovim will decide.
@@ -112,3 +126,6 @@ vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Suppor
 
 -- Add any additional options here
 vim.g.autoformat = false
+
+-- Theme setting
+-- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"

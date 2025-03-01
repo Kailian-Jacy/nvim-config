@@ -4,11 +4,11 @@ return {
     -- 1. Configure lsp from here as example does: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
     -- 2. LspInfo to check if working.
     "neovim/nvim-lspconfig",
-    opts = function(_, opts)
+    config = function()
       local lspconfig = require("lspconfig")
-      local keys = require("lazyvim.plugins.lsp.keymaps").get()
-      keys[#keys + 1] = { "K", false }
-      keys[#keys + 1] = { "<C-K>", false, mode = { "i" } }
+      -- local keys = require("lazyvim.plugins.lsp.keymaps").get()
+      -- keys[#keys + 1] = { "K", false }
+      -- keys[#keys + 1] = { "<C-K>", false, mode = { "i" } }
       -- markdown config.
       lspconfig.marksman.setup({
         on_attach = lspconfig.marksman.LspOnAttach,
@@ -50,7 +50,6 @@ return {
       lspconfig.pyright.setup({})
       -- cmake
       lspconfig.cmake.setup({})
-      return opts
     end,
   },
   {
@@ -186,5 +185,60 @@ return {
         }),
       })
     end,
+  },
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    dependencies = {
+      "folke/snacks.nvim",
+    },
+    -- event = "LazyFile",
+    opts = function()
+      Snacks.toggle({
+        name = "Indention Guides",
+        get = function()
+          return require("ibl.config").get_config(0).enabled
+        end,
+        set = function(state)
+          require("ibl").setup_buffer(0, { enabled = state })
+        end,
+      }):map("<leader>ug")
+      return {
+        indent = {
+          char = "│",
+          tab_char = "│",
+        },
+        scope = { show_start = false, show_end = false },
+        exclude = {
+          filetypes = {
+            "Trouble",
+            "alpha",
+            "dashboard",
+            "help",
+            "lazy",
+            "mason",
+            "neo-tree",
+            "notify",
+            "snacks_dashboard",
+            "snacks_notif",
+            "snacks_terminal",
+            "snacks_win",
+            "toggleterm",
+            "trouble",
+          },
+        },
+      }
+    end,
+    main = "ibl",
+  },
+  {
+    "folke/lazydev.nvim",
+    ft = "lua", -- only load on lua files
+    opts = {
+      library = {
+        -- See the configuration section for more details
+        -- Load luvit types when the `vim.uv` word is found
+        { path = "${3rd}/luv/library", words = { "vim%.uv" } },
+      },
+    },
   },
 }

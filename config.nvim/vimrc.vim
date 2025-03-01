@@ -17,7 +17,6 @@ set incsearch ignorecase smartcase hlsearch
 set wildmode=longest,list,full wildmenu
 
 """ not showing bottom line.
-set cmdheight=0 noshowmode noruler noshowcmd laststatus=0
 """ set laststatus=0 showcmd showmode
 set showbreak=↪\
 set list listchars=tab:→\ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨
@@ -33,7 +32,7 @@ set title
 set linebreak
 set smoothscroll
 
-highlight WinSeparator guifg=#565f89
+"highlight WinSeparator guifg=#565f89
 
 autocmd ColorScheme * highlight CursorLineNr cterm=bold term=bold gui=bold
 set termguicolors
