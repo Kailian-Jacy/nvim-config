@@ -25,6 +25,11 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
 
+-- Relative number and cursorline.
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.cursorline = true
+
 -- Making neovim comaptible with possible gbk encodings.
 -- According to neovim doc, set encoding= option is deprecated.
 -- Just list possible encodings in the fileencodings, and neovim will decide.
@@ -97,6 +102,12 @@ vim.g.neovide_window_blurred = false
 -- Setting floating blur amount.
 vim.g.neovide_floating_blur_amount_x = 5
 vim.g.neovide_floating_blur_amount_y = 5
+
+-- Global tabstop.
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 0
+vim.opt.expandtab = true
 
 -- Paste to cmd + v
 vim.g.neovide_input_use_logo = 1

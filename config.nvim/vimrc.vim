@@ -11,8 +11,9 @@ au VimLeave * set guicursor=a:ver10-blinkon1
 filetype plugin indent on
 " set autochdir
 " tab
-set expandtab
-" set tabstop=4 softtabstop=4 shiftwidth=4 smarttab autoindent
+""" set expandtab
+""" set tabstop=4 softtabstop=4 shiftwidth=0 smarttab autoindent
+set softtabstop=4 smarttab autoindent
 set incsearch ignorecase smartcase hlsearch
 set wildmode=longest,list,full wildmenu
 
@@ -24,7 +25,6 @@ set wrap breakindent
 """ set encoding=utf-8
 set textwidth=0
 set hidden
-set number relativenumber
 set title
 """ Only highlight the current line number
 "set cursorline

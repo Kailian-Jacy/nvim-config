@@ -41,6 +41,7 @@ return {
       local luasnip = require("luasnip")
       require("cmp").setup({
         auto_brackets = {}, -- disabled. Being managed by other plugins.
+        preselect = "none",
         completion = {
           completeopt = "menu,menuone,noinsert,noselect",
         },
