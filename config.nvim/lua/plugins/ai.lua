@@ -57,7 +57,6 @@ return {
           api_version = "2024-02-15-preview",
           timeout = 300000,
           max_tokens = 128000,
-          ["local"] = false,
         },
         ["azure4omini"] = {
           __inherited_from = "azure",
@@ -69,7 +68,6 @@ return {
           timeout = 30000,
           temperature = 0.7,
           max_tokens = 10000,
-          ["local"] = false,
         },
       },
       behaviour = {

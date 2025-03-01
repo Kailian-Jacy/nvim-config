@@ -11,6 +11,7 @@ return {
     event = "VeryLazy",
     config = function()
       require("venv-selector").setup({
+        stay_on_this_version = true,
         settings = {
           search = {
             bare_envs = {
