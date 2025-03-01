@@ -156,6 +156,18 @@ return {
           vim.cmd([[ BookmarksDesc ]])
         end,
       },
+      {
+        "<leader>md",
+        function()
+          vim.cmd([[ DeleteBookmarkAtCursor ]])
+        end,
+      },
+      {
+        "gm",
+        "<cmd>BookmarksInfoCurrentBookmark<CR>",
+        desc = "show bookmark information",
+        mode = { "n", "v" },
+      },
     },
     commands = {
       mark_comment = function()
