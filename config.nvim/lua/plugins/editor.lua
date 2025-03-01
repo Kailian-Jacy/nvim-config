@@ -1,5 +1,18 @@
 return {
   {
+    "tzachar/local-highlight.nvim",
+    config = function()
+      require("local-highlight").setup({
+        cw_hlgroup = "FaintSelected",
+        hlgroup = "FaintSelected",
+        animate = {
+          enabled = false,
+        },
+        debounce_timeout = 500
+      })
+    end,
+  },
+  {
     "kwkarlwang/bufjump.nvim",
     keys = {
       {

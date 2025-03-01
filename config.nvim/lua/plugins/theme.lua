@@ -17,6 +17,8 @@ return {
         italic_comment = true,
         overrides = function(colors)
           return {
+            -- Faint seletion.
+            FaintSelected = { bg = "#383679" },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
             CursorLine = { bg = "" },
