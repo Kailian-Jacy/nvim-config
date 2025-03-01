@@ -223,7 +223,7 @@ return {
                   end
                 end
                 local maximized = function()
-                  if vim.t.maximized then
+                  if vim.t.window_maximized then
                     return "m"
                   end
                   return ""

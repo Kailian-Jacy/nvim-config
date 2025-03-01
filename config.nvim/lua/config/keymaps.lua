@@ -13,9 +13,20 @@ vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
 vim.keymap.set({ "n", "v" }, "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit." })
 
--- terminal related.
--- TODO: Implement floating terminal without lazyvim.
---
+-- Window maximize.
+vim.keymap.set({ "n", "v" }, "<leader>wm", function()
+  local cmd
+  if vim.t.window_maximized then
+    cmd = "<c-w>="
+    vim.t.window_maximized = false
+  else
+    vim.t.window_maximized = true
+    cmd = "<c-w>_<c-w>|"
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
+  require("lualine").refresh()
+end)
+
 -- local Util = require("lazyvim.util")
 -- local lazyterm = function()
 --   Util.terminal({ "tmux", "new", "-As0" }, { cwd = Util.root() })

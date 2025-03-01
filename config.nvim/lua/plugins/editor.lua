@@ -185,16 +185,4 @@ return {
       require("bookmarks").setup(opts)
     end,
   },
-  {
-    "declancm/maximize.nvim",
-    keys = {
-      {
-        "<leader>wm",
-        "<cmd>Maximize<CR>",
-        { "n", "v" },
-        desc = "Maximize current window.",
-      },
-    },
-    config = true,
-  },
 }
