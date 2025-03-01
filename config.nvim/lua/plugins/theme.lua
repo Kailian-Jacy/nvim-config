@@ -15,7 +15,7 @@ return {
         -- and the bottom gui/terminal take control.
         -- dracula can only make full transparency or not. Not semi. So just set it to none. transparent_bg = true,
         italic_comment = true,
-        overrides = function(colors)
+        overrides = function()
           return {
             -- Faint seletion.
             FaintSelected = { bg = "#383679" },
@@ -47,14 +47,16 @@ return {
             MsgSeparator = { bg = "" },
             -- Diff color palette
             DiffAdd = { bg = "#4a2f90" },
+            -- Scrollbar
+            SatelliteCursor = { fg = "#F8F8F2" },
           }
         end,
       })
-      require("scrollbar").setup({
-        handle = {
-          color = "#2D4263",
-        },
-      })
+      -- require("scrollbar").setup({
+      --   handle = {
+      --     color = "#2D4263",
+      --   },
+      -- })
       vim.cmd([[ colorscheme dracula ]])
     end,
   },
@@ -269,18 +271,46 @@ return {
     end,
   },
   {
-    --[[I tried to make search highlights works, but
-    this scrollbar plugin is deeply intergated with hlslen plugin
-    and after installation of that plugin it still won't work. 
-    
-    maybe sometimes I should discard this plugin.]]
-    "petertriho/nvim-scrollbar",
+    "lewis6991/satellite.nvim",
     config = function()
-      require("scrollbar").setup()
-      require("gitsigns").setup()
-      require("scrollbar.handlers.gitsigns").setup()
+      require("satellite").setup({
+        width = 1,
+        handlers = {
+          cursor = {
+            enable = true,
+            -- Supports any number of symbols
+            symbols = { "·" },
+          },
+          marks = { enable = false },
+          -- search = {
+          --   enable = false,
+          -- },
+          -- diagnostic = {
+          --   enable = false,
+          -- },
+          -- gitsigns = {
+          --   enable = false,
+          -- },
+          -- quickfix = {
+          --   enable = false,
+          -- },
+        },
+      })
     end,
   },
+  -- {
+  --   --[[I tried to make search highlights works, but
+  --   this scrollbar plugin is deeply intergated with hlslen plugin
+  --   and after installation of that plugin it still won't work.
+  --
+  --   maybe sometimes I should discard this plugin.]]
+  --   "petertriho/nvim-scrollbar",
+  --   config = function()
+  --     require("scrollbar").setup()
+  --     require("gitsigns").setup()
+  --     require("scrollbar.handlers.gitsigns").setup()
+  --   end,
+  -- },
   {
     "levouh/tint.nvim",
     config = function()

@@ -85,13 +85,14 @@ return {
         "<leader><CR>",
         -- conform formatting
         function()
+          vim.print_silent("@conform.format")
           if not (vim.g.do_not_format_all and vim.fn.mode() == "n") then
             require("conform").format()
           end
           require("lint").try_lint()
           vim.cmd([[ :w ]]) -- triggers lsp updating.
-          require("scrollbar").render() -- try to update the scrollbar.
-          vim.print_silent("@conform.format")
+          -- require("scrollbar").render() -- try to update the scrollbar.
+          vim.cmd("SatelliteRefresh")
         end,
         mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",
