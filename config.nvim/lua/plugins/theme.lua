@@ -272,6 +272,23 @@ return {
   },
   {
     "lewis6991/satellite.nvim",
+    lazy = false,
+    keys = {
+      {
+        "<leader>ub",
+        function()
+          -- By default, satellite is enabled.
+          if vim.g.satellite_enabled then
+            vim.g.satellite_enabled = false
+            vim.cmd("SatelliteDisable")
+          else
+            vim.g.satellite_enabled = true
+            vim.cmd("SatelliteEnable")
+          end
+        end,
+        desc = "Toggle satellite scrollbar.",
+      },
+    },
     config = function()
       require("satellite").setup({
         width = 1,
@@ -291,11 +308,13 @@ return {
           -- gitsigns = {
           --   enable = false,
           -- },
-          -- quickfix = {
-          --   enable = false,
-          -- },
+          quickfix = {
+            signs = { "~" },
+          },
         },
       })
+      vim.g.satellite_enabled = true
+      vim.cmd("SatelliteEnable")
     end,
   },
   -- {
