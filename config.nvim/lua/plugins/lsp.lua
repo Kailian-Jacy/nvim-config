@@ -91,8 +91,8 @@ return {
           end
           require("lint").try_lint()
           vim.cmd([[ :w ]]) -- triggers lsp updating.
-          -- require("scrollbar").render() -- try to update the scrollbar.
-          vim.cmd("SatelliteRefresh")
+          require("scrollbar").render() -- try to update the scrollbar.
+          -- vim.cmd("SatelliteRefresh")
         end,
         mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",

@@ -52,11 +52,6 @@ return {
           }
         end,
       })
-      -- require("scrollbar").setup({
-      --   handle = {
-      --     color = "#2D4263",
-      --   },
-      -- })
       vim.cmd([[ colorscheme dracula ]])
     end,
   },
@@ -271,65 +266,57 @@ return {
     end,
   },
   {
-    "lewis6991/satellite.nvim",
-    lazy = false,
+    "petertriho/nvim-scrollbar",
     keys = {
       {
         "<leader>ub",
         function()
-          -- By default, satellite is enabled.
-          if vim.g.satellite_enabled then
-            vim.g.satellite_enabled = false
-            vim.cmd("SatelliteDisable")
-          else
-            vim.g.satellite_enabled = true
-            vim.cmd("SatelliteEnable")
-          end
+          require("scrollbar.utils").toggle()
         end,
-        desc = "Toggle satellite scrollbar.",
+        mode = "n",
+        desc = "Toggle scrollbar",
       },
     },
     config = function()
-      require("satellite").setup({
-        width = 1,
-        handlers = {
-          cursor = {
-            enable = true,
-            -- Supports any number of symbols
-            symbols = { "·" },
-          },
-          marks = { enable = false },
-          -- search = {
-          --   enable = false,
-          -- },
-          -- diagnostic = {
-          --   enable = false,
-          -- },
-          -- gitsigns = {
-          --   enable = false,
-          -- },
-          quickfix = {
-            signs = { "~" },
+      require("scrollbar").setup({
+        handle = {
+          color = "#2D4263",
+          hide_if_all_visible = true,
+        },
+        marks = {
+          Search = {
+            text = { "+", "*" },
+            priority = 1,
+            gui = nil,
+            color = "#FFB86C",
+            cterm = nil,
+            color_nr = nil, -- cterm
+            highlight = "Search",
           },
         },
+        handlers = {
+          cursor = true,
+          diagnostic = true,
+          gitsigns = true, -- Requires gitsigns
+          handle = true,
+          search = true, -- Requires hlslens
+          ale = false, -- Requires ALE
+        },
       })
-      vim.g.satellite_enabled = true
-      vim.cmd("SatelliteEnable")
+      require("gitsigns").setup()
+      require("scrollbar.handlers.gitsigns").setup()
     end,
   },
-  -- {
-  --   --[[I tried to make search highlights works, but
-  --   this scrollbar plugin is deeply intergated with hlslen plugin
-  --   and after installation of that plugin it still won't work.
-  --
-  --   maybe sometimes I should discard this plugin.]]
-  --   "petertriho/nvim-scrollbar",
-  --   config = function()
-  --     require("scrollbar").setup()
-  --     require("gitsigns").setup()
-  --     require("scrollbar.handlers.gitsigns").setup()
-  --   end,
-  -- },
+  {
+    "kevinhwang91/nvim-hlslens",
+    dependencies = { "petertriho/nvim-scrollbar" },
+    config = function()
+      -- require('hlslens').setup() is not required
+      require("scrollbar.handlers.search").setup({
+        override_lens = function() end,
+      })
+    end,
+  },
   {
     "levouh/tint.nvim",
     config = function()
