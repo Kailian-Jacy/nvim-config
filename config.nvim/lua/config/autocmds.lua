@@ -8,6 +8,19 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Quickfix page page closing.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "qf" },
+  callback = function()
+    vim.keymap.set(
+      "n",
+      "q",
+      "<cmd>bd<cr>",
+      { desc = "Using q to close quickfix page.", silent = true, buffer = true, noremap = false }
+    )
+  end,
+})
+
 -- Help page closing.
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "help", "man" },
