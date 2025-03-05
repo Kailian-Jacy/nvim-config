@@ -54,12 +54,9 @@ return {
   {
     -- "Kailian-Jacy/visual-surround.nvim",
     "NStefan002/visual-surround.nvim",
-    opts = {
-      enable_wrapped_deletion = true,
-      surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`", "<", ">" },
-    },
     config = function()
       require("visual-surround").setup({
+        enable_wrapped_deletion = true,
         surround_chars = { "{", "}", "[", "]", "(", ")", "'", '"', "`" },
       })
 
