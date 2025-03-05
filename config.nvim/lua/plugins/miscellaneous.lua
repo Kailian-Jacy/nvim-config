@@ -264,7 +264,6 @@ return {
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
 
               -- Windows switching.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
@@ -316,7 +315,6 @@ return {
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["x"] = "edit_split",
               ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",
@@ -358,7 +356,6 @@ return {
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<d-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["x"] = "edit_split",
               ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",

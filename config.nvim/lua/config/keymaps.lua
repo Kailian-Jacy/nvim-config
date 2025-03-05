@@ -17,6 +17,8 @@ vim.keymap.set({ "n", "v" }, "<esc>", function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
 end, { desc = "Esc wrapper: no highlight with esc." })
 
+vim.keymap.set({ "n", "v" }, "<leader>ps", '"+p', { desc = "paste from the clipboard." })
+
 -- Window maximize.
 vim.keymap.set({ "n", "v" }, "<leader>wm", function()
   local cmd
@@ -368,6 +370,7 @@ local cmd_mappings = {
   },
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
+  { cmdKeymap = "<D-v>", leaderKeymap = "<leader>ps", modes = { "n", "v" }, description = "Paste from clipboard" },
   -- buffer/Window closing.
   { cmdKeymap = "<D-w>", leaderKeymap = "<leader>bd", modes = { "n", "v" }, description = "Close buffer" },
   { cmdKeymap = "<D-w>", leaderKeymap = "<C-/>", modes = { "t" }, description = "Close floating terminal" },
