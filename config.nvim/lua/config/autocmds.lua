@@ -8,7 +8,8 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
--- Quickfix page page closing.
+-- Quickfix related.
+-- Page closing
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "qf" },
   callback = function()
@@ -20,6 +21,24 @@ vim.api.nvim_create_autocmd("FileType", {
     )
   end,
 })
+vim.api.nvim_create_user_command("Qnext", function()
+  local success = pcall(vim.cmd, "cnext")
+  if not success then
+    vim.cmd("cfirst")
+  end
+end, { desc = "navigate to the next quickfix item" })
+vim.api.nvim_create_user_command("Qprev", function()
+  local success = pcall(vim.cmd, "cprev")
+  if not success then
+    vim.cmd("clast")
+  end
+end, { desc = "navigate to the next quickfix item" })
+vim.api.nvim_create_user_command("Qnewer", function()
+  local _ = pcall(vim.cmd, "cnewer")
+end, { desc = "navigate to the next quickfix list" })
+vim.api.nvim_create_user_command("Qolder", function()
+  local _ = pcall(vim.cmd, "colder")
+end, { desc = "navigate to the next quickfix list" })
 
 -- Help page closing.
 vim.api.nvim_create_autocmd("FileType", {
