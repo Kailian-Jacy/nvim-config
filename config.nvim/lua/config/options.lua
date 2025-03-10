@@ -47,6 +47,39 @@ local function obsidian_app_exists()
   return false
 end
 
+-- Tabline
+-- Set the current tab name as the working directory name.
+function MyTabLine()
+    local tabline = ""
+    for index = 1, vim.fn.tabpagenr('$') do
+        -- select the highlighting
+        if index == vim.fn.tabpagenr() then
+            tabline = tabline .. '%#TabLineSel#'
+        else
+            tabline = tabline .. '%#TabLine#'
+        end
+
+        -- set the tab page number (for mouse clicks)
+        tabline = tabline .. '%' .. index .. 'T'
+
+        local win_num = vim.fn.tabpagewinnr(index)
+        local working_directory = vim.fn.getcwd(win_num, index)
+        local project_name = vim.fn.fnamemodify(working_directory, ":t")
+        tabline = tabline .. " " .. project_name .. " "
+    end
+
+    -- after the last tab fill with TabLineFill and reset tab page nr
+    tabline = tabline .. '%#TabLineFill#%T'
+
+    -- right-align the label to close the current tab page
+    if vim.fn.tabpagenr('$') > 1 then
+        tabline = tabline .. '%=%#TabLine#%999Xclose'
+    end
+
+    return tabline
+end
+vim.go.tabline = "%!v:lua.MyTabLine()"
+
 vim.g.function_get_selected_content = function()
   local esc = vim.api.nvim_replace_termcodes("<esc>", true, false, true)
   vim.api.nvim_feedkeys(esc, "x", false)
@@ -133,7 +166,9 @@ vim.g.obsidian_vault = "/Users/kailianjacy/Library/Mobile Documents/iCloud~md~ob
 
 -- Snippet path settings
 vim.g.import_user_snippets = true
-vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
+vim.g.user_vscode_snippets_path = vim.fn.stdpath("config") .. "/snip/" -- How to get: https://arc.net/l/quote/fjclcvra
+-- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
+-- Linking: ln -s "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" /Users/kailianjacy/.config/nvim/snip.
 
 -- Add any additional options here
 vim.g.autoformat = false
