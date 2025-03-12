@@ -7,6 +7,14 @@ vim.g.mapleader = " "
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
+-- keymap based on filetype
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = {"cpp", "c", "objc", "objcpp", "cuda", "proto"},
+  callback = function()
+    vim.keymap.set({ "n" }, "<leader>hh", "<cmd>ClangdSwitchSourceHeader<cr>", { desc = "Switch between header and type." })
+  end,
+})
+
 -- Some useful keymaps:
 vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
