@@ -76,7 +76,12 @@ vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
 end, { desc = "Remove the bookmark at cursor line." })
 
 -- Set cursor
-vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
+vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
+if vim.fn.has("nvim-0.11") == 1 then
+  -- Neovim added t mode for guicursor in nvim-0.11, and gave up drawing terminal mode.
+  vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
+end
+
 vim.api.nvim_create_autocmd({
   "TermOpen",
   "WinEnter",
