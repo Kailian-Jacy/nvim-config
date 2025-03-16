@@ -88,10 +88,30 @@ vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { nore
 vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
 
 -- Quick fixes.
-vim.keymap.set({ "n", "v" }, "<leader>qj", "<cmd>Qnext<cr>", { desc = "navigate to the next quickfix item", noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "<leader>qk", "<cmd>Qprev<cr>", { desc = "navigate to the prev quickfix item", noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "<leader>ql", "<cmd>Qnewer<cr>", { desc = "navigate to the newer quickfix item", noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "<leader>qh", "<cmd>Qolder<cr>", { desc = "navigate to the older quickfix item", noremap = true, silent = true })
+vim.keymap.set(
+  { "n", "v" },
+  "<leader>qj",
+  "<cmd>Qnext<cr>",
+  { desc = "navigate to the next quickfix item", noremap = true, silent = true }
+)
+vim.keymap.set(
+  { "n", "v" },
+  "<leader>qk",
+  "<cmd>Qprev<cr>",
+  { desc = "navigate to the prev quickfix item", noremap = true, silent = true }
+)
+vim.keymap.set(
+  { "n", "v" },
+  "<leader>ql",
+  "<cmd>Qnewer<cr>",
+  { desc = "navigate to the newer quickfix item", noremap = true, silent = true }
+)
+vim.keymap.set(
+  { "n", "v" },
+  "<leader>qh",
+  "<cmd>Qolder<cr>",
+  { desc = "navigate to the older quickfix item", noremap = true, silent = true }
+)
 
 -- search
 vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
