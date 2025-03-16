@@ -148,32 +148,6 @@ end, {})
 -- Search History
 vim.api.nvim_create_user_command("SearchHistory", Snacks.picker.search_history, {})
 
--- Flip between header file and corresponsing implementation. Based on filename.
-vim.api.nvim_create_user_command("FlipHeaderAndImpl", function()
-  local file_map = {
-    [".c"] = ".h", -- C implementation to header
-    [".h"] = ".c", -- Header to C implementation
-    [".cpp"] = ".h", -- C++ implementation to header
-    [".hpp"] = ".cpp", -- Header to C++ implementation
-    [".cc"] = ".hh", -- C++ (alternative) implementation to header
-    [".hh"] = ".cc", -- Header (alternative) to C++ implementation
-    [".cxx"] = ".h", -- C++ implementation (alternative) to header
-    [".hxx"] = ".cxx", -- Header (alternative) to C++ implementation
-  }
-  local current_file = vim.fn.expand("%:p")
-  local current_ext = vim.fn.fnamemodify(current_file, ":e")
-  local new_ext = file_map["." .. current_ext]
-
-  if not new_ext then
-    vim.notify("Fip not available found for: " .. current_ext, vim.log.levels.WARN)
-    return
-  end
-  local new_file = vim.fn.fnamemodify(current_file, ":r") .. new_ext
-  if vim.fn.filereadable(new_file) then
-    vim.cmd("edit " .. vim.fn.shellescape(new_file))
-  end
-end, {})
-
 -- Drop buf some where and reveal the last.
 vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   if #opt.args == 0 then

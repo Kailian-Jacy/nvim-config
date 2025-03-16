@@ -90,7 +90,10 @@ return {
             require("conform").format()
           end
           require("lint").try_lint()
-          vim.cmd([[ :w ]]) -- triggers lsp updating.
+          if not vim.api.nvim_buf_get_name(0) == "" then
+            -- Do not save if new buffer.
+            vim.cmd([[ :w ]]) -- triggers lsp updating.
+          end
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
         end,
