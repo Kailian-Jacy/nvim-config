@@ -7,6 +7,9 @@ vim.g.mapleader = " "
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
+-- Inc rename.
+vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode lsp variable name replacement." })
+
 -- Some useful keymaps:
 vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
@@ -352,7 +355,7 @@ local cmd_mappings = {
     description = "All available command",
   },
   -- Search
-  { cmdKeymap = "<D-r>", leaderKeymap = "<leader>rn", modes = { "n" }, description = "LSP rename variable." },
+  { cmdKeymap = "<D-r>", leaderKeymap = "<leader>rn", modes = { "n", "v" }, description = "LSP rename variable." },
   { cmdKeymap = "<D-R>", leaderKeymap = "<leader>cR", modes = { "n", "v" }, description = "Rename file" },
   -- Symbols
   {
