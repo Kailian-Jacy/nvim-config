@@ -63,7 +63,57 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
--- Bookmark removing.
+-- Bookmark related code snippet.
+vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
+  Snacks.picker.pick({
+    title = "Bookmarks",
+    format = function(item, picker)
+      local ret = require("snacks.picker.format").filename(item, picker)
+      ret[#ret + 1] = { item.text }
+      return ret
+    end,
+    finder = function(_, ctx)
+      local bookmark_items = require("bookmarks.domain.node").get_all_bookmarks(
+        require("bookmarks.domain.repo").ensure_and_get_active_list()
+      )
+      local tbl = {}
+      for _, bookmark in ipairs(bookmark_items) do
+        table.insert(tbl, {
+          text = bookmark.name,
+          _path = bookmark.location.path,
+          -- = bookmark.location,
+          pos = { bookmark.location.line, bookmark.location.col },
+          bm_location = bookmark.location,
+          file = bookmark.location.path,
+        })
+      end
+      return tbl
+    end,
+    actions = {
+      delete_from_bookmarks = function(picker, item)
+        local location = item.bm_location
+        local node = require("bookmarks.domain.repo").find_node_by_location(location)
+        if not node then
+          vim.notify("No node found at cursor position", vim.log.levels.WARN)
+          return
+        end
+        require("bookmarks.domain.service").delete_node(node.id)
+        require("bookmarks.sign").safe_refresh_signs()
+        picker.list:set_selected()
+        picker.list:set_target()
+        picker:find()
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+        },
+      },
+    },
+  })
+end, { desc = "Bookmark table in snacks.picker" })
+
 vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
   local location = require("bookmarks.domain.location").get_current_location()
   local node = require("bookmarks.domain.repo").find_node_by_location(location)

@@ -132,7 +132,7 @@ return {
       {
         "'",
         function()
-          vim.cmd([[ BookmarksGoto ]])
+          vim.cmd([[ BookmarkSnackPicker ]])
         end,
       },
       {
@@ -141,7 +141,7 @@ return {
           vim.ui.input({ prompt = "[Set Bookmark]" }, function(input)
             if input then
               local Service = require("bookmarks.domain.service")
-              Service.toggle_mark("[BM]" .. input)
+              Service.toggle_mark("" .. input)
               require("bookmarks.sign").safe_refresh_signs()
             end
           end)
