@@ -1,5 +1,29 @@
 return {
   {
+    "nvim-treesitter/nvim-treesitter-textobjects",
+    dependencies = {
+      { "nvim-treesitter/nvim-treesitter" },
+    },
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        textobjects = {
+          select = {
+            enable = true,
+            lookahead = true,
+            keymaps = {
+              -- You can use the capture groups defined in textobjects.scm
+              ["af"] = "@function.outer",
+              ["if"] = "@function.inner",
+              ["ac"] = "@class.outer",
+              ["ic"] = "@class.inner",
+            },
+            iinclude_surrounding_whitespace = true,
+          },
+        },
+      })
+    end,
+  },
+  {
     -- lsp configurations:
     -- 1. Configure lsp from here as example does: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
     -- 2. LspInfo to check if working.
