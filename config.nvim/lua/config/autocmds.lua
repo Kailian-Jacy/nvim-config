@@ -53,6 +53,14 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Window splitting with cursor moved to the new one.
+vim.api.nvim_create_user_command("Split", function ()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<cmd>split<cr><c-w>j", true, false, true), "n", false)
+end, { desc = "split horizontally and move cursor" })
+vim.api.nvim_create_user_command("Vsplit", function ()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<cmd>vsplit<cr><c-w>l", true, false, true), "n", false)
+end, { desc = "split horizontally and move cursor" })
+
 -- Highlight yanking
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = vim.api.nvim_create_augroup("highlight_yank", {}),
