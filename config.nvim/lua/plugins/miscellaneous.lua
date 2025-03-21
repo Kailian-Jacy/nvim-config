@@ -380,7 +380,6 @@ return {
         },
         actions = {
           picker_print = function(picker, _)
-            vim.print_silent("111")
             vim.print(picker)
           end,
           to_preview = function(picker, _)
@@ -424,15 +423,17 @@ return {
             win = wins[idx % #wins + 1] or 1 -- cycle
             vim.api.nvim_set_current_win(win)
           end,
-          v_new_win_here = function (_, item)
-            vim.cmd[[ vsplit ]]
-            vim.cmd.lcd(item._path)
-            -- Snacks.picker.actions.lcd(_, item)
+          v_new_win_here = function (picker, item)
+            picker:close()
+            vim.cmd[[ Vsplit ]]
+            Snacks.picker.actions.lcd(_, item)
+            vim.print_silent("Win pwd: " .. vim.fn.getcwd())
           end,
-          x_new_win_here = function (_, item)
-            vim.cmd[[ split ]]
-            vim.cmd.lcd(item._path)
-            -- Snacks.picker.actions.lcd(_, item)
+          x_new_win_here = function (picker, item)
+            picker:close()
+            vim.cmd[[ Split ]]
+            Snacks.picker.actions.lcd(_, item)
+            vim.print_silent("Win pwd: " .. vim.fn.getcwd())
           end,
           search_here = function(picker, item)
             item.dir = item.dir or false
@@ -538,18 +539,31 @@ return {
               zoxide_tcd = function (picker, item)
                 vim.cmd.tcd(item._path)
                 picker:close()
+                vim.print_silent("Win pwd: " .. vim.fn.getcwd())
+              end,
+              zoxide_lcd = function(picker, item)
+                picker:close()
+                Snacks.picker.actions.lcd(_, item)
+                vim.print_silent("Win pwd: " .. vim.fn.getcwd())
               end
             },
             win = {
               input = {
                 keys = {
-                  -- ["<c-t>"] = {"test", mode={"n", "i"}},
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
-                  ["<c-cr>"] = {"new_tab_here", mode={"n", "i"}},
-                  ["<d-cr>"] = {"new_tab_here", mode={"n", "i"}},
-                  -- FIXME: Split won't work for now. could because it's on the input window, and split could not be done easily.
+                  ["t"] = {"new_tab_here", mode={"n"}},
+
+                  ["<c-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
+                  ["<d-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
+
+                  ["v"] = {"v_new_win_here", mode={"n"}},
+                  ["x"] = {"x_new_win_here", mode={"n"}},
                   ["<c-v>"] = {"v_new_win_here", mode={"n", "i"}},
-                  ["<c-X>"] = {"v_new_win_here", mode={"n", "i"}},
+                  ["<c-s-x>"] = {"v_new_win_here", mode={"n", "i"}},
+                  ["<c-x>"] = {"x_new_win_here", mode={"n", "i"}},
+                  ["<d-v>"] = {"v_new_win_here", mode={"n", "i"}},
+                  ["<d-s-x>"] = {"v_new_win_here", mode={"n", "i"}},
+                  ["<d-x>"] = {"x_new_win_here", mode={"n", "i"}},
                 }
               }
             }
