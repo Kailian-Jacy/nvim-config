@@ -80,7 +80,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       ret[#ret + 1] = { item.text }
       return ret
     end,
-    finder = function(_, ctx)
+    finder = function(_, _)
       local bookmark_items = require("bookmarks.domain.node").get_all_bookmarks(
         require("bookmarks.domain.repo").ensure_and_get_active_list()
       )
@@ -89,6 +89,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
         table.insert(tbl, {
           text = bookmark.name,
           _path = bookmark.location.path,
+          _bookmark = bookmark,
           -- = bookmark.location,
           pos = { bookmark.location.line, bookmark.location.col },
           bm_location = bookmark.location,
@@ -111,16 +112,81 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
         picker.list:set_target()
         picker:find()
       end,
+      -- FIXME: popup window for rename shows beneath the picker.
+      edit_bookmark = function(picker, item)
+        -- Get the desc of of bookmark
+        local text = "Original text name"
+        vim.ui.input({
+          prompt = "Edit Bookmark Name",
+          -- icon = " ",
+          -- icon_pos = "title",
+          default = text,
+        }, function(value)
+          vim.print(value)
+          if not value then
+            vim.print("Bookmark unchanged.")
+            return
+          end
+          if value and (#value == 0 or value == text) then
+            vim.print("Bookmark unchanged.")
+            return
+          end
+          -- Create the bookmark.
+          item._bookmark.name = value
+          require("bookmarks.domain.service").rename_node(item._bookmark.id, value)
+          -- Refresh the picker.
+          picker.list:set_selected()
+          picker.list:set_target()
+          picker:find()
+        end)
+      end,
     },
     win = {
       input = {
         keys = {
           ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
+        },
+      },
+      list = {
+        keys = {
+          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["dd"] = { "delete_from_bookmarks", mode = { "n" } },
+          ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
+          ["ee"] = { "edit_bookmark", mode = { "n" } },
         },
       },
     },
   })
 end, { desc = "Bookmark table in snacks.picker" })
+
+vim.api.nvim_create_user_command("BookmarkEditNameAtCursor", function()
+  local location = require("bookmarks.domain.location").get_current_location()
+  local node = require("bookmarks.domain.repo").find_node_by_location(location)
+  if not node then
+    vim.notify("No node found at cursor position", vim.log.levels.WARN)
+    return
+  end
+  local text = "Original text name"
+  vim.ui.input({
+    prompt = "Edit Bookmark Name",
+    default = text,
+  }, function(value)
+    vim.print(value)
+    if not value then
+      vim.print("Bookmark unchanged.")
+      return
+    end
+    if value and (#value == 0 or value == text) then
+      vim.print("Bookmark unchanged.")
+      return
+    end
+    -- Create the bookmark.
+    node.name = value
+    require("bookmarks.domain.service").rename_node(node.id, value)
+    require("bookmarks.sign").safe_refresh_signs()
+  end)
+end, { desc = "Edit the current bookmark under the cursor." })
 
 vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
   local location = require("bookmarks.domain.location").get_current_location()
