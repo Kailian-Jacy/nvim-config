@@ -159,11 +159,12 @@ vim.keymap.set("n", "<leader>bd", function()
     vim.print_silent("To close edited buf, use :bd! to confirm.", vim.log.levels.INFO)
     return
   end
-  -- TODO: Not sure this is correct... but it works for now. Just leave it.
-  if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
-    vim.notify("last buf.", vim.log.levels.WARN)
-    return
-  end
+  -- Not sure this is correct... but it works for now. Just leave it.
+  --
+  -- if #vim.fn.getbufinfo({ bufloaded = true }) == 1 and #vim.api.nvim_list_tabpages() == 1 then
+  --   vim.notify("last buf.", vim.log.levels.WARN)
+  --   return
+  -- end
   close_buf_but_leave_window()
 end, { noremap = true, silent = false })
 
