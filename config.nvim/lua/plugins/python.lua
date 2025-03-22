@@ -1,9 +1,10 @@
 return {
   {
     "linux-cultist/venv-selector.nvim",
+    enabled = false,
     dependencies = {
       "neovim/nvim-lspconfig",
-      "nvim-telescope/telescope.nvim",
+      -- "nvim-telescope/telescope.nvim",
       "mfussenegger/nvim-dap-python",
     },
     -- Selector is not needed except wanting to point
