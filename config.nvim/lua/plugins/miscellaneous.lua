@@ -208,7 +208,7 @@ return {
       { "<leader>tt", function() Snacks.terminal({"tmux", "new", "-As0"}) end, mode = {"n", "v"}, desc = "Tmux floating window terminal."} 
     },
     opts = {
-      bigfile = { enabled = false },
+      bigfile = { enabled = true },
       dashboard = { enabled = false },
       explorer = {
         enabled = true
