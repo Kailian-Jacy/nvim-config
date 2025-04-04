@@ -144,7 +144,7 @@ return {
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
       { "<leader>fo", function() Snacks.picker.recent(
-        { title = "Recent (Cwd)" ,hidden = false, filter = { cwd = true } }
+        { title = "Recent (Global)" ,hidden = true, filter = { cwd = false } }
       ) end, desc = "Recent" },
 
       -- Symbol browsing
@@ -487,7 +487,7 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<c-e>"] = {"toggle_global", mode={"n", "i"}}
+                  ["<c-g>"] = {"toggle_global", mode={"n", "i"}}
                 }
               }
             }
