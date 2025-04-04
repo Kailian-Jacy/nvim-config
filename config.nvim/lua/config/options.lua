@@ -50,32 +50,32 @@ end
 -- Tabline
 -- Set the current tab name as the working directory name.
 function MyTabLine()
-    local tabline = ""
-    for index = 1, vim.fn.tabpagenr('$') do
-        -- select the highlighting
-        if index == vim.fn.tabpagenr() then
-            tabline = tabline .. '%#TabLineSel#'
-        else
-            tabline = tabline .. '%#TabLine#'
-        end
-
-        -- set the tab page number (for mouse clicks)
-        tabline = tabline .. '%' .. index .. 'T'
-
-        local win_num = vim.fn.tabpagewinnr(index)
-        local working_directory = vim.fn.getcwd(win_num, index)
-        local project_name = vim.fn.fnamemodify(working_directory, ":t")
-        tabline = tabline .. " " .. project_name .. " "
+  local tabline = ""
+  for index = 1, vim.fn.tabpagenr("$") do
+    -- select the highlighting
+    if index == vim.fn.tabpagenr() then
+      tabline = tabline .. "%#TabLineSel#"
+    else
+      tabline = tabline .. "%#TabLine#"
     end
 
-    -- after the last tab fill with TabLineFill and reset tab page nr
-    tabline = tabline .. '%#TabLineFill#%T'
+    -- set the tab page number (for mouse clicks)
+    tabline = tabline .. "%" .. index .. "T"
 
-    -- -- right-align the label to close the current tab page
-    -- if vim.fn.tabpagenr('$') > 1 then
-    --     tabline = tabline .. '%=%#TabLine#%999Xclose'
-    -- end
-    return tabline
+    local win_num = vim.fn.tabpagewinnr(index)
+    local working_directory = vim.fn.getcwd(win_num, index)
+    local project_name = vim.fn.fnamemodify(working_directory, ":t")
+    tabline = tabline .. " " .. project_name .. " "
+  end
+
+  -- after the last tab fill with TabLineFill and reset tab page nr
+  tabline = tabline .. "%#TabLineFill#%T"
+
+  -- -- right-align the label to close the current tab page
+  -- if vim.fn.tabpagenr('$') > 1 then
+  --     tabline = tabline .. '%=%#TabLine#%999Xclose'
+  -- end
+  return tabline
 end
 vim.go.tabline = "%!v:lua.MyTabLine()"
 
@@ -99,9 +99,10 @@ vim.g.recording_status = false
 vim.g.neovide_show_border = true
 
 vim.g.neovide_scroll_animation_length = 0.13
+vim.g.neovide_position_animation_length = 0.08
 vim.g.neovide_cursor_animate_command_line = true
 -- disable too much animation
-vim.g.neovide_cursor_trail_size = 0
+vim.g.neovide_cursor_trail_size = 0.1
 
 -- appearance
 -- vim.print(string.format("%x", math.floor(255 * 0))) -- 0.88 e0; 0.9 cc; 0 0
@@ -109,7 +110,8 @@ local alpha = function()
   return string.format("%x", math.floor(255 * (vim.g.transparency or 0.8)))
 end
 -- Visual parts transparency.
-vim.g.neovide_transparency = 1 -- 0: fully transparent.
+-- vim.g.neovide_transparency = 1 -- 0: fully transparent.
+vim.g.neovide_opacity = 1 -- 0: fully transparent. # neovide 0.15: upgraded from neovide_transparency.
 -- Normal Background transparency.
 vim.g.neovide_normal_opacity = 0.3
 
