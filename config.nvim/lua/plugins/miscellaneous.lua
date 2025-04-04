@@ -144,17 +144,7 @@ return {
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
       { "<leader>fo", function() Snacks.picker.recent(
-        {
-          finder = "recent_files",
-          format = "file",
-          filter = {
-            paths = {
-              [vim.fn.stdpath("data")] = true, -- index vim luas.
-              [vim.fn.stdpath("cache")] = false,
-              [vim.fn.stdpath("state")] = false,
-            },
-          },
-        }
+        { title = "Recent (Cwd)" ,hidden = false, filter = { cwd = true } }
       ) end, desc = "Recent" },
 
       -- Symbol browsing
@@ -308,6 +298,9 @@ return {
               -- Inspecting.
               ["<c-p>"] = "inspect",
               ["<d-p>"] = "inspect",
+
+              -- Additional actions.
+              ["<c-e>"] = {"picker_print", mode={"n", "i"}}
             }
           },
           list = {
@@ -472,9 +465,33 @@ return {
             end)
           end
         },
-        -- FIXME: Some special prewview types will not accept keymaps.
-        -- BUFFERS BUFFER_DIAGNOSTICS LINESEARCH
+        -- As neovim has no window-local keymap.
+        -- Display view that uses opened buffer will not oevrride keymaps. 
+        -- Confirmed by author.
         sources = {
+          recent = {
+            filter = {
+              paths = {
+                [vim.fn.stdpath("data")] = true
+              },
+            },
+            actions = {
+              toggle_global = function(picker, item)
+                if picker and picker.title == "Recent (Cwd)" then
+                  Snacks.picker.recent({ title = "Recent (Global)", hidden = true, filter = { cwd = false } })
+                else
+                  Snacks.picker.recent({ title = "Recent (Cwd)", hidden = false, filter = { cwd = true } })
+                end
+              end
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<c-e>"] = {"toggle_global", mode={"n", "i"}}
+                }
+              }
+            }
+          },
           keymaps = {
             actions = {
               go_to_if_possible = function (_, item)
@@ -532,6 +549,7 @@ return {
                 keys = {
                   ["<c-p>"] = "inspect",
                   ["<d-p>"] = "inspect",
+                  ["<d-.>"] = {"explorer_focus", mode = {"n", "i"}},
                 }
               },
               list = {
@@ -547,8 +565,11 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<c-w>"] = {"bufdelete", mode={"n", "i"}},
-                  ["<d-w>"] = {"bufdelete", mode={"n", "i"}},
+                  -- we won't use dd in input buffer here.
+                  ["d"] = {"bufdelete", mode={"n"}},
+
+                  ["<c-x>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<d-x>"] = {"bufdelete", mode={"n", "i"}},
                 }
               }
             }
