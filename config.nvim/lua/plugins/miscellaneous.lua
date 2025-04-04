@@ -214,6 +214,12 @@ return {
         enabled = true
       },
       styles = {
+        input = {
+          relative = "cursor",
+          row = 1,
+          col = 3,
+          width = 30,
+        },
         terminal = {
           keys = {
             ["<D-t>"] = {
@@ -254,7 +260,9 @@ return {
         }
       },
       -- indent = { enabled = false },
-      input = { enabled = false },
+      input = {
+        enabled = true,
+      },
       indent = { enabled = false },
       notify = { enabled = false },
       notifier = { enabled = false },
