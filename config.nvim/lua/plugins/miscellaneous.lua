@@ -143,7 +143,19 @@ return {
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-      { "<leader>fo", function() Snacks.picker.recent() end, desc = "Recent" },
+      { "<leader>fo", function() Snacks.picker.recent(
+        {
+          finder = "recent_files",
+          format = "file",
+          filter = {
+            paths = {
+              [vim.fn.stdpath("data")] = true, -- index vim luas.
+              [vim.fn.stdpath("cache")] = false,
+              [vim.fn.stdpath("state")] = false,
+            },
+          },
+        }
+      ) end, desc = "Recent" },
 
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
@@ -274,6 +286,7 @@ return {
               ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
 
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+              ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
 
               -- Searching from the directory.
               ["<C-/>"] = {"search_here", mode={"n", "i"}},
@@ -301,6 +314,7 @@ return {
 
               -- Tab open.
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+              ["<d-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["t"] = {"new_tab_here", mode={"n", "i"}},
 
               -- Search from the directory
@@ -348,6 +362,7 @@ return {
               -- Tab Opening.
               ["t"] = {"new_tab_here", mode={"n", "i"}},
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
+              ["<d-t>"] = {"new_tab_here", mode={"n", "i"}},
 
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
@@ -468,7 +483,7 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<c-t>"] = { "go_to_if_possible" , mode={"n", "i"}}
+                  ["<c-t>"] = { "go_to_if_possible" , mode={"n", "i"}},
                 }
               }
             }
