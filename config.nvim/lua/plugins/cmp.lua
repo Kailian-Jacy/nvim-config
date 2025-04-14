@@ -152,7 +152,6 @@ return {
           {
             name = "luasnip",
             priority = 150,
-            group_index = 1,
             option = { show_autosnippets = true, use_show_condition = false },
           },
           -- {
@@ -213,18 +212,18 @@ return {
           {
             name = "cmp_tabnine",
             priority = 90,
-            group_index = 1,
           },
         }),
         sorting = {
           priority_weight = 100,
           comparators = {
-            cmp.config.compare.offset,
-            cmp.config.compare.exact,
-            cmp.config.compare.score,
+            cmp.config.compare.locality,
             cmp.config.compare.recently_used,
-            require("cmp-under-comparator").under,
+            cmp.config.compare.score,
             cmp.config.compare.kind,
+            cmp.config.compare.exact,
+            cmp.config.compare.offset,
+            require("cmp-under-comparator").under,
           },
         },
         matching = {
