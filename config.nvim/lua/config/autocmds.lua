@@ -8,6 +8,17 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Lua print target result content.
+vim.api.nvim_create_user_command("LuaPrint", function()
+  local codepiece, err = loadstring("vim.print(" .. vim.g.function_get_selected_content() .. ")")
+  if err then
+    vim.print("failed to execute target string: " .. err)
+  else
+    codepiece()
+  end
+end, { desc = "Execute the target lua codepiece and print result", range = true })
+
+-- Yanky ring filter
 if not vim.g.yanky_ring_accept_length then
   vim.notify("vim.g.yanky_ring_accept_length is not set. Default to be 10.")
   vim.g.yanky_ring_accept_length = 10
@@ -24,7 +35,7 @@ end
 
 local _yanky_hook_before_copy = function()
   -- get the copied content from default register.
-  local content = _yanky_hook_before_copy_body(vim.fn.getreg("\""))
+  local content = _yanky_hook_before_copy_body(vim.fn.getreg('"'))
 
   -- Actually move the filtered content to yanky register.
   if content then
