@@ -165,6 +165,9 @@ vim.g.obsidian_executable = "/applications/obsidian.app"
 vim.g.obsidian_functions_enabled = obsidian_app_exists()
 vim.g.obsidian_vault = "/Users/kailianjacy/Library/Mobile Documents/iCloud~md~obsidian/Documents/universe"
 
+-- yanky ring reserve least content length.
+vim.g.yanky_ring_accept_length = 10
+
 -- Snippet path settings
 vim.g.import_user_snippets = true
 vim.g.user_vscode_snippets_path = vim.fn.stdpath("config") .. "/snip/" -- How to get: https://arc.net/l/quote/fjclcvra

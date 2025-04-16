@@ -427,6 +427,13 @@ local cmd_mappings = {
     description = "Split vertically",
     back_to_insert = true,
   },
+  {
+    cmdKeymap = "<D-y>",
+    leaderKeymap = "<leader>yy",
+    modes = { "n", "v", "i" },
+    description = "Yanky short cut",
+    back_to_insert = true,
+  },
   -- Zoxide navigation.
   { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Navigate Cd with Zeoxide" },
   -- Searching

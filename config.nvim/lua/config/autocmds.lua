@@ -8,6 +8,41 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+if not vim.g.yanky_ring_accept_length then
+  vim.notify("vim.g.yanky_ring_accept_length is not set. Default to be 10.")
+  vim.g.yanky_ring_accept_length = 10
+end
+
+---@param copied_content string
+---@return string|nil
+local _yanky_hook_before_copy_body = function(copied_content)
+  if #vim.trim(copied_content) < vim.g.yanky_ring_accept_length then
+    return nil
+  end
+  return copied_content
+end
+
+local _yanky_hook_before_copy = function()
+  -- get the copied content from default register.
+  local content = _yanky_hook_before_copy_body(vim.fn.getreg("\""))
+
+  -- Actually move the filtered content to yanky register.
+  if content then
+    vim.fn.setreg("y", content) -- write to another register that is not ignored by yanky.
+  end
+end
+
+vim.api.nvim_create_autocmd("TextYankPost", {
+  pattern = "*",
+  callback = function()
+    local reg = vim.v.event.regname
+    -- If the default register (nil for default '"')
+    if reg == nil or #reg == 0 then
+      _yanky_hook_before_copy()
+    end
+  end,
+})
+
 -- Quickfix related.
 -- Page closing
 vim.api.nvim_create_autocmd("FileType", {
