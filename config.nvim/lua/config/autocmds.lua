@@ -8,6 +8,29 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Open and edit the lua script.
+vim.api.nvim_create_user_command("SnipEdit", function()
+  local default_snip_path = vim.fn.stdpath("config") .. "/snip/all.json"
+  if vim.fn.filereadable(default_snip_path) == 1 then
+    vim.cmd("e " .. default_snip_path)
+  elseif vim.g.import_user_snippets and #vim.g.user_vscode_snippets_path > 0 then
+    vim.cmd("e " .. vim.g.user_vscode_snippets_path[1])
+  else
+    vim.notify("Failed to open luasnippet file. ", vim.log.levels.ERROR)
+    return
+  end
+  vim.print_silent("Editing lua script. Call :LuaSnippetsLoad on accomplishment.")
+end, { desc = "Open the lua snippet buffer. By default, open the all.json under vim config dir." })
+
+vim.api.nvim_create_user_command("SnipLoad", function()
+  if vim.g.import_user_snippets then
+    require("luasnip.loaders.from_vscode").load({
+      paths = vim.g.user_vscode_snippets_path,
+    })
+    vim.print_silent("snip load success.")
+  end
+end, { desc = "Load luasnip files." })
+
 -- Lua print target result content.
 vim.api.nvim_create_user_command("LuaPrint", function()
   local codepiece, err = loadstring("vim.print(" .. vim.g.function_get_selected_content() .. ")")
