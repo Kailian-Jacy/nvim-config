@@ -47,7 +47,9 @@ return {
       -- keymaps are all configured at nvim-cmp.
       require("luasnip.loaders.from_vscode").lazy_load()
       if vim.g.import_user_snippets then
-        require("luasnip.loaders.from_vscode").load({ paths = { vim.g.user_vscode_snippets_path } })
+        require("luasnip.loaders.from_vscode").load({
+          paths = vim.g.user_vscode_snippets_path,
+        })
       end
     end,
   },

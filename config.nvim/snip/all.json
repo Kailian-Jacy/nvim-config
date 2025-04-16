@@ -1,0 +1,52 @@
+{
+	"Toc": {
+		"prefix": "toc",
+		"body": [
+			"```table-of-contents",
+			"title: ${0:Table of Contents}",
+			"```"
+		]
+	},
+	"Todos": {
+		"prefix": "todo",
+		"body": [
+			"- [ ] "
+		]
+	},
+	"LazyVimKeymap": {
+		"prefix": "pluginkeymap",
+		"body": [
+			"{",
+			"\t\"<keymap>\",",
+			"\t\"functionality\",",
+			"\tmode = \"n\",",
+			"\tdesc = \"n\",",
+			"},"
+		],
+		"desc": "Create new keymap in lazyvim plugin."
+	},
+	"CreateNewSnippet": {
+		"prefix": "newsnippet",
+		"body": [
+			"\"${1:SnippetName}\": {",
+			"\t\"prefix\": \"${2:snip_prefix}\",",
+			"\t\"body\": [",
+			"\t\t\"${3:Snippet content here}\"",
+			"\t]",
+			"}"
+		],
+		"desc": "Create a new code snippet with a specified name, prefix, and content."
+	},
+	"VimPrintInspect": {
+		"prefix": "printinspect",
+		"body": [
+			"vim.print(vim.inspect($0))"
+		]
+	},
+	"VimAddLog": {
+		"prefix": "vimlog",
+		"body": [
+			"vim.notify(\"$1\", vim.log.levels.$2)"
+		]
+	}
+}
