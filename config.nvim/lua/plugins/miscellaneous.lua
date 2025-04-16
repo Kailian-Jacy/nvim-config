@@ -859,13 +859,36 @@ return {
   {
     "cohama/lexima.vim"
   },
-  -- {
-  --   "gbprod/yanky.nvim",
-  --   dependencies = {
-  --     { "kkharji/sqlite.lua" }
-  --   },
-  --   opts = {
-  --     ring = { storage = "sqlite" },
-  --   },
-  -- }
+  {
+    "gbprod/yanky.nvim",
+    keys = {
+      {
+        "<leader>yy",
+        function()
+          Snacks.picker.yanky()
+        end,
+        desc = "Yanky ring history picker.",
+      }
+    },
+    dependencies = { "folke/snacks.nvim" },
+    opts = {
+      ring = {
+        history_length = 1000,
+        storage = "shada",
+        sync_with_numbered_registers = false,
+        -- Ignroe all by default.
+        ignore_registers = { "\"" }
+      },
+      -- I prever highlight to be done by nvim itself.
+      highlight = {
+        on_put = false,
+        on_yank = false,
+        timer = 500,
+      },
+      system_clipboard = {
+        sync_with_ring = false,
+        clipboard_register = nil,
+      },
+    },
+  }
 }
