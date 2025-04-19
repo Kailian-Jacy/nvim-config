@@ -1,6 +1,9 @@
 return {
   {
     "williamboman/mason.nvim",
+    cmd = {
+      "Mason",
+    },
     -- disable mason keymaps.
     keys = function(_)
       return {}
@@ -156,25 +159,42 @@ return {
       -- Setup windows location and side when debugging with terminal:
 
       -- Register Codelldb adapter here: for rust and cpp.
-      local function get_codelldb_path()
-        local codelldb_path = vim.fn.trim(vim.fn.system("which codelldb"))
+      local function get_full_path_of(debugger_exe_name)
+        local exe_path = vim.fn.trim(vim.fn.system("which " .. debugger_exe_name))
 
         -- Check if codelldb is found
-        if codelldb_path == "" then
+        if exe_path == "" then
           -- If not found, show a notification and panic
-          vim.notify("codelldb is not installed. Please install it to use the debugger.", vim.log.levels.ERROR)
+          vim.notify(
+            debugger_exe_name .. " is not installed. Please install it to use the debugger.",
+            vim.log.levels.ERROR
+          )
         else
           -- Return the absolute path of codelldb
-          return codelldb_path
+          -- vim.notify(debugger_exe_name .. " loaded.")
+          return exe_path
         end
       end
-      dap.adapters.codelldb = {
-        type = "executable",
-        -- Developer says it's important to have absolute path.
-        command = get_codelldb_path(),
-        -- env = {},
-        name = "codelldb",
-      }
+      if get_full_path_of("codelldb") then
+        dap.adapters.codelldb = {
+          type = "executable",
+          -- Developer says it's important to have absolute path.
+          command = get_full_path_of("codelldb"),
+          -- env = {},
+          name = "codelldb",
+        }
+      end
+      if vim.fn.executable("debugpy") then
+        dap.adapters.debugpy = {
+          type = "executable",
+          -- We want to update the actual debugpy instance it points to
+          --   as used python executable is updated.
+          -- So we are not using full path here.
+          command = "debugpy",
+          -- env = {},
+          name = "debugpy",
+        }
+      end
     end,
   },
   --[[{

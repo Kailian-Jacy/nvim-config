@@ -1,7 +1,15 @@
 return {
+  -- Before debugging, if anything happens,
+  -- 1. Make sure python is reachable as `python` in shell;
+  -- 2. Make sure venv-selector could reach the python executalb;
+  -- 3. Make sure path `.vscode/launch.json` if you want to use;
+  -- 4. Make sure debugpy is installed and corresponded to python executable.
   {
     "linux-cultist/venv-selector.nvim",
-    enabled = false,
+    -- Only load on python files.
+    lazy = true,
+    ft = { "python" },
+    -- event = "BufEnter *.py" ,
     dependencies = {
       "neovim/nvim-lspconfig",
       -- "nvim-telescope/telescope.nvim",
@@ -9,20 +17,24 @@ return {
     },
     -- Selector is not needed except wanting to point
     --  python intepreter manually.
-    event = "VeryLazy",
     config = function()
       require("venv-selector").setup({
         stay_on_this_version = true,
+        anaconda_base_path = "/opt/homebrew/Caskroom/miniconda/base",
+        -- anaconda_envs_path = "/home/cado/.conda/envs",
         settings = {
           search = {
+            cwd = false,
             bare_envs = {
-              -- TODO: Search envs not precise.
               command = "fd python$ ~/.venv/",
+            },
+            conda_envs = {
+              command = "fd python3$ /opt/homebrew/Caskroom/miniconda/*/bin",
             },
           },
         },
       })
-      -- require("venv-selector").retrieve_from_cache() -- TODO: it's not working for now.
+      require("venv-selector").retrieve_from_cache()
     end,
   },
   {
@@ -30,8 +42,19 @@ return {
   },
   {
     "mfussenegger/nvim-dap-python",
-    dependencies = { "mfussenegger/nvim-dap" },
+    -- Only load on python files.
+    lazy = true,
+    ft = { "python" },
+    dependencies = {
+      "mfussenegger/nvim-dap",
+
+      -- It's not dependent, since dap-python only works on top of `python`
+      --   executable. selector just sets the executable alternatives.
+      -- "linux-cultist/venv-selector.nvim",
+    },
     config = function()
+      -- Set debugpy only when
+
       -- Try to get default python path.
       if not vim.fn.executable("python") then
         vim.notify("Could not find python executable. Please select by :VenvSelect", vim.log.levels.ERROR)
@@ -40,17 +63,6 @@ return {
       -- Setup
       -- It's following the link of `python`. So we use VenvSelect to modify.
       require("dap-python").setup("python")
-      if vim.fn.executable("debugpy") == 0 then
-        vim.notify(
-          "Debugpy is not installed. Install with:\n"
-            .. "mkdir -p ~/.virtualenvs\n"
-            .. "cd ~/.virtualenvs\n"
-            .. "python -m venv debugpy\n"
-            .. "debugpy/bin/python -m pip install debugpy",
-          vim.log.levels.ERROR
-        )
-        return
-      end
       table.insert(require("dap").configurations.python, {
         type = "debugpy",
         request = "launch",
