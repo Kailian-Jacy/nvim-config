@@ -30,10 +30,10 @@ return {
     },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "azure4omini", -- Recommend using Claude
+      provider = "openrouter", -- Recommend using Claude
       -- provider = "4omini", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
-      azure = {},
+      -- azure = {},
       vendors = {
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
@@ -41,6 +41,16 @@ return {
           __inherited_from = "openai",
           api_key_name = "OPENAI_API_KEY",
           model = "gpt-4o-mini",
+        },
+        openrouter = {
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
+          -- model = "openrouter/auto",
+          model = "anthropic/claude-3.5-sonnet",
+          max_tokens = 10240,
+          -- timeout = 30000,
+          disable_tools = true,
         },
         deepseek = {
           __inherited_from = "openai",
@@ -110,7 +120,7 @@ return {
           reverse_switch_windows = "<S-Tab>",]]
         },
       },
-      hints = { enabled = true },
+      hints = { enabled = false },
       windows = {
         ---@type "right" | "left" | "top" | "bottom"
         position = "right", -- the position of the sidebar
