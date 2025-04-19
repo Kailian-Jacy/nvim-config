@@ -406,6 +406,53 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   require("bufjump").backward()
 end, { nargs = "?" })
 
+-- Open in Vscode
+vim.api.nvim_create_user_command("Code", function(opt)
+  local mode
+  if #opt.args == 0 then
+    mode = "full"
+  else
+    mode = opt.args
+  end
+
+  -- Try to check if code executable exists.
+  local code = "Code"
+  if not vim.fn.executable(code) then
+    vim.notify(
+      '`code` not found in executable. Install with "Shell Command: Install Command `code` in PATH"',
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
+  local file
+  local dir
+
+  if mode == "file" then
+    file = vim.fn.expand("%:p")
+  elseif mode == "dir" then
+    dir = vim.fn.getcwd()
+  elseif mode == "both" then
+    file = vim.fn.expand("%:p")
+    dir = vim.fn.getcwd()
+  else
+    vim.notify("Invalid option for code: " .. mode .. '. Alternatives: "file"(default), "dir", "both"')
+    return
+  end
+
+  if dir then
+    vim.print(dir)
+    vim.loop.spawn(code, {
+      args = { dir },
+    })
+  end
+  if file then
+    vim.loop.spawn(code, {
+      args = { file },
+    })
+  end
+end, { desc = "Open the current file or dir in vscode.", nargs = "?" })
+
 -- current file path into clipboard.
 vim.api.nvim_create_user_command("CopyFilePath", function(opt)
   if #opt.args == 0 then
