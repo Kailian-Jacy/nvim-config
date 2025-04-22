@@ -147,7 +147,7 @@ local snack_old_file = function(opts)
   local title = "OldFiles"
   local toggle_function
   if opts.global then
-    title = title .. "(Global)"
+    title = title .. " (Global)"
     toggle_function = function(picker, _)
       vim.cmd([[ SnackOldfilesLocal ]])
       picker:close()
@@ -182,7 +182,7 @@ local snack_old_file = function(opts)
           if not opts.global and full_path:find(cwd, 1, true) ~= 1 then
             goto continue
           end
-          if oldfile:find("^term:/") then
+          if oldfile:find("^term:/") or oldfile:find("^scp:/") or oldfile:find("^rsync:/") then
             goto continue
           end
           table.insert(tbl, {
