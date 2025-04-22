@@ -61,9 +61,10 @@ local _yanky_hook_before_copy = function()
   local content = _yanky_hook_before_copy_body(vim.fn.getreg('"'))
 
   -- Actually move the filtered content to yanky register.
-  if content then
-    vim.fn.setreg("y", content) -- write to another register that is not ignored by yanky.
-  end
+  require("yanky.history").push({
+    regcontents = content,
+    regtype = "y",
+  })
 end
 
 vim.api.nvim_create_autocmd("TextYankPost", {
