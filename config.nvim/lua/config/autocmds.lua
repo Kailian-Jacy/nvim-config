@@ -374,10 +374,10 @@ end, {})
 -- Search History
 vim.api.nvim_create_user_command("SearchHistory", Snacks.picker.search_history, {})
 
--- Drop buf some where and reveal the last.
+-- Drop buf somewhere and reveal the last on this window.
 vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   if #opt.args == 0 then
-    opt = "l"
+    opt = "l" -- "l: right"
   else
     opt = opt.args
   end
@@ -385,26 +385,32 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   if not vim.tbl_contains({ "h", "j", "k", "l" }, opt) then
     vim.notify("Invalid direction: " .. opt, vim.log.levels.WARN)
   end
-  if vim.fn.winnr() ~= vim.fn.winnr(opt) then
-    -- exists. Just throw.
-    vim.cmd("wincmd " .. opt)
-  else
-    -- create new window if none exists.
-    if opt == "l" then
+  -- create new window if none exists.
+  if opt == "l" then
+    if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("vsplit")
-    elseif opt == "h" then
+    end
+    vim.cmd("wincmd l")
+  elseif opt == "h" then
+    if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("vsplit")
-      vim.cmd("wincmd h")
-    elseif opt == "j" then
+    end
+  elseif opt == "j" then
+    if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("split")
-    elseif opt == "k" then
+    end
+    vim.cmd("wincmd j")
+  elseif opt == "k" then
+    if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("split")
-      vim.cmd("wincmd k")
     end
   end
   vim.cmd("b " .. buf)
+
   vim.cmd("wincmd p") -- go to the last win.
   require("bufjump").backward()
+
+  vim.cmd("wincmd p") -- focus to the created win.
 end, { nargs = "?" })
 
 -- Open in Vscode
