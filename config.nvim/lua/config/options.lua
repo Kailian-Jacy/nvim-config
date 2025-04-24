@@ -167,6 +167,7 @@ vim.g.obsidian_vault = "/Users/kailianjacy/Library/Mobile Documents/iCloud~md~ob
 
 -- yanky ring reserve least content length.
 vim.g.yanky_ring_accept_length = 10
+vim.g.yanky_ring_max_accept_length = 1000
 
 -- Snippet path settings
 vim.g.import_user_snippets = true
