@@ -74,6 +74,9 @@ return {
       lspconfig.pyright.setup({})
       -- cmake
       lspconfig.cmake.setup({})
+
+      -- Start LSP inlay hint.
+      vim.lsp.inlay_hint.enable(true)
     end,
   },
   {

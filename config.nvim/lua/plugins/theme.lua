@@ -49,6 +49,8 @@ return {
             DiffAdd = { bg = "#4a2f90" },
             -- Scrollbar
             SatelliteCursor = { fg = "#F8F8F2" },
+            -- LSP.
+            LspInlayHint = { fg = "#969696" }
           }
         end,
       })
