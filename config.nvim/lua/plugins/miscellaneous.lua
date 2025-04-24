@@ -404,6 +404,16 @@ return {
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          yanky = {
+            win = {
+              input = {
+                keys = {
+                  ["<c-s-x>"] = false,
+                  ["<c-x>"] = false,
+                }
+              }
+            }
+          },
           recent = {
             filter = {
               paths = {
