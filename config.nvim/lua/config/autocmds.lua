@@ -46,11 +46,18 @@ if not vim.g.yanky_ring_accept_length then
   vim.notify("vim.g.yanky_ring_accept_length is not set. Default to be 10.")
   vim.g.yanky_ring_accept_length = 10
 end
+if not vim.g.yanky_ring_max_accept_length then
+  vim.notify("vim.g.yanky_ring_accept_length is not set. Default to be 10.")
+  vim.g.yanky_ring_max_accept_length = 1000
+end
 
 ---@param copied_content string
 ---@return string|nil
 local _yanky_hook_before_copy_body = function(copied_content)
   if #vim.trim(copied_content) < vim.g.yanky_ring_accept_length then
+    return nil
+  end
+  if #vim.trim(copied_content) > vim.g.yanky_ring_max_accept_length then
     return nil
   end
   return copied_content
