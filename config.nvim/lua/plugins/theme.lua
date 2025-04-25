@@ -18,7 +18,9 @@ return {
         overrides = function()
           return {
             -- Faint seletion.
-            FaintSelected = { bg = "#383679" },
+            FaintSelected = {
+              link = "Underlined",
+            },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
             CursorLine = { bg = "" },
@@ -50,7 +52,7 @@ return {
             -- Scrollbar
             SatelliteCursor = { fg = "#F8F8F2" },
             -- LSP.
-            LspInlayHint = { fg = "#969696" }
+            LspInlayHint = { fg = "#969696" },
           }
         end,
       })
