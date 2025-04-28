@@ -21,8 +21,9 @@ vim.g.maplocalleader = "\\"
 vim.cmd([[ set laststatus=3 ]]) -- Global lualine across each windows.
 vim.cmd([[ set signcolumn=yes:1 ]]) -- Constant status column indentation.
 vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
-vim.o.guifont = 'MonoLisa Nerd Font Light:h14'
 
+-- Font. Now we are setting font in neovide configuration to keep consistency.
+-- vim.o.guifont = 'MonoLisa Nerd Font Light:h14'
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
 
