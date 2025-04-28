@@ -8,6 +8,45 @@ vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)
 
+-- Open the launch.json related to the current workdir. If non-exists, confirms to create.
+vim.api.nvim_create_user_command("OpenLaunchJson", function()
+  -- Check if $VIMPWD/.vscode/launch.json exists.
+  local vscode_dir = vim.fn.getcwd() .. "/.vscode"
+  local launch_json = vscode_dir .. "/launch.json"
+
+  if vim.fn.filereadable(launch_json) == 0 then
+    -- Popup select to confirm creation. Map to [Y]es or [N]o.
+    local choice = vim.fn.confirm("launch.json does not exist. Create it?", "&Yes\n&No", 1)
+    if choice == 1 then
+      -- Create basic launch.json template
+      local template = [[
+{
+  "version": "0.2.0",
+  "configurations": []
+}
+]]
+      -- Create directory if it doesn't exist
+      if vim.fn.isdirectory(vscode_dir) == 0 then
+        vim.fn.mkdir(vscode_dir, "p")
+      end
+      local file = io.open(launch_json, "w")
+      if file then
+        file:write(template)
+        file:close()
+        vim.print_silent("Created $pwd/.vscode/launch.json")
+      else
+        vim.notify("Failed to create launch.json", vim.log.levels.ERROR)
+        return
+      end
+    else
+      vim.print_silent("aborted.")
+      return
+    end
+  end
+
+  vim.cmd("edit " .. launch_json)
+end, { desc = "Open the launch.json related to the current workdir. If non-exists, confirms to create." })
+
 -- Open and edit the lua script.
 vim.api.nvim_create_user_command("SnipEdit", function()
   local default_snip_path = vim.fn.stdpath("config") .. "/snip/all.json"
