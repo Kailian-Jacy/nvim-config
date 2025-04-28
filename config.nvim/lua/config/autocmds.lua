@@ -85,6 +85,17 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- Oldfiles related.
+-- Save & load the pages in record after entering buffer.
+vim.api.nvim_create_autocmd("BufEnter", {
+  pattern = "*",
+  -- Async write and load shada files.
+  callback = vim.schedule_wrap(function()
+    vim.cmd([[ wshada ]])
+    vim.cmd([[ rshada! ]])
+  end),
+})
+
 -- Quickfix related.
 -- Page closing
 vim.api.nvim_create_autocmd("FileType", {
