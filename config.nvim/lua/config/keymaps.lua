@@ -11,9 +11,14 @@ vim.keymap.set({ "n", "v" }, "Y", '"*y')
 vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode lsp variable name replacement." })
 -- keymap based on filetype
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = {"cpp", "c", "objc", "objcpp", "cuda", "proto"},
+  pattern = { "cpp", "c", "objc", "objcpp", "cuda", "proto" },
   callback = function()
-    vim.keymap.set({ "n" }, "<leader>hh", "<cmd>ClangdSwitchSourceHeader<cr>", { desc = "Switch between header and type." })
+    vim.keymap.set(
+      { "n" },
+      "<leader>hh",
+      "<cmd>ClangdSwitchSourceHeader<cr>",
+      { desc = "Switch between header and type." }
+    )
   end,
 })
 
