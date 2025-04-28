@@ -48,5 +48,14 @@
 		"body": [
 			"vim.notify(\"$1\", vim.log.levels.$2)"
 		]
-	}
+	},
+  "LuaKeymapSnippet": {
+    "prefix": "vimkeymap",
+    "body": [
+      "vim.keymap.set({\"${1:n}\"}, \"${2:<leader>tp}\", function()",
+      "\t${3:vim.notify(\"Keymap Triggered\", vim.log.levels.INFO)}",
+      "end, { desc = \"${4:Description}\" })"
+    ],
+    "description": "Create a Neovim keymap using vim.keymap.set"
+  }
 }
