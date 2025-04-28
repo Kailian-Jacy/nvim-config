@@ -1,16 +1,22 @@
 return {
   {
     "tzachar/local-highlight.nvim",
-    config = function()
-      require("local-highlight").setup({
-        cw_hlgroup = "FaintSelected",
-        hlgroup = "FaintSelected",
-        animate = {
-          enabled = false,
+    opts = {
+      disable_file_types = { "help" },
+      cw_hlgroup = "FaintSelected",
+      hlgroup = "FaintSelected",
+      animate = {
+        enabled = true,
+        easing = "linear",
+        duration = {
+          step = 7, -- ms per step
+          total = 30, -- maximum duration
+          fps = 120,
         },
-        debounce_timeout = 500,
-      })
-    end,
+      },
+      highlight_single_match = true,
+      debounce_timeout = 300,
+    },
   },
   {
     "kwkarlwang/bufjump.nvim",
