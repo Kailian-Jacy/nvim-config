@@ -430,9 +430,9 @@ local cmd_mappings = {
   {
     cmdKeymap = "<D-y>",
     leaderKeymap = "<leader>yy",
-    modes = { "n", "v", "i" },
+    modes = { "n", "v" },
     description = "Yanky short cut",
-    back_to_insert = true,
+    back_to_insert = false,
   },
   -- Zoxide navigation.
   { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Navigate Cd with Zeoxide" },
