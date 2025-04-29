@@ -50,6 +50,7 @@ return {
       })
       -- lua config
       lspconfig.lua_ls.setup({
+        capabilities = cmp_nvim_lsp.default_capabilities(),
         settings = {
           Lua = {
             diagnostics = {
