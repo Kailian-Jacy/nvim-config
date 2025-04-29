@@ -24,6 +24,11 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
 -- Font. Now we are setting font in neovide configuration to keep consistency.
 -- vim.o.guifont = 'MonoLisa Nerd Font Light:h14'
+
+-- Highlighting Source.
+vim.cmd([[ syntax off ]]) -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
+vim.g.use_treesitter_highlight = true -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
+
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
 

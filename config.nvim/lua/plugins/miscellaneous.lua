@@ -29,21 +29,28 @@ return {
       }
       opts.ensure_installed = {
         "bash",
-        "json",
-        "lua",
+        "python", -- Pylance does not support highlighting.
+        "cpp", -- clangd provides very barren highlighting. `See https://github.com/clangd/clangd/issues/1115`
+        -- "lua",
         "markdown",
         "markdown_inline",
         "python",
         "query",
         "regex",
-        "rust",
-        "go",
+        "xml",
+        -- "rust",
+        -- "go",
         "vim",
         "vimdoc",
         "yaml",
         "json",
         "json5",
       }
+      if (vim.g.use_treesitter_highlight) then
+        vim.cmd[[ TSEnable highlight ]]
+      else
+        vim.cmd[[ TSDisable highlight ]]
+      end
       opts.indent = {
         disable = true,
       }
