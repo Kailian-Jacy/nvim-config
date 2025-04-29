@@ -500,12 +500,30 @@ return {
             diagnostics_open = true,
             focus = "input",
             auto_close = true,
+            actions = {
+              tcd_to_item = function (picker, item)
+                picker:close()
+                vim.cmd('silent !zoxide add "' .. item._path .. '"')
+                vim.cmd.tcd(item._path)
+                vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+              end,
+              add_to_zoxide = function(_, item)
+                vim.cmd('silent !zoxide add "' .. item._path .. '"')
+                vim.notify("Path " .. item._path .. " added to zoxide path.", vim.log.levels.INFO)
+              end
+            },
             win = {
               input = {
                 keys = {
                   ["<c-p>"] = "inspect",
                   ["<d-p>"] = "inspect",
                   ["<d-.>"] = {"explorer_focus", mode = {"n", "i"}},
+
+                  ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
+
+                  ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
+                  ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
+                  ["z"] = {"add_to_zoxide", mode = {"n"}},
                 }
               },
               list = {
@@ -513,6 +531,12 @@ return {
                   ["<c-p>"] = "inspect",
                   ["<d-p>"] = "inspect",
                   ["p"] = "inspect",
+
+                  ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
+
+                  ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
+                  ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
+                  ["z"] = {"add_to_zoxide", mode = {"n"}},
                 }
               },
             }
@@ -537,11 +561,13 @@ return {
             confirm = "zoxide_tcd",
             actions = {
               zoxide_tcd = function (picker, item)
-                vim.cmd.tcd(item._path)
                 picker:close()
-                vim.print_silent("Win pwd: " .. vim.fn.getcwd())
+                vim.cmd('silent !zoxide add "' .. item._path .. '"')
+                vim.cmd.tcd(item._path)
+                vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
               end,
               zoxide_lcd = function(picker, item)
+                vim.cmd('silent !zoxide add "' .. item._path .. '"')
                 picker:close()
                 Snacks.picker.actions.lcd(_, item)
                 vim.print_silent("Win pwd: " .. vim.fn.getcwd())
