@@ -185,6 +185,78 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- Svn Related.
+vim.api.nvim_create_user_command("SvnDiffThis", function()
+  -- Get the current buffer's filetype, index, and file path
+  local buf_number = vim.api.nvim_get_current_buf() -- Get the current buffer number
+  local filetype = vim.bo[buf_number].filetype -- Get the filetype of the buffer
+  local file_path = vim.api.nvim_buf_get_name(buf_number) -- Get the file path of the buffer
+
+  -- Create a new tab
+  vim.cmd("tabnew")
+
+  -- Try to get the file content from SVN (svn cat)
+  local svn_cmd = "svn cat " .. file_path
+  local handle = io.popen(svn_cmd)
+  local svn_content = handle:read("*all")
+  local success = handle:close() -- Capture the exit code to check if svn command succeeded
+  vim.print(success)
+  vim.print(svn_content)
+
+  local buf2
+  if success and svn_content and #svn_content > 0 then
+    buf2 = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(buf2, 0, -1, false, vim.split(svn_content, "\n"))
+  -- TODO: Judge error type.
+  else
+    -- If it's new buffer, create an empty buffer
+    vim.print("Debug: New page.")
+    buf2 = vim.api.nvim_create_buf(false, true) -- Create an empty buffer
+  end
+  vim.cmd("edit " .. file_path)
+  vim.cmd("diffthis")
+
+  -- Original buffer in vertical split.
+  vim.cmd("vsplit")
+  vim.api.nvim_win_set_buf(0, buf2)
+  vim.bo[buf2].modifiable = false
+  vim.bo[buf2].filetype = filetype
+
+  vim.cmd("diffthis")
+  -- vim.cmd("windo diffthis")
+end, { desc = "SVN diff this file in a new tabpage." })
+
+vim.api.nvim_create_user_command("SvnDiffAll", function()
+  local function parse_file_changes(input)
+    local file_changes = {}
+    -- Iterate through each line of the input
+    for line in input:gmatch("[^\r\n]+") do
+      local operation, filepath = line:match("^(%S+)%s+(%S+)")
+      if operation and filepath then
+        table.insert(file_changes, { status = operation, text = filepath, file = filepath })
+      end
+    end
+    return file_changes
+  end
+
+  local svn_updates = function()
+    local command = 'svn status | grep -e "^[A|M]"'
+    local handle = io.popen(command)
+    local result = handle:read("*a")
+    handle:close()
+    return parse_file_changes(result)
+  end
+
+  -- vim.print(svn_updates())
+
+  require("snacks").picker({
+    finder = svn_updates,
+    -- layout = {
+    --     preview = false,
+    -- }
+  })
+end, { desc = "List all svn modifications." })
+
 -- Oldfiles related.
 -- Save & load the pages in record after entering buffer.
 vim.api.nvim_create_autocmd("BufEnter", {
