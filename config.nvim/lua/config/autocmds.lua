@@ -70,6 +70,67 @@ vim.api.nvim_create_user_command("SnipLoad", function()
   end
 end, { desc = "Load luasnip files." })
 
+-- Snippet picker.
+vim.api.nvim_create_user_command("SnipPick", function()
+  Snacks.picker.pick({
+    supports_live = false,
+    title = "Code Snippets",
+    preview = "preview",
+    format = function(item)
+      return {
+        { item.name, item.ft == "" and "Conceal" or "DiagnosticWarn" },
+        { item.description },
+      }
+    end,
+    finder = function()
+      local snippets = {}
+      for _, snip in ipairs(require("luasnip").get_snippets().all) do
+        snip.ft = ""
+        table.insert(snippets, snip)
+      end
+      for _, snip in ipairs(require("luasnip").get_snippets(vim.bo.ft)) do
+        snip.ft = vim.bo.ft
+        table.insert(snippets, snip)
+      end
+      local align_1 = 0
+      for _, snip in pairs(snippets) do
+        align_1 = math.max(align_1, #snip.name)
+      end
+      local items = {}
+      for _, snip in pairs(snippets) do
+        local docstring = snip:get_docstring()
+        if type(docstring) == "table" then
+          docstring = table.concat(docstring)
+        end
+        local name = Snacks.picker.util.align(snip.name, align_1 + 5)
+        local description = table.concat(snip.description)
+        description = name == description and "" or description
+        table.insert(items, {
+          text = name .. description,
+          name = name,
+          description = description,
+          trigger = snip.trigger,
+          orig_snip = snip,
+          ft = snip.ft,
+          preview = {
+            ft = snip.ft,
+            text = docstring,
+          },
+        })
+      end
+      return items
+    end,
+    -- Insert trigger and tab to expand later.
+    confirm = function(picker, item)
+      picker:close()
+      -- TODO: Consider about insertion.
+      -- Now just put in reg.
+      -- Now expansion is sometimes causing panic.
+      vim.fn.setreg('"', item.trigger)
+    end,
+  })
+end, { desc = "Snacks picker for luasnip." })
+
 -- Lua print target result content.
 vim.api.nvim_create_user_command("LuaPrint", function()
   local codepiece, err = loadstring("vim.print(" .. vim.g.function_get_selected_content() .. ")")
