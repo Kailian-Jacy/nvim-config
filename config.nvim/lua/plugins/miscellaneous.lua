@@ -412,28 +412,41 @@ return {
               }
             }
           },
+          -- Now migrate to customized recent picker. Deprecated for now.
           recent = {
-            filter = {
-              paths = {
-                [vim.fn.stdpath("data")] = true
-              },
-            },
-            actions = {
-              toggle_global = function(picker, item)
-                if picker and picker.title == "Recent (Cwd)" then
-                  Snacks.picker.recent({ title = "Recent (Global)", hidden = true, filter = { cwd = false } })
-                else
-                  Snacks.picker.recent({ title = "Recent (Cwd)", hidden = false, filter = { cwd = true } })
-                end
-              end
-            },
-            win = {
-              input = {
-                keys = {
-                  ["<c-g>"] = {"toggle_global", mode={"n", "i"}}
-                }
-              }
-            }
+            -- filter = {
+            --   paths = {
+            --     [vim.fn.stdpath("data")] = true
+            --   },
+            -- },
+            -- actions = {
+            --   toggle_global = function(picker, item)
+            --     if picker and picker.title == "Recent (Cwd)" then
+            --       Snacks.picker.recent({ title = "Recent (Global)", hidden = true, filter = { cwd = false,
+            --       paths = {
+            --         [vim.fn.stdpath("data")] = true,
+            --         [vim.fn.stdpath("cache")] = true,
+            --         [vim.fn.stdpath("state")] = true,
+            --       }
+            --       } })
+            --     else
+            --       Snacks.picker.recent({ title = "Recent (Cwd)", hidden = false, filter = { cwd = true,
+            --         paths = {
+            --           [vim.fn.stdpath("data")] = true,
+            --           [vim.fn.stdpath("cache")] = true,
+            --           [vim.fn.stdpath("state")] = true,
+            --         }
+            --     } })
+            --     end
+            --   end
+            -- },
+            -- win = {
+            --   input = {
+            --     keys = {
+            --       ["<c-g>"] = {"toggle_global", mode={"n", "i"}}
+            --     }
+            --   }
+            -- }
           },
           keymaps = {
             actions = {
