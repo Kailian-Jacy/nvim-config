@@ -29,8 +29,6 @@ return {
       }
       opts.ensure_installed = {
         "bash",
-        "html",
-        "javascript",
         "json",
         "lua",
         "markdown",
@@ -38,10 +36,10 @@ return {
         "python",
         "query",
         "regex",
-        "tsx",
         "rust",
         "go",
         "vim",
+        "vimdoc",
         "yaml",
         "json",
         "json5",
