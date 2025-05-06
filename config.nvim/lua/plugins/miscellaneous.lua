@@ -522,8 +522,10 @@ return {
             win = {
               input = {
                 keys = {
-                  ["<c-p>"] = "inspect",
-                  ["<d-p>"] = "inspect",
+                  ["<d-bs>"]= { "explorer_up", mode = { "n", "i" } },
+
+                  ["<c-p>"] = {"inspect", mode = { "n", "i" }},
+                  ["<d-p>"] = {"inspect", mode = { "n", "i" }},
                   ["<d-.>"] = {"explorer_focus", mode = {"n", "i"}},
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
@@ -535,8 +537,8 @@ return {
               },
               list = {
                 keys = {
-                  ["<c-p>"] = "inspect",
-                  ["<d-p>"] = "inspect",
+                  ["<c-p>"] = {"inspect", mode = { "n", "i" }},
+                  ["<d-p>"] = {"inspect", mode = { "n", "i" }},
                   ["p"] = "inspect",
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
