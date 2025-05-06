@@ -857,6 +857,7 @@ return {
     keys = {
       {
         "<leader>yy",
+        mode = {"n", "v"},
         function()
           Snacks.picker.yanky()
         end,
