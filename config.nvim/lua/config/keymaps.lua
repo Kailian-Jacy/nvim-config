@@ -9,6 +9,7 @@ vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
 -- Inc rename.
 vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode lsp variable name replacement." })
+
 -- keymap based on filetype
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "cpp", "c", "objc", "objcpp", "cuda", "proto" },
@@ -135,7 +136,13 @@ vim.keymap.set("v", "/", '"fy/\\V<C-R>f<CR>')
 -- )
 -- nnoremap <leader>/ <cmd>Telescope live_grep<cr>
 -- vnoremap <leader>/ "zy:Telescope live_grep default_text=<C-r>z<cr>
-vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "gh", function()
+  local winid = require("ufo").peekFoldedLinesUnderCursor()
+  if not winid then
+    vim.lsp.buf.hover()
+  end
+end)
+-- vim.keymap.set("n", "gh", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "ge", "<cmd>lua vim.diagnostic.open_float()<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "ga", "<cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
 
@@ -296,6 +303,7 @@ function NoUIGeneircDebug()
   -- Set Keymap for debugging
   if isInDebugging() then
     vim.print_silent("Session is already activated.")
+    return
   end
   -- (Re-)reads launch.json if present
   if vim.fn.filereadable(".vscode/launch.json") then

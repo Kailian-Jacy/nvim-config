@@ -29,12 +29,6 @@ return {
       vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
       vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
       vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
-      vim.keymap.set('n', 'gh', function()
-        local winid = require('ufo').peekFoldedLinesUnderCursor()
-        if not winid then
-            vim.lsp.buf.hover()
-        end
-      end)
       require('ufo').setup({
         open_fold_hl_timeout = 150,
         provider_selector = function(bufnr, filetype, buftype)
