@@ -18,10 +18,36 @@ return {
   --   },
   -- },
   {
+    'kevinhwang91/nvim-ufo',
+    dependencies = { 'kevinhwang91/promise-async' },
+    config = function()
+      vim.o.foldenable = true
+      vim.o.foldcolumn = '0' -- '0' is not bad
+      vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
+      vim.o.foldlevelstart = 99
+      vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
+      vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
+      vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
+      vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
+      vim.keymap.set('n', 'gh', function()
+        local winid = require('ufo').peekFoldedLinesUnderCursor()
+        if not winid then
+            vim.lsp.buf.hover()
+        end
+      end)
+      require('ufo').setup({
+        open_fold_hl_timeout = 150,
+        provider_selector = function(bufnr, filetype, buftype)
+          return {'treesitter', 'indent'}
+        end}
+      )
+    end
+  },
+  {
     "nvim-treesitter/nvim-treesitter",
     dependencies = { "HiPhish/rainbow-delimiters.nvim" },
     opts = function(_, opts)
-      opts.auto_install = false
+      opts.auto_install = true
       opts.rainbow = {
         enable = true,
         query = "rainbow-delimiters",
@@ -30,27 +56,43 @@ return {
       opts.ensure_installed = {
         "bash",
         "python", -- Pylance does not support highlighting.
+
+        -- Cpp related.
         "cpp", -- clangd provides very barren highlighting. `See https://github.com/clangd/clangd/issues/1115`
+        "make",
+        "cmake",
+
         -- "lua",
         "markdown",
         "markdown_inline",
         "python",
         "query",
         "regex",
-        "xml",
-        -- "rust",
-        -- "go",
+
+        -- Programming languages.
+        "rust",
+        "go",
+        "gomod",
+        "gosum",
+
+        -- Vim.
         "vim",
         "vimdoc",
+
+        -- Markup Languages.
         "yaml",
+        "toml",
         "json",
-        "json5",
+        "xml",
+        -- "json5",
+
+        -- Others.
+        "diff",
+        "ssh_config"
       }
-      if (vim.g.use_treesitter_highlight) then
-        vim.cmd[[ TSEnable highlight ]]
-      else
-        vim.cmd[[ TSDisable highlight ]]
-      end
+      opts.highlight = {
+        enable = vim.g.use_treesitter_highlight or false
+      }
       opts.indent = {
         disable = true,
       }
@@ -368,16 +410,24 @@ return {
             wins = vim.tbl_filter(function(w)
               return vim.api.nvim_win_is_valid(w)
             end, wins)
-            local win = vim.api.nvim_get_current_win()
+            local last_win = vim.api.nvim_get_current_win()
             local idx = 1
             for i, w in ipairs(wins) do
-              if w == win then
+              if w == last_win then
                 idx = i
                 break
               end
             end
-            win = wins[idx % #wins + 1] or 1 -- cycle
+            local win = wins[idx % #wins + 1] or 1 -- cycle
             vim.api.nvim_set_current_win(win)
+            -- When switching from other windows to the current, select the line.
+            if last_win ~= picker.input.win.win and win == picker.input.win.win then
+              -- It did not work. Fix it later.
+              -- vim.print("debug: to input.")
+              picker.list:set_selected()
+              picker.list:set_target()
+              picker:find()
+            end
           end,
           v_new_win_here = function (picker, item)
             picker:close()
@@ -503,7 +553,7 @@ return {
           explorer = {
             -- your explorer picker configuration comes here
             -- or leave it empty to use the default settings
-            layout = { preset = "dropdown", preview = true },
+            layout = { preset = "dropdown", preview = true, cycle = true },
             diagnostics_open = true,
             focus = "input",
             auto_close = true,
