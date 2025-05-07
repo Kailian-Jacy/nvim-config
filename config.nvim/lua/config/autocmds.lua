@@ -78,6 +78,7 @@ vim.api.nvim_create_user_command("SnipPick", function()
     preview = "preview",
     format = function(item)
       return {
+        { item.trigger, "Special" },
         { item.name, item.ft == "" and "Conceal" or "DiagnosticWarn" },
         { item.description },
       }
@@ -96,24 +97,29 @@ vim.api.nvim_create_user_command("SnipPick", function()
       for _, snip in pairs(snippets) do
         align_1 = math.max(align_1, #snip.name)
       end
+      local align_2 = 0
+      for _, snip in pairs(snippets) do
+        align_2 = math.max(align_2, #snip.trigger)
+      end
       local items = {}
       for _, snip in pairs(snippets) do
         local docstring = snip:get_docstring()
         if type(docstring) == "table" then
           docstring = table.concat(docstring)
         end
-        local name = Snacks.picker.util.align(snip.name, align_1 + 5)
+        local name = Snacks.picker.util.align(snip.name, align_1 + 3)
+        local trigger = Snacks.picker.util.align(snip.trigger, align_2 + 3)
         local description = table.concat(snip.description)
         description = name == description and "" or description
         table.insert(items, {
           text = name .. description,
           name = name,
           description = description,
-          trigger = snip.trigger,
+          trigger = trigger,
           orig_snip = snip,
           ft = snip.ft,
           preview = {
-            ft = snip.ft,
+            ft = "json",
             text = docstring,
           },
         })
