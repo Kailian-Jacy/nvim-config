@@ -6,6 +6,9 @@ return {
     "hrsh7th/cmp-nvim-lsp",
   },
   {
+    "onsails/lspkind.nvim",
+  },
+  {
     "tzachar/cmp-tabnine",
     build = "./install.sh",
     dependencies = "hrsh7th/nvim-cmp",
@@ -42,6 +45,17 @@ return {
       require("cmp").setup({
         auto_brackets = {}, -- disabled. Being managed by other plugins.
         preselect = "none",
+        formatting = {
+          fields = { "kind", "abbr", "menu" },
+          format = function(entry, vim_item)
+            local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
+            local strings = vim.split(kind.kind, "%s", { trimempty = true })
+            kind.kind = " " .. (strings[1] or "") .. " "
+            kind.menu = "    (" .. (strings[2] or "") .. ")"
+
+            return kind
+          end,
+        },
         completion = {
           completeopt = "menu,menuone,noinsert,noselect",
         },
@@ -213,6 +227,9 @@ return {
             name = "cmp_tabnine",
             priority = 90,
           },
+          {
+            max_item_count = 7,
+          },
         }),
         sorting = {
           priority_weight = 100,
@@ -282,7 +299,7 @@ return {
           end,
         }),]]
         sources = {
-          { name = "buffer" },
+          { name = "buffer", max_item_count = 7 },
         },
       })
       -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
@@ -332,9 +349,9 @@ return {
           end,
         }),]]
         sources = cmp.config.sources({
-          { name = "async_path" },
-          { name = "cmdline" },
-          { name = "cmdline_history" },
+          { name = "async_path", max_item_count = 7 },
+          { name = "cmdline", max_item_count = 7 },
+          { name = "cmdline_history", max_item_count = 7 },
         }),
       })
     end,
