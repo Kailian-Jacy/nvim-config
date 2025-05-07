@@ -24,15 +24,16 @@ return {
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
             CursorLine = { bg = "" },
+            CursorLineNoneEmpty = { link = "Visual" },
             -- Basics
             SnacksPickerDir = { link = "SnacksPickerFile" },
             -- SnacksPickerDir = { link = "Delimiter" },
             SnacksPickerMatch = { link = "Search" },
-            SnacksPickerPreviewCursorLine = { link = "Visual" },
+            SnacksPickerPreviewCursorLine = { link = "CursorLineNoneEmpty" },
             -- Completion/documentation Pmenu border color when using bordered windows
             Pmenu = { bg = "" },
             PmenuSbar = { bg = "" },
-            PmenuSel = { link = "Visual" },
+            PmenuSel = { link = "CursorLineNoneEmpty" },
             -- PmenuMatch = { link = "Visual" },
             -- PmenuMatchSel = { link = "Visual" },
             CmpPmenuBorder = { link = "Comment" },
