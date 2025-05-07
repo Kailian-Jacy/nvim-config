@@ -3,7 +3,7 @@
 -- Add any additional autocmds here
 
 -- Start a tmux session in the background if none.
--- TODO: Not sure if working.
+-- TODO: Not sure if working. Ans: it's not...
 vim.schedule(function()
   vim.fn.system("tmux", { "new", "-As0" })
 end)

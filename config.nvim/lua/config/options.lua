@@ -180,7 +180,7 @@ vim.g.yanky_ring_max_accept_length = 1000
 vim.g.import_user_snippets = true
 vim.g.user_vscode_snippets_path = {
   vim.fn.stdpath("config") .. "/snip/", -- How to get: https://arc.net/l/quote/fjclcvra
-  vim.fn.expand('$HOME/Library/Application Support/Code/User/snippets/'), -- Default Vscode snippet path under MacOS.
+  vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/"), -- Default Vscode snippet path under MacOS.
 }
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
