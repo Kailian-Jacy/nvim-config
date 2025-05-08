@@ -2,9 +2,6 @@
 	path = neovim-source
 	url = https://github.com/neovim/neovim
 
-[submodule "font"]
-	path = font
-	url = https://github.com/Kailian-Jacy/monalisa-nerd-complete
 [submodule "monolisa-nerd-font"]
 	path = monolisa-nerd-font
 	url = https://github.com/Kailian-Jacy/monalisa-nerd-complete

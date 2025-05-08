@@ -140,7 +140,7 @@ if [ -n "$INSTALL_FONT_PATH" ]; then
   # Use find to robustly copy font files
   # Copy only files ending with *Nerd* or *NerdFont* patterns, common for Nerd Fonts
   # Adjust pattern if your font names differ significantly
-  find "$CURRENT_BASEDIR/font" -type f \( -name '*Nerd*' -o -name '*NerdFont*' \) -print0 | while IFS= read -r -d $'\0' font_file; do
+  find "$CURRENT_BASEDIR/monolisa-nerd-font" -type f \( -name '*Nerd*' -o -name '*NerdFont*' \) -print0 | while IFS= read -r -d $'\0' font_file; do
     echo "Copying font: $(basename "$font_file") to $INSTALL_FONT_PATH"
     cp "$font_file" "$INSTALL_FONT_PATH/"
   done
