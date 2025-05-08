@@ -1,0 +1,10 @@
+frame = "buttonless"
+# frame = "none"
+title-hidden = true
+srgb = false
+
+[font]
+normal = { family = "MonoLisa Nerd Font", style = "Light"}
+italic = { family = "MonoLisa Nerd Font", style = "Light Italic"}
+bold_italic = { family = "MonoLisa Nerd Font", style = "Bold Italic"}
+size = 14
