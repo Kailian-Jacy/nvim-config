@@ -85,6 +85,9 @@ return {
         "ssh_config"
       }
 
+      -- zsh does not own its parser. So use bash.
+      vim.treesitter.language.register("bash", "zsh")
+
       -- Tried to use opts.highlight.enable, but it did not work.
       if vim.g.use_treesitter_highlight then
         vim.cmd[[ TSEnable highlight ]]
