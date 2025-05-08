@@ -30,10 +30,8 @@ return {
     },
     opts = {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "openrouter", -- Recommend using Claude
-      -- provider = "4omini", -- Recommend using Claude
+      provider = "openrouter_claude_3_5", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
-      -- azure = {},
       vendors = {
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
@@ -42,7 +40,27 @@ return {
           api_key_name = "OPENAI_API_KEY",
           model = "gpt-4o-mini",
         },
-        openrouter = {
+        openrouter_gemini_pro = {
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
+          -- model = "openrouter/auto",
+          model = "google/gemini-2.5-pro-preview",
+          max_tokens = 102400,
+          -- timeout = 30000,
+          disable_tools = true,
+        },
+        openrouter_gemini_flash = {
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
+          -- model = "openrouter/auto",
+          model = "google/gemini-2.5-flash-preview",
+          max_tokens = 10240,
+          -- timeout = 30000,
+          disable_tools = true,
+        },
+        openrouter_claude_3_5 = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
@@ -98,16 +116,6 @@ return {
           next = "]]",
           prev = "[[",
         },
-        -- suggestion = {
-        --   accept = "<M-l>",
-        --   next = "<M-]>",
-        --   prev = "<M-[>",
-        --   dismiss = "<C-]>",
-        -- },
-        -- jump = {
-        --     next = "]]",
-        --    prev = "[[",
-        --  },
         submit = {
           normal = "<CR>",
           insert = "<C-s>",
@@ -157,23 +165,6 @@ return {
       --- The below dependencies are optional,
       "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
       -- "zbirenbaum/copilot.lua", -- for providers='copilot'
-      -- {
-      --   -- support for image pasting
-      --   "HakonHarnes/img-clip.nvim",
-      --   event = "VeryLazy",
-      --   opts = {
-      --     -- recommended settings
-      --     default = {
-      --       embed_image_as_base64 = false,
-      --       prompt_for_file_name = false,
-      --       drag_and_drop = {
-      --         insert_mode = true,
-      --       },
-      --       -- required for Windows users
-      --       use_absolute_path = true,
-      --     },
-      --   },
-      -- },
       {
         -- Make sure to set this up properly if you have lazy=true
         "MeanderingProgrammer/render-markdown.nvim",
