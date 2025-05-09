@@ -1,10 +1,12 @@
-#/bin/zsh -e
+#!/bin/zsh
+
+set -e
 
 # detect OS.
-OS=""
-if [ "$(uname)" == "Darwin" ]; then
+OS="Linux"
+if [[ "$(uname)" == "Darwin" ]]; then
   OS="MacOS"
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
   OS="Linux"
 else
   echo "Not supported OS. Exit."
@@ -15,15 +17,18 @@ fi
 ###############################################
 
 # Basic.
-DEFAULT_SHELL=/bin/zsh
+DEFAULT_SHELL=/usr/bin/zsh
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
-INSTALL_DEPENDENCIES="git fzf node lazygit zoxide pngpaste golang make g++ unzip zip npm ripgrep cmake lua@5.3"
+INSTALL_DEPENDENCIES="tmux git fzf node lazygit zoxide golang unzip zip npm ripgrep lua@5.4 sqlite luarocks make"
 INSTALL_FONT_PATH=""
+CONTINUE_ON_ERROR=true
+INSTALL_NVIM_FROM_SOURCE=false
 if [[ $OS == "MacOS" ]]; then
-  INSTALL_FONT_PATH="/Library/Fonts/" # System-wide fonts for macOS
-else # Linux
-  INSTALL_FONT_PATH="$HOME/.local/share/fonts/" # User-specific fonts for Linux
+  INSTALL_FONT_PATH="/Library/Fonts/"
+  INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES pngpaste"
+else
+  INSTALL_FONT_PATH="$HOME/.local/share/fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES xsel"
 fi
 
@@ -62,42 +67,59 @@ echo "Writing to shell rc: ${DEFAULT_SHELL_RC}"
 echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC" # Use quotes for safety
 DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 
+if $INSTALL_NVIM_FROM_SOURCE; then
+  INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES gcc cmake"
+else
+  INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES neovim"
+fi
+
 # install homebrew for dependencies.
 echo "Installing homebrew..."
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-if ! command -v brew &> /dev/null; then
-    echo "Error: Homebrew installation failed or brew command not found."
-    exit 1
+if command -v "brew" &> /dev/null; then
+  echo "Homebrew already installed. Skipping re-installing homebrew."
+else
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  if [[ $OS == "Darwin" ]]; then
+    :
+  elif [[ $OS == "Linux" ]]; then
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $DEFAULT_ENV_FILE_PATH
+  fi
+  source $DEFAULT_ENV_FILE_PATH
+  if ! command -v brew &> /dev/null; then
+      echo "Error: Homebrew installation failed. exit."
+      exit 1
+  fi
+  echo "Homebrew successfully installed."
 fi
 
 HOMEBREW_BIN_PATH=$(which brew)
-echo "Homebrew successfully installed."
-
 cat >> $DEFAULT_SHELL_RC << EOF
 # alias brew.
 function brew() {
-  HOMEBREW_NO_AUTO_UPDATE=1 PATH="$(dirname $HOMEBREW_BIN_PATH):$PATH" $HOMEBREW_BIN_PATH "$@"
+  HOMEBREW_NO_AUTO_UPDATE=1 PATH="$(dirname $HOMEBREW_BIN_PATH):\$PATH" $HOMEBREW_BIN_PATH "\$@"
 }
 EOF
+echo "PATH=$PATH:$(brew --prefix)/bin" >> $DEFAULT_ENV_FILE_PATH
+source $DEFAULT_ENV_FILE_PATH
 source $DEFAULT_SHELL_RC
 
 # Install dependencies.
 echo "Installing dependencies..."
-brew install $INSTALL_DEPENDENCIES
+echo $INSTALL_DEPENDENCIES | xargs brew install || $CONTINUE_ON_ERROR
 
 echo "eval \$(zoxide init $(basename $DEFAULT_SHELL))" >> ${DEFAULT_SHELL_RC}
 npm i -g vscode-langservers-extracted
-pip3 install neovim-remote
+# pip3 install neovim-remote # TODO: pip3 python config later.
 
-# Clond and compile neovim.
-echo "Compile and install neovim to: $NVIM_INSTALL_PATH"
-# Ensure submodules are updated from the project root perspective
-(cd "$CURRENT_BASEDIR" && git submodule update --init --recursive)
-mkdir -p "$NVIM_INSTALL_PATH"
-cd "$CURRENT_BASEDIR/neovim-source" && make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX="$NVIM_INSTALL_PATH" && make install
-cd "$CURRENT_BASEDIR" # Return to the script's base directory
+if [ "$INSTALL_NVIM_FROM_SOURCE" = true ]; then
+  # Clone and compile neovim.
+  echo "Install neovim to: $NVIM_INSTALL_PATH"
+  mkdir -p "$NVIM_INSTALL_PATH"
+  cd "$CURRENT_BASEDIR/neovim-source" && make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX="$NVIM_INSTALL_PATH" && make install
+  cd "$CURRENT_BASEDIR" # Return to the script's base directory
 
-echo "export PATH=\"$NVIM_INSTALL_PATH/bin:\$PATH\"" >> "${DEFAULT_ENV_FILE_PATH}" # Ensure PATH is exported and $PATH is escaped
+  echo "export PATH=\"$NVIM_INSTALL_PATH/bin:\$PATH\"" >> "${DEFAULT_ENV_FILE_PATH}" # Ensure PATH is exported and $PATH is escaped
+fi
 
 # Make all links.
 function backup_and_link() {
@@ -120,17 +142,17 @@ function backup_and_link() {
   fi
 
   if ln -s "$source" "$target"; then
+    echo "Successfully linked $source to $target"
   else
     echo "Error: Failed to link $source to $target."
   fi
-
 }
 
 # Ensure using absolute paths from CURRENT_BASEDIR for sources
 backup_and_link "$CURRENT_BASEDIR/config.nvim/" "${NVIM_CONF_LINK}"
 backup_and_link "$CURRENT_BASEDIR/config.others/tmux.conf" "${TMUX_CONF_LINK}" # Corrected target
 backup_and_link "$CURRENT_BASEDIR/config.others/neovide.config.toml" "${NEOVIDE_CONF_LINK}"
-backup_and_link "$CURRENT_BASEDIR/config.nvim/snip" "${SNIPPET_LINK}"
+backup_and_link "$CURRENT_BASEDIR/config.nvim/snip" "${SNIPPET_LINK}" || [ $CONTINUE_ON_ERROR = true ]
 
 # if INSTALL_FONT_PATH is set, install Nerd fonts
 if [ -n "$INSTALL_FONT_PATH" ]; then
@@ -146,7 +168,7 @@ if [ -n "$INSTALL_FONT_PATH" ]; then
   done
 
   # Update font cache on Linux
-  if [ "$OS" == "Linux" ] && command -v fc-cache &> /dev/null; then
+  if [[ "$OS" == "Linux" ]] && command -v fc-cache &> /dev/null; then
     echo "Updating font cache..."
     fc-cache -fv
   fi
@@ -163,12 +185,13 @@ echo "export PATH=\$PATH:$DEFAULT_MASON_PATH:$HOME/.local/bin" >> ${DEFAULT_ENV_
 
 # Start nvim and install all the dependencies
 source ${DEFAULT_ENV_FILE_PATH}
-nvim --headless +"MasonInstall $INSTALL_LSPS" +q
+# nvim --headless +"MasonInstall $INSTALL_LSPS" +q
 nvim --headless +"lua print('Dependencies successfully installed.')" +q
 
 # Remind todo list to the user:
 cat <<EOF
 Neovim is successfully installed. Please:
   1. Setup API keys in $DEFAULT_ENV_FILE_PATH (e.g., OPENROUTER_API_KEY, DEEPSEEK_API_KEY).
-  2. Source your shell configuration file (e.g., 'source $DEFAULT_SHELL_RC') or open a new terminal window to apply changes.
+  2. Start neovim, edit LSPs needed, and run :MasonToolsInstall to install them.
+  3. Source your shell configuration file (e.g., 'source $DEFAULT_SHELL_RC') or open a new terminal window to apply changes.
 EOF
