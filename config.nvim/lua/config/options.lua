@@ -11,6 +11,12 @@
 vim.g.read_binary_with_xxd = false
 --------------------------------------------------
 
+-- Language support. Detect and enable language.
+vim.g.module_enable_rust = true and vim.fn.executable("rustc")
+vim.g.module_enable_go = true and vim.fn.executable("go")
+vim.g.module_enable_python = true and (vim.fn.executable("python") or vim.fn.executable("python3"))
+vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
+
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)

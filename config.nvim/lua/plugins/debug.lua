@@ -1,28 +1,69 @@
 return {
   {
-    "williamboman/mason.nvim",
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
     cmd = {
-      "Mason",
+      "MasonToolsInstall",
     },
-    -- disable mason keymaps.
-    keys = function(_)
-      return {}
-    end,
     opts = {
       ensure_installed = {
         -- rust
         --[["bacon",]]
         -- install rust-analyzer manually and link to there.
         -- cpp
-        "checkmake",
-        "clang-format",
-        "clangd",
-        "cmakelint",
-        "cmake-language-server",
-        "cmakelang",
-        "codelldb",
-        "cpplint",
-        "cpptools",
+        {
+          "checkmake",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "clang-format",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "clangd",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "cmakelint",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "cmake-language-server",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "cmakelang",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "codelldb",
+          condition = function()
+            return vim.g.module_enable_cpp or vim.g.module_enable_rust
+          end,
+        },
+        {
+          "cpplint",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
+        {
+          "cpptools",
+          condition = function()
+            return vim.g.module_enable_cpp
+          end,
+        },
         -- python
         --[["debugpy",
         "black",
@@ -34,11 +75,36 @@ return {
         "docker-compose-language-service docker_compose_language_service",
         "dockerfile-language-server dockerls",]]
         -- golang
-        "gofumpt",
-        "goimports",
-        "gomodifytags",
-        "gopls",
-        "impl",
+        {
+          "gofumpt",
+          condition = function()
+            return vim.g.module_enable_go
+          end,
+        },
+        {
+          "goimports",
+          condition = function()
+            return vim.g.module_enable_go
+          end,
+        },
+        {
+          "gomodifytags",
+          condition = function()
+            return vim.g.module_enable_go
+          end,
+        },
+        {
+          "gopls",
+          condition = function()
+            return vim.g.module_enable_go
+          end,
+        },
+        {
+          "impl",
+          condition = function()
+            return vim.g.module_enable_go
+          end,
+        },
         -- json
         "jsonlint",
         "fixjson",
@@ -66,6 +132,17 @@ return {
         "yaml-language-server",
       },
     },
+  },
+  {
+    "williamboman/mason.nvim",
+    cmd = {
+      "Mason",
+      "MasonInstall",
+    },
+    -- disable mason keymaps.
+    keys = function(_)
+      return {}
+    end,
   },
   {
     "mfussenegger/nvim-dap",
