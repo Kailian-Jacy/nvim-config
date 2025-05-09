@@ -99,7 +99,7 @@ function brew() {
   HOMEBREW_NO_AUTO_UPDATE=1 PATH="$(dirname $HOMEBREW_BIN_PATH):\$PATH" $HOMEBREW_BIN_PATH "\$@"
 }
 EOF
-echo "PATH=$PATH:$(brew --prefix)/bin" >> $DEFAULT_ENV_FILE_PATH
+echo "PATH=\$PATH:$(brew --prefix)/bin" >> $DEFAULT_ENV_FILE_PATH
 source $DEFAULT_ENV_FILE_PATH
 source $DEFAULT_SHELL_RC
 
@@ -107,7 +107,7 @@ source $DEFAULT_SHELL_RC
 echo "Installing dependencies..."
 echo $INSTALL_DEPENDENCIES | xargs brew install || $CONTINUE_ON_ERROR
 
-echo "eval \$(zoxide init $(basename $DEFAULT_SHELL))" >> ${DEFAULT_SHELL_RC}
+echo "eval \"\$(zoxide init $(basename $DEFAULT_SHELL))\"" >> ${DEFAULT_SHELL_RC}
 npm i -g vscode-langservers-extracted
 # pip3 install neovim-remote # TODO: pip3 python config later.
 
