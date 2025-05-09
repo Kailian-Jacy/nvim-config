@@ -32,32 +32,6 @@ else
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES xsel"
 fi
 
-# Language support
-INSTALL_LSPS=""
-INSTALL_LSPS="$INSTALL_LSPS cmake-language-server checkmake cmakelint" # cmake.
-INSTALL_LSPS="$INSTALL_LSPS clangd clangd-format checkmake cmakelint cmake-language-server cpplint cpptools" # c/cpp.
-INSTALL_LSPS="$INSTALL_LSPS debugpy pyright ruff" # python
-INSTALL_LSPS="$INSTALL_LSPS codelldb" # cpp/rust debugging
-INSTALL_LSPS="$INSTALL_LSPS rust-analyzer" # rust
-INSTALL_LSPS="$INSTALL_LSPS fixjson jsonlint" # json
-INSTALL_LSPS="$INSTALL_LSPS goimports gopls impl" # golang
-INSTALL_LSPS="$INSTALL_LSPS lua-language-server luacheck luaformatter stylua" # lua
-INSTALL_LSPS="$INSTALL_LSPS yaml-language-server" # yaml
-INSTALL_LSPS="$INSTALL_LSPS markdown-toc markdownlint-cli2 marksman" # markdown
-INSTALL_LSPS="$INSTALL_LSPS shfmt bash-language-server bash-debug-adapter" # shell
-INSTALL_LSPS="$INSTALL_LSPS taplo" # toml
-
-# Linking options. Set to empty to prevent linking
-TMUX_CONF_LINK="$HOME/.tmux.conf"
-NVIM_CONF_LINK="$HOME/.config/nvim" # default. Suggested no move.
-NEOVIDE_CONF_LINK="$HOME/.config/neovide/config.toml"
-SNIPPET_LINK=
-if [[ $OS == "MacOS" ]]; then
-  SNIPPET_LINK="$HOME/Library/Application Support/Code/User/snippets/"
-else
-  SNIPPET_LINK="$HOME/.config/Code/User/snippets/"
-fi
-
 # generated options.
 CURRENT_ABS=$(realpath $0)
 CURRENT_BASEDIR=$(dirname $CURRENT_ABS)
@@ -76,11 +50,12 @@ fi
 # install homebrew for dependencies.
 echo "Installing homebrew..."
 if command -v "brew" &> /dev/null; then
-  echo "Homebrew already installed. Skipping re-installing homebrew."
+  echo "Homebrew already installed. Using $(which brew)"
 else
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   if [[ $OS == "Darwin" ]]; then
-    :
+    echo "Install homebrew first. Exit."
+    exit 1
   elif [[ $OS == "Linux" ]]; then
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $DEFAULT_ENV_FILE_PATH
   fi
@@ -180,18 +155,16 @@ fi
 # Require user to set tokens in .zprofile file.
 echo "export OPENROUTER_API_KEY=" >> ${DEFAULT_ENV_FILE_PATH}
 echo "export DEEPSEEK_API_KEY=" >> ${DEFAULT_ENV_FILE_PATH}
-echo "export TERM=xterm-256color" >> ${DEFAULT_ENV_FILE_PATH}
 echo "export PATH=\$PATH:$DEFAULT_MASON_PATH:$HOME/.local/bin" >> ${DEFAULT_ENV_FILE_PATH}
 
 # Start nvim and install all the dependencies
 source ${DEFAULT_ENV_FILE_PATH}
-# nvim --headless +"MasonInstall $INSTALL_LSPS" +q
-nvim --headless +"lua print('Dependencies successfully installed.')" +q
+nvim --headless +"lua print('Dependencies successfully installed.')" +q || [ $CONTINUE_ON_ERROR ]
+nvim --headless +"MasonToolsInstall" +q || [ $CONTINUE_ON_ERROR ]
 
 # Remind todo list to the user:
 cat <<EOF
 Neovim is successfully installed. Please:
   1. Setup API keys in $DEFAULT_ENV_FILE_PATH (e.g., OPENROUTER_API_KEY, DEEPSEEK_API_KEY).
-  2. Start neovim, edit LSPs needed, and run :MasonToolsInstall to install them.
-  3. Source your shell configuration file (e.g., 'source $DEFAULT_SHELL_RC') or open a new terminal window to apply changes.
+  2. source $DEFAULT_SHELL_RC.
 EOF
