@@ -143,6 +143,7 @@ return {
     keys = function(_)
       return {}
     end,
+    opts = {},
   },
   {
     "mfussenegger/nvim-dap",
