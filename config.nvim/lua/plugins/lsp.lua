@@ -40,14 +40,6 @@ return {
       })
       -- clang config.
       local cmp_nvim_lsp = require("cmp_nvim_lsp")
-      lspconfig.clangd.setup({
-        -- on_attach = on_attach,
-        capabilities = cmp_nvim_lsp.default_capabilities(),
-        cmd = {
-          "clangd",
-          "--offset-encoding=utf-16",
-        },
-      })
       -- lua config
       lspconfig.lua_ls.setup({
         capabilities = cmp_nvim_lsp.default_capabilities(),
@@ -73,9 +65,24 @@ return {
       lspconfig.yamlls.setup({})
       -- python
       lspconfig.pyright.setup({})
-      -- cmake
-      lspconfig.cmake.setup({})
 
+      if vim.g.module_enable_cpp then
+        -- cmake
+        lspconfig.cmake.setup({})
+        lspconfig.clangd.setup({
+          -- on_attach = on_attach,
+          capabilities = cmp_nvim_lsp.default_capabilities(),
+          cmd = {
+            "clangd",
+            "--offset-encoding=utf-16",
+          },
+        })
+      end
+
+      if vim.g.module_enable_go then
+        -- cmake
+        lspconfig.gopls.setup({})
+      end
       -- Start LSP inlay hint.
       vim.lsp.inlay_hint.enable(true)
     end,
