@@ -64,12 +64,21 @@ end
 -- Set the current tab name as the working directory name.
 function MyTabLine()
   -- Test cases
+  -- Still some errors:
+  -- prefix not distinguished.
+  -- local tabpages = {
+  --   "/data/home/zianxu/master/release",
+  --   "/data/home/zianxu/master/release/anotherlayout/release",
+  -- }
+  -- expect: { release, anotherlayout.release }
+  -- got: { release, release }
   -- local tabpages = {
   --   "/data/home/zianxu/master/release",
   --   "/data/home/zianxu/master/branch/OB_Branch_publish/release",
-  --   "/data/home/zianxu/master/branch/OB_Branch_GServer/release",
-  --   "/data/home/zianxu/master/release/anotherlayout/release",
   -- }
+  -- expect: {release, OB_Branch_publish.release}
+  -- got: {release.release, branch.release}
+  -- Thinking: adding another tab causes current to change.
 
   local tabnames = {}
   local groups = {} -- { tabname = { { index1, split_path1 }, { index2, split_path2 } } }
