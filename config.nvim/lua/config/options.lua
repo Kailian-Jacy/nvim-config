@@ -63,25 +63,25 @@ end
 -- Tabline
 -- Set the current tab name as the working directory name.
 function MyTabLine()
-  -- Test cases
-  -- Still some errors:
-  -- prefix not distinguished.
-  -- local tabpages = {
-  --   "/data/home/zianxu/master/release",
-  --   "/data/home/zianxu/master/release/anotherlayout/release",
-  -- }
-  -- expect: { release, anotherlayout.release }
-  -- got: { release, release }
-  -- local tabpages = {
-  --   "/data/home/zianxu/master/release",
-  --   "/data/home/zianxu/master/branch/OB_Branch_publish/release",
-  -- }
-  -- expect: {release, OB_Branch_publish.release}
-  -- got: {release.release, branch.release}
-  -- Thinking: adding another tab causes current to change.
-
   local tabnames = {}
   local groups = {} -- { tabname = { { index1, split_path1 }, { index2, split_path2 } } }
+
+  local function group_by(group, get_identifier)
+    local ret = {}
+    local group_cnt = 0
+    for _, item in pairs(group) do
+      local identifier = get_identifier(item)
+      if identifier then
+        if not ret[identifier] then
+          ret[identifier] = {}
+          group_cnt = group_cnt + 1
+        end
+        table.insert(ret[identifier], item)
+      else
+      end
+    end
+    return ret, group_cnt
+  end
 
   local function format_tabname(uniq, tail)
     if #uniq > 0 then
@@ -107,28 +107,22 @@ function MyTabLine()
     if not groups[tabname] then
       groups[tabname] = {}
     end
-    table.insert(groups[tabname], { index, split_path(working_directory) })
+    table.insert(groups[tabname], { index, split_path(vim.fn.fnamemodify(working_directory, ":p:h")) })
   end
 
-  -- Debug tabnames state
-  -- vim.notify("Current tabnames state: " .. vim.inspect(tabnames), vim.log.levels.DEBUG)
-  -- vim.notify("Current groups state: " .. vim.inspect(groups), vim.log.levels.DEBUG)
-
   -- Diff in group to eliminate same tabnames.
-  local round_cnt = 500
+  local round_cnt = 500 -- prevent deadloop.
   while round_cnt > 0 do
     -- Those who has uniq tabname gets rolled out.
     local non_zero_count = 0
     for tabname, body in pairs(groups) do
       if #body == 1 then
-        -- vim.notify("Removing unique tabname: " .. tabname, vim.log.levels.DEBUG)
         groups[tabname] = nil
       else
         non_zero_count = non_zero_count + 1
       end
     end
     if non_zero_count == 0 then
-      -- vim.notify("group length zero. ends", vim.log.levels.DEBUG)
       break
     end
     local new_groups = {}
@@ -138,33 +132,30 @@ function MyTabLine()
       for _, index_and_sections in ipairs(bodies) do
         min_section_count = math.min(min_section_count, #index_and_sections[2])
       end
-      for i = 1, min_section_count do
-        local section_nums = 0
-        -- find the first different section.
-        local _section_map = {} -- { section = { index1, index2 }  }
-        for _, index_and_sections in ipairs(bodies) do
-          -- Compare the i-th section of each path
-          local section = index_and_sections[2][i]
-          if not _section_map[section] then
-            section_nums = section_nums + 1
-            _section_map[section] = {}
+      for i = 1, min_section_count + 1 do
+        local _group_by_sections, _group_cnt = group_by(bodies, function(item)
+          if item[2][i] then
+            return item[2][i] -- ith sections.
+          else
+            return "" -- for those has reached max length, use "" as special group
           end
-          table.insert(_section_map[section], index_and_sections)
+        end)
+        -- special dispose those "" group (poths that reaches the maximum length)
+        if _group_by_sections[""] then
+          for _, index_and_sections in ipairs(_group_by_sections) do
+            tabnames[index_and_sections[1]] = format_tabname("", tabnames[index_and_sections[1]])
+          end
+          _group_by_sections[""] = nil
         end
-        -- Debug section mapping
-        -- vim.notify("Section mapping for iteration " .. i .. ": " .. vim.inspect(_section_map), vim.log.levels.DEBUG)
-        if section_nums ~= 1 then
+
+        -- dispose remainder non-max groups.
+        if _group_cnt ~= 1 then
           -- split the group.
-          for section, section_bodies in pairs(_section_map) do
+          for section, section_bodies in pairs(_group_by_sections) do
             if #section_bodies == 1 then
               -- Uniq. Just modify the global.
               -- Debug unique tabname resolution
-              local old_name = tabnames[section_bodies[1][1]]
               tabnames[section_bodies[1][1]] = format_tabname(section, tabnames[section_bodies[1][1]])
-            -- vim.notify(
-            --   string.format("Unique tabname found: %s -> %s", old_name, tabnames[section_bodies[1][1]]),
-            --   vim.log.levels.DEBUG
-            -- )
             else
               -- needs to be split further. put to new_group.
               if not new_groups[tabname] then
@@ -184,10 +175,7 @@ function MyTabLine()
     end
     groups = new_groups
     round_cnt = round_cnt - 1
-    -- Debug groups iteration state
-    -- vim.notify("Groups after iteration: " .. vim.inspect(groups), vim.log.levels.DEBUG)
   end
-
   -- vim.print(tabnames)
   local tabline = ""
   for index = 1, vim.fn.tabpagenr("$") do
