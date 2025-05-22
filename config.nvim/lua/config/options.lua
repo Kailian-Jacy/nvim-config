@@ -166,9 +166,9 @@ function MyTabLine()
                 index_and_sections[2] = { unpack(index_and_sections[2], i) }
                 table.insert(new_groups[tabname], index_and_sections)
               end
-              goto next_tabname_round
             end
           end
+          goto next_tabname_round
         end
       end
       ::next_tabname_round::
