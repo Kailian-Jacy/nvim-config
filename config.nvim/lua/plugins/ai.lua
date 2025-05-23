@@ -29,9 +29,14 @@ return {
       },
     },
     opts = {
+      debug = false,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "openrouter_claude_3_5", -- Recommend using Claude
+      provider = "openrouter_gemini_flash", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
+      ollama = {
+        -- works well but way too slow...
+        model = "devstral:latest",
+      },
       vendors = {
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
@@ -55,9 +60,19 @@ return {
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
           -- model = "openrouter/auto",
-          model = "google/gemini-2.5-flash-preview",
+          model = "google/gemini-2.5-flash-preview-05-20",
           max_tokens = 10240,
           -- timeout = 30000,
+          disable_tools = true,
+        },
+        openrouter_claude_4 = {
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
+          -- model = "openrouter/auto",
+          model = "anthropic/claude-sonnet-4",
+          max_tokens = 102400,
+          timeout = 300000,
           disable_tools = true,
         },
         openrouter_claude_3_5 = {
