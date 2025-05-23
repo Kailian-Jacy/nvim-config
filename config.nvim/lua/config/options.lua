@@ -209,6 +209,10 @@ vim.g.function_get_selected_content = function()
   return table.concat(vim.fn.getregion(vstart, vend), "\n")
 end
 
+vim.g.get_word_under_cursor = function()
+  return vim.fn.expand("<cword>")
+end
+
 vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 --[[Running = "Running",
   Stopped = "Stopped",
