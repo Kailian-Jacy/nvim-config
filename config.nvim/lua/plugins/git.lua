@@ -18,6 +18,12 @@ return {
         mode = "n",
         desc = "n",
       },
+      {
+        "<leader>hs",
+        "<Cmd>Gitsigns stage_hunk<CR>",
+        mode = "n",
+        desc = "n",
+      },
     },
     config = function()
       require("gitsigns").setup({
