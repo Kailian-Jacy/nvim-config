@@ -590,6 +590,8 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   elseif opt == "h" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("vsplit")
+    else
+      vim.cmd("wincmd h")
     end
   elseif opt == "j" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
@@ -599,6 +601,8 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   elseif opt == "k" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("split")
+    else
+      vim.cmd("wincmd k")
     end
   end
   vim.cmd("b " .. buf)
