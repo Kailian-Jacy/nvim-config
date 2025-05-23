@@ -9,6 +9,116 @@ return {
     "copilot.vim",
   },]]
   {
+    "ravitemer/mcphub.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
+    build = "npm install -g mcp-hub@latest", -- Installs `mcp-hub` node binary globally
+    config = function()
+      local mcphub = require("mcphub")
+      mcphub.setup({
+        auto_approve = true,
+      })
+      mcphub.add_server("rust-playground")
+      mcphub.add_tool("rust-playground", {
+        name = "run_rust_code",
+        description = "run a rust code for validation, you should not execute heavy work inside it. You can update your code from result or compilation error.",
+        inputSchema = {
+          type = "object",
+          properties = {
+            name = {
+              type = "string",
+              description = "underline_connected_brief_filename that describes the purpose of this test. Do not add `.rs` postfix",
+              examples = {
+                "bpe_algorithm_test",
+              },
+            },
+            compile_only = {
+              type = "boolean",
+              description = "set to true to skip running.",
+            },
+            code = {
+              type = "string",
+              description = "code that wants to be run. Should be full code starting from main.",
+              examples = {
+                'fn main() { println!("Hello, world!"); }',
+              },
+            },
+          },
+          required = { "name", "code" },
+        },
+        handler = function(req, res)
+          if not string.match(req.params.code, "fn%s+main%s*%(") then
+            return res:error("Error: No main function found in the code.")
+          end
+
+          local cache_dir = vim.fn.stdpath("cache")
+          if #cache_dir == 0 then
+            return res:error('internal error: vim.fn.stdpath("cache") returns empty')
+          end
+
+          cache_dir = cache_dir .. "/rust_playground"
+          if vim.fn.isdirectory(cache_dir) == 0 then
+            local ok = vim.fn.mkdir(cache_dir, "p")
+            if ok == 0 then
+              return res:error("Failed to create cache directory: " .. cache_dir)
+            end
+          end
+
+          if vim.fn.executable("rustc") == 0 then
+            return res:error("rustc is not installed or not in PATH")
+          end
+
+          local time_stamp = os.time()
+          if not time_stamp then
+            return res:error("Failed to generate timestamp")
+          end
+
+          local file_abs = cache_dir .. "/" .. req.params.name .. "_" .. time_stamp .. ".rs"
+
+          local file = io.open(file_abs, "w")
+          if not file then
+            return res:error("Failed to create file: " .. file_abs)
+          end
+          file:write(req.params.code)
+          file:close()
+
+          -- Get output binary path by removing .rs extension
+          local binary_path = cache_dir .. "/" .. vim.fn.fnamemodify(file_abs, ":t:r")
+
+          -- Compile with output in same directory
+          local output = vim.fn.system({ "rustc", file_abs, "-o", binary_path })
+          local compilation_failed = vim.v.shell_error ~= 0
+
+          if compilation_failed then
+            return res:error("Compilation failed:\n" .. output)
+          end
+
+          local ret = res:text("Compilation succeeded.")
+
+          if req.params.compile_only then
+            -- Clean up binary if compile-only
+            os.remove(binary_path)
+            return ret
+          end
+
+          -- Execute the compiled binary with explicit path
+          local exec_output = vim.fn.system(binary_path)
+          local exec_failed = vim.v.shell_error ~= 0
+
+          -- Clean up binary after execution
+          os.remove(binary_path)
+
+          if exec_failed then
+            return res:error("Execution failed:\n" .. exec_output)
+          end
+
+          return ret:text("\nOutput:\n"):text(exec_output):send()
+        end,
+      })
+    end,
+  },
+  {
     "yetone/avante.nvim",
     event = "VeryLazy",
     lazy = false,
@@ -27,9 +137,33 @@ return {
         mode = { "n" },
         desc = "Start code completion.",
       },
+      {
+        "<leader>ah",
+        "<cmd>AvanteHistory<CR>",
+        mode = { "n" },
+        desc = "Avante History",
+      },
+      {
+        "<leader>am",
+        "<cmd>AvanteModels<CR>",
+        mode = { "n" },
+        desc = "Avante Models",
+      },
     },
     opts = {
       debug = false,
+      -- system_prompt as function ensures LLM always has latest MCP server state
+      -- This is evaluated for every message, even in existing chats
+      system_prompt = function()
+        local hub = require("mcphub").get_hub_instance()
+        return hub and hub:get_active_servers_prompt() or ""
+      end,
+      -- Using function prevents requiring mcphub before it's loaded
+      custom_tools = function()
+        return {
+          require("mcphub.extensions.avante").mcp_tool(),
+        }
+      end,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "openrouter_gemini_flash", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
@@ -49,41 +183,34 @@ return {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          -- model = "openrouter/auto",
           model = "google/gemini-2.5-pro-preview",
           max_tokens = 102400,
-          -- timeout = 30000,
           disable_tools = true,
         },
         openrouter_gemini_flash = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          -- model = "openrouter/auto",
           model = "google/gemini-2.5-flash-preview-05-20",
           max_tokens = 10240,
-          -- timeout = 30000,
           disable_tools = true,
         },
         openrouter_claude_4 = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          -- model = "openrouter/auto",
           model = "anthropic/claude-sonnet-4",
-          max_tokens = 102400,
-          timeout = 300000,
-          disable_tools = true,
+          max_tokens = 10240,
+          timeout = 30000,
+          disable_tools = false,
         },
         openrouter_claude_3_5 = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          -- model = "openrouter/auto",
           model = "anthropic/claude-3.5-sonnet",
           max_tokens = 10240,
-          -- timeout = 30000,
-          disable_tools = true,
+          disable_tools = false,
         },
         deepseek = {
           __inherited_from = "openai",
@@ -175,6 +302,7 @@ return {
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
       -- "stevearc/dressing.nvim",
+      "ravitemer/mcphub.nvim",
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
       --- The below dependencies are optional,
