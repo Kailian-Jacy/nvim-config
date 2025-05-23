@@ -124,6 +124,7 @@ return {
 
       -- File browsing.
       { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" },
+      { "<leader>fE", function() Snacks.picker.explorer({cwd = vim.fn.expand("%:p:h")}) end, desc = "File Explorer of the current opened file" },
       { "<leader>fe", function() Snacks.explorer({ pattern = vim.g.function_get_selected_content() }) end, desc = "File Explorer", mode = "v" },
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },

@@ -341,6 +341,12 @@ local cmd_mappings = {
     modes = { "n", "v" },
     description = "List directory on current dir.",
   },
+  {
+    cmdKeymap = "<D-E>",
+    leaderKeymap = "<leader>fE",
+    modes = { "n", "v" },
+    description = "List directory on current file base dir.",
+  },
   -- TODO: Directory from the current opened buffer.
   -- {
   --   cmdKeymap = "<D-E>",
