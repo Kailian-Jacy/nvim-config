@@ -127,6 +127,31 @@ return {
   --   end,
   -- },
   {
+    "folke/todo-comments.nvim",
+    keys = {
+      {
+        "<leader>mt",
+        function()
+          local text = "TODO: zianxu"
+          if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+            local selected_content = vim.g.function_get_selected_content()
+            if #selected_content then
+              text = text .. ": " .. selected_content
+            end
+          end
+          vim.api.nvim_feedkeys("O" .. text, "n", false)
+          vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+          vim.api.nvim_feedkeys("gcc", "m", false)
+        end,
+        mode = { "n", "v" },
+        desc = "add todo mark at this line.",
+      },
+    },
+    config = function()
+      require("todo-comments").setup({})
+    end,
+  },
+  {
     -- with lazy.nvim
     "Kailian-Jacy/bookmarks.nvim",
     -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
