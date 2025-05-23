@@ -153,6 +153,9 @@ return {
       { "<leader>jJ", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
       { "<leader>jj", function() Snacks.picker.diagnostics_buffer() end, desc = "Buffer Diagnostics" },
 
+      -- Jump list browsing.
+      { "<leader>jk", function() Snacks.picker.jumps() end, desc = "Jump list" },
+
       -- LSP related browsing.
       { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
       { "gy", function() Snacks.picker.lsp_type_definitions({ pattern = vim.g.function_get_selected_content()}) end, desc = "Goto T[y]pe Definition", mode = "v" },
