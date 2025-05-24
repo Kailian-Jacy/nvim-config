@@ -75,5 +75,24 @@
 			"}"
 		],
 		"description": "example config.json config for Rust programs."
+	},
+	"llm.prompt.fix": {
+		"prefix": "fix",
+		"body": [
+			"Fix or complete the given pseudocode as TODO and comment instructed, refering the surrounding examples."
+		],
+		"desc": "Snippet for fixing pseudocode with TODO and comments"
+	},
+	"llm.prompt.tdd": {
+		"prefix": "tdd",
+		"body": [
+			"Finish and test this function, and REPLACE it on success.",
+			"1. Refine the ommited part in doc comment. Put necessary test cases within doc. If the language has doc test, follow the case.",
+			"2. Finish the code with brief comment.",
+			"3. Pick appropriate tool to test the code. ",
+			"4. Merge finished code and test cases.",
+			"Do not stop until finish these all steps or meet something you can't dipose."
+		],
+		"desc": "Snippet for test-driven development workflow"
 	}
 }
