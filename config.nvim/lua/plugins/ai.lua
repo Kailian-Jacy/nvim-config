@@ -19,103 +19,96 @@ return {
       mcphub.setup({
         auto_approve = true,
       })
-      mcphub.add_server("rust-playground")
-      mcphub.add_tool("rust-playground", {
-        name = "run_rust_code",
-        description = "run a rust code for validation, you should not execute heavy work inside it. You can update your code from result or compilation error.",
-        inputSchema = {
-          type = "object",
-          properties = {
-            name = {
-              type = "string",
-              description = "underline_connected_brief_filename that describes the purpose of this test. Do not add `.rs` postfix",
-              examples = {
-                "bpe_algorithm_test",
+      if vim.g.module_enable_rust and vim.fn.executable("rustc") then
+        mcphub.add_server("rust-playground")
+        local cache_dir = vim.fn.stdpath("cache")
+        if #cache_dir == 0 then
+          vim.notify("std path cache returns empty.")
+          return
+        end
+        cache_dir = cache_dir .. "/rust_playground"
+        if vim.fn.isdirectory(cache_dir) == 0 then
+          local ok = vim.fn.mkdir(cache_dir, "p")
+          if ok == 0 then
+            return vim.notify("Failed to create cache directory: " .. cache_dir, vim.log.levels.ERROR)
+          end
+        end
+
+        mcphub.add_tool("rust-playground", {
+          name = "run_rust_code",
+          description = "run a rust code for validation, you should not execute heavy work inside it. You can update your code from result or compilation error.",
+          inputSchema = {
+            type = "object",
+            properties = {
+              name = {
+                type = "string",
+                description = "underline_connected_func_name_test that points the function you are testing, adding _test postfix. Should be a valid filename without extension.",
+                examples = {
+                  "bpe_algorithm_test",
+                },
+              },
+              compile_only = {
+                type = "boolean",
+                description = "set to true to skip running.",
+              },
+              code = {
+                type = "string",
+                description = "code that wants to be run. Should be full code starting from main.",
+                examples = {
+                  'fn main() { println!("Hello, world!"); }',
+                },
               },
             },
-            compile_only = {
-              type = "boolean",
-              description = "set to true to skip running.",
-            },
-            code = {
-              type = "string",
-              description = "code that wants to be run. Should be full code starting from main.",
-              examples = {
-                'fn main() { println!("Hello, world!"); }',
-              },
-            },
+            required = { "name", "code" },
           },
-          required = { "name", "code" },
-        },
-        handler = function(req, res)
-          if not string.match(req.params.code, "fn%s+main%s*%(") then
-            return res:error("Error: No main function found in the code.")
-          end
-
-          local cache_dir = vim.fn.stdpath("cache")
-          if #cache_dir == 0 then
-            return res:error('internal error: vim.fn.stdpath("cache") returns empty')
-          end
-
-          cache_dir = cache_dir .. "/rust_playground"
-          if vim.fn.isdirectory(cache_dir) == 0 then
-            local ok = vim.fn.mkdir(cache_dir, "p")
-            if ok == 0 then
-              return res:error("Failed to create cache directory: " .. cache_dir)
+          handler = function(req, res)
+            local time_stamp = os.time()
+            if not time_stamp then
+              return res:error("Failed to generate timestamp")
             end
-          end
+            local file_abs = cache_dir .. "/" .. req.params.name .. "_" .. time_stamp .. ".rs"
 
-          if vim.fn.executable("rustc") == 0 then
-            return res:error("rustc is not installed or not in PATH")
-          end
+            local file = io.open(file_abs, "w")
+            if not file then
+              return res:error("Failed to create file: " .. file_abs)
+            end
+            file:write(req.params.code)
+            file:close()
 
-          local time_stamp = os.time()
-          if not time_stamp then
-            return res:error("Failed to generate timestamp")
-          end
+            -- Get output binary path by removing .rs extension
+            local binary_path = cache_dir .. "/" .. vim.fn.fnamemodify(file_abs, ":t:r")
 
-          local file_abs = cache_dir .. "/" .. req.params.name .. "_" .. time_stamp .. ".rs"
+            -- Compile with output in same directory
+            local output = vim.fn.system({ "rustc", file_abs, "-o", binary_path })
+            local compilation_failed = vim.v.shell_error ~= 0
 
-          local file = io.open(file_abs, "w")
-          if not file then
-            return res:error("Failed to create file: " .. file_abs)
-          end
-          file:write(req.params.code)
-          file:close()
+            if compilation_failed then
+              return res:error("Compilation failed:\n" .. output)
+            end
 
-          -- Get output binary path by removing .rs extension
-          local binary_path = cache_dir .. "/" .. vim.fn.fnamemodify(file_abs, ":t:r")
+            local ret = res:text("Compilation succeeded.")
 
-          -- Compile with output in same directory
-          local output = vim.fn.system({ "rustc", file_abs, "-o", binary_path })
-          local compilation_failed = vim.v.shell_error ~= 0
+            if req.params.compile_only then
+              -- Clean up binary if compile-only
+              os.remove(binary_path)
+              return ret
+            end
 
-          if compilation_failed then
-            return res:error("Compilation failed:\n" .. output)
-          end
+            -- Execute the compiled binary with explicit path
+            local exec_output = vim.fn.system(binary_path)
+            local exec_failed = vim.v.shell_error ~= 0
 
-          local ret = res:text("Compilation succeeded.")
-
-          if req.params.compile_only then
-            -- Clean up binary if compile-only
+            -- Clean up binary after execution
             os.remove(binary_path)
-            return ret
-          end
 
-          -- Execute the compiled binary with explicit path
-          local exec_output = vim.fn.system(binary_path)
-          local exec_failed = vim.v.shell_error ~= 0
+            if exec_failed then
+              return res:error("Execution failed:\n" .. exec_output)
+            end
 
-          -- Clean up binary after execution
-          os.remove(binary_path)
-
-          if exec_failed then
-            return res:error("Execution failed:\n" .. exec_output)
-          end
-
-          return ret:text("\nOutput:\n"):text(exec_output):send()
-        end,
-      })
+            return ret:text("\nOutput:\n"):text(exec_output):send()
+          end,
+        })
+      end
     end,
   },
   {
