@@ -606,9 +606,11 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
     end
   end
   vim.cmd("b " .. buf)
+  vim.cmd("call cursor" .. "(" .. row .. "," .. col .. ")")
 
   vim.cmd("wincmd p") -- go to the last win.
   require("bufjump").backward()
+  -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<c-o>", true, false, true), "n", false)
 
   vim.cmd("wincmd p") -- focus to the created win.
 end, { nargs = "?" })
