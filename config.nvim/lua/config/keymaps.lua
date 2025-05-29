@@ -7,6 +7,12 @@ vim.g.mapleader = " "
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
+-- Path/Line fetching keymap.
+vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yr", "<cmd>CopyFilePath relative<cr>", { desc = "Copy relative path" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yf", "<cmd>CopyFilePath filename<cr>", { desc = "Copy filename only" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yl", "<cmd>CopyFilePath line<cr>", { desc = "Copy filename:line number" })
+
 -- Inc rename.
 vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode lsp variable name replacement." })
 

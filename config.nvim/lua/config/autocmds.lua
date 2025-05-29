@@ -578,6 +578,7 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
     opt = opt.args
   end
   local buf = vim.api.nvim_get_current_buf()
+  local _, row, col, _ = unpack(vim.fn.getpos("."))
   if not vim.tbl_contains({ "h", "j", "k", "l" }, opt) then
     vim.notify("Invalid direction: " .. opt, vim.log.levels.WARN)
   end
@@ -669,21 +670,33 @@ vim.api.nvim_create_user_command("CopyFilePath", function(opt)
   else
     opt = opt.args
   end
+  local ret = ""
   if opt == "full" then
+    -- /path/to/cwd/filename.ext
     local full_path = vim.fn.expand("%:p")
     vim.fn.setreg("*", full_path)
   elseif opt == "relative" then
+    -- ./path/relative/to/cwd/filename.ext
     local relative_path = vim.fn.expand("%:p"):gsub(vim.fn.getcwd() .. "/", "")
     vim.fn.setreg("*", relative_path)
   elseif opt == "dir" then
+    -- /path/to/cwd/
     local workdir = vim.fn.getcwd()
     vim.fn.setreg("*", workdir)
   elseif opt == "filename" then
+    -- filename.ext
     local filename = vim.fn.expand("%:t")
     vim.fn.setreg("*", filename)
+  elseif opt == "line" then
+    -- filename.ext:line
+    local _, line, _, _ = unpack(vim.fn.getpos("."))
+    local ret = vim.fn.expand("%:t") .. ":" .. line
+    vim.fn.setreg("*", ret)
   else
     vim.notify("Invalid option: " .. opt, vim.log.levels.ERROR)
   end
+  vim.fn.setreg("*", ret)
+  vim.print_silent("Copied: " .. ret)
 end, { nargs = "?" })
 
 -- Macro recording related.
