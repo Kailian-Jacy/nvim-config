@@ -70,6 +70,9 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
   end
 end)
 
+vim.keymap.set("n", "<leader>sd", "<cmd>SvnDiffThis<cr>", { noremap = true, desc = "Svn diff this" })
+-- vim.keymap.set("n", "<leader>sa", "<cmd>SvnDiffAll<cr>", { noremap = true, desc = "Svn diff all" }) -- It's better to use autocmd
+
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
 -- vim.keymap.del({ "n", "i", "v" }, "<M-k>")
 -- vim.keymap.del({ "n", "i", "v" }, "<M-j>")
