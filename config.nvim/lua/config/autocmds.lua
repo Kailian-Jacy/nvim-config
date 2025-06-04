@@ -547,6 +547,30 @@ vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
   require("bookmarks.sign").safe_refresh_signs()
 end, { desc = "Remove the bookmark at cursor line." })
 
+vim.api.nvim_create_user_command("ClearBookmark", function(opt)
+  opt = opt.args[1] or "wasted"
+  local all_bookmarks =
+    require("bookmarks.domain.node").get_all_bookmarks(require("bookmarks.domain.repo").ensure_and_get_active_list())
+  local to_remove_bookmarks = {}
+  if opt == "all" then
+    -- clear all bookmarks.
+    to_remove_bookmarks = all_bookmarks
+  elseif opt == "wasted" then
+    -- clear bookmarks with pending path reference.
+    for _, bookmark in ipairs(all_bookmarks) do
+      if vim.fn.filereadable(bookmark.location.path) == 0 then
+        table.insert(to_remove_bookmarks, bookmark)
+      end
+    end
+  end
+  for _, bookmark in ipairs(to_remove_bookmarks) do
+    vim.notify("Remove bookmark: " .. bookmark.location.path, vim.log.levels.DEBUG)
+    require("bookmarks.domain.service").delete_node(bookmark.id)
+  end
+  vim.print("Cleared " .. #to_remove_bookmarks .. " bookmarks.")
+  require("bookmarks.sign").safe_refresh_signs()
+end, { desc = "Remove the bookmark at cursor line.", nargs = "?" })
+
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
 if vim.fn.has("nvim-0.11") == 1 then

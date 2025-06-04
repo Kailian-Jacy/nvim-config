@@ -153,7 +153,7 @@ return {
   },
   {
     -- with lazy.nvim
-    "Kailian-Jacy/bookmarks.nvim",
+    "LintaoAmons/bookmarks.nvim",
     -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
     dependencies = {
       { "kkharji/sqlite.lua" },
