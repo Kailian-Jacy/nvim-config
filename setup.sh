@@ -19,14 +19,14 @@ fi
 # Basic.
 DEFAULT_SHELL=/usr/bin/zsh
 NVIM_CONF_LINK=~/.config/nvim
-TMUX_CONF_LINK=~/
+TMUX_CONF_LINK=~/.tmux.conf
 NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
 INSTALL_DEPENDENCIES="tmux git fzf node lazygit zoxide golang unzip zip npm ripgrep lua@5.4 sqlite luarocks make"
 INSTALL_FONT_PATH=""
-CONTINUE_ON_ERROR=true
-INSTALL_NVIM_FROM_SOURCE=false
+CONTINUE_ON_ERROR=1
+INSTALL_NVIM_FROM_SOURCE=0
 if [[ $OS == "MacOS" ]]; then
   INSTALL_FONT_PATH="/Library/Fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES pngpaste"
@@ -44,7 +44,7 @@ echo "Writing to shell rc: ${DEFAULT_SHELL_RC}"
 echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC" # Use quotes for safety
 DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 
-if $INSTALL_NVIM_FROM_SOURCE; then
+if [ $INSTALL_NVIM_FROM_SOURCE -ne 0 ]; then
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES gcc cmake"
 else
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES neovim"
@@ -89,7 +89,7 @@ echo "eval \"\$(zoxide init $(basename $DEFAULT_SHELL))\"" >> ${DEFAULT_SHELL_RC
 npm i -g vscode-langservers-extracted
 # pip3 install neovim-remote # TODO: pip3 python config later.
 
-if [ "$INSTALL_NVIM_FROM_SOURCE" == true ]; then
+if [ "$INSTALL_NVIM_FROM_SOURCE" -ne 0 ]; then
   # Clone and compile neovim.
   echo "Install neovim to: $NVIM_INSTALL_PATH"
   mkdir -p "$NVIM_INSTALL_PATH"
