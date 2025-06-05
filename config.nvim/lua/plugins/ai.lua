@@ -4,6 +4,11 @@ return {
   {
     "github/copilot.vim",
   },
+  {
+    "tzachar/cmp-tabnine",
+    build = "./install.sh",
+    dependencies = "hrsh7th/nvim-cmp",
+  },
   -- tencent copilot (gongfeng).
   --[[{
     "copilot.vim",
@@ -145,6 +150,7 @@ return {
     },
     opts = {
       debug = false,
+      mode = "legacy",
       -- system_prompt as function ensures LLM always has latest MCP server state
       -- This is evaluated for every message, even in existing chats
       system_prompt = function()
@@ -164,7 +170,7 @@ return {
         -- works well but way too slow...
         model = "devstral:latest",
       },
-      vendors = {
+      providers = {
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
         ["4omini"] = {
@@ -210,27 +216,6 @@ return {
           endpoint = "https://api.deepseek.com/",
           api_key_name = "DEEPSEEK_API_KEY",
           model = "deepseek-chat",
-        },
-        o1 = {
-          __inherited_from = "azure",
-          endpoint = "https://vlaa-openai-eastus2.openai.azure.com/",
-          deployment = "o1-preview-0912-nofilter",
-          model = "o1-preview-0912-nofilter",
-          api_key_name = "AZURE_OPENAI_O1_API_KEY",
-          api_version = "2024-02-15-preview",
-          timeout = 300000,
-          max_tokens = 128000,
-        },
-        ["azure4omini"] = {
-          __inherited_from = "azure",
-          endpoint = "https://openai-vlaa-eastus.openai.azure.com/",
-          deployment = "gpt-4o-mini-0718-nofilter",
-          model = "gpt-4o-mini-0718-nofilter",
-          api_key_name = "AZURE_OPENAI_API_KEY",
-          api_version = "2024-02-15-preview",
-          timeout = 30000,
-          temperature = 0.7,
-          max_tokens = 10000,
         },
       },
       behaviour = {
