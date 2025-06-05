@@ -18,6 +18,9 @@ fi
 
 # Basic.
 DEFAULT_SHELL=/usr/bin/zsh
+NVIM_CONF_LINK=~/.config/nvim
+TMUX_CONF_LINK=~/
+NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
 INSTALL_DEPENDENCIES="tmux git fzf node lazygit zoxide golang unzip zip npm ripgrep lua@5.4 sqlite luarocks make"
@@ -86,7 +89,7 @@ echo "eval \"\$(zoxide init $(basename $DEFAULT_SHELL))\"" >> ${DEFAULT_SHELL_RC
 npm i -g vscode-langservers-extracted
 # pip3 install neovim-remote # TODO: pip3 python config later.
 
-if [ "$INSTALL_NVIM_FROM_SOURCE" = true ]; then
+if [ "$INSTALL_NVIM_FROM_SOURCE" == true ]; then
   # Clone and compile neovim.
   echo "Install neovim to: $NVIM_INSTALL_PATH"
   mkdir -p "$NVIM_INSTALL_PATH"
