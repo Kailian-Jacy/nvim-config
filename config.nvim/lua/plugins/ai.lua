@@ -6,6 +6,8 @@ return {
   },
   {
     "tzachar/cmp-tabnine",
+    -- there is some problem with tabnine installation. Just 
+    -- go to the tabnine path and run the install.sh
     build = "./install.sh",
     dependencies = "hrsh7th/nvim-cmp",
   },
