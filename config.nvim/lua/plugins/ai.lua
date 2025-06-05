@@ -166,11 +166,11 @@ return {
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "openrouter_gemini_flash", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
-      ollama = {
-        -- works well but way too slow...
-        model = "devstral:latest",
-      },
       providers = {
+        ollama = {
+          -- works well but way too slow...
+          model = "devstral:latest",
+        },
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
         ["4omini"] = {
