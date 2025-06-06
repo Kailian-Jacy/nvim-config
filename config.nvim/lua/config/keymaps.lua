@@ -3,6 +3,17 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
+-- Asterisk do not move to the next automatically.
+-- TODO: find a way to check highlights under the cursor. Go to the next one on highlight.
+vim.keymap.set({ "n" }, "*", function()
+  if vim.g.is_highlight_on == false then
+    vim.g.is_highlight_on = true
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
+  else
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*", true, false, true), "n", false)
+  end
+end, { desc = "Search and highlight but not jump to the next.", noremap = true })
+
 -- Local workaround for osc52 copy from remote.
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
@@ -32,6 +43,7 @@ vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
 vim.keymap.set({ "n", "v" }, "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
+  vim.g.is_highlight_on = false
   vim.cmd([[ noh ]])
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
 end, { desc = "Esc wrapper: no highlight with esc." })
