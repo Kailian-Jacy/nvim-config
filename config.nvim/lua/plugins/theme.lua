@@ -299,6 +299,15 @@ return {
             color_nr = nil, -- cterm
             highlight = "Search",
           },
+          Visual = {
+            text = { "v" },
+            priority = 1,
+            gui = nil,
+            color = "#FFB86C",
+            cterm = nil,
+            color_nr = nil, -- cterm
+            highlight = "Visual",
+          },
         },
         handlers = {
           cursor = true,
@@ -311,6 +320,39 @@ return {
       })
       require("gitsigns").setup()
       require("scrollbar.handlers.gitsigns").setup()
+      require("scrollbar.handlers").register("lastjump", function(bufnr)
+        if vim.api.nvim_get_current_buf() ~= bufnr then
+          return { { line = 0, text = "" } } -- dummy-return to prevent error
+        end
+        if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+          local _, vstart, _, _ = unpack(vim.fn.getpos("v"))
+          local _, vend, _, _ = unpack(vim.fn.getpos("."))
+          if vstart > vend then
+            vstart, vend = vend, vstart
+          end
+          local ret = {}
+          for line = vstart, vend, 1 do
+            table.insert(ret, {
+              line = line,
+              type = "Visual",
+              level = 1,
+            })
+          end
+          return ret
+        end
+        return { { line = 0, text = "" } } -- dummy-return to prevent error
+      end)
+      -- FIXME: only updates when redrawing the bar. and cmd-cr Dunno why..
+      --
+      -- vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI", "CursorMoved", "CursorMovedI", "ModeChanged" }, {
+      --   pattern = { "*" },
+      --   callback = function()
+      --     if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+      --       vim.print("123")
+      --       require("scrollbar").render()
+      --     end
+      --   end,
+      -- })
     end,
   },
   {
