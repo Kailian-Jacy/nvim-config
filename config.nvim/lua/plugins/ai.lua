@@ -3,6 +3,7 @@ return {
   -- from ai store.
   {
     "github/copilot.vim",
+    enabled = vim.g.module_enable_copilot,
   },
   {
     "tzachar/cmp-tabnine",

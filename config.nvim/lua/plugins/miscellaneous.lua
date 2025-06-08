@@ -961,24 +961,30 @@ return {
       }
     },
     dependencies = { "folke/snacks.nvim" },
-    opts = {
-      ring = {
-        history_length = 1000,
-        storage = "shada",
-        sync_with_numbered_registers = false,
-        -- Ignroe all by default.
-        ignore_registers = { "\"" }
-      },
-      -- I prever highlight to be done by nvim itself.
-      highlight = {
-        on_put = false,
-        on_yank = false,
-        timer = 500,
-      },
-      system_clipboard = {
-        sync_with_ring = false,
-        clipboard_register = nil,
-      },
-    },
+    opts = function ()
+      local storage = "shada"
+      if vim.g._resource_executable_sqlite then
+        storage = "sqlite"
+      end
+      return {
+        ring = {
+          history_length = 1000,
+          storage = storage,
+          sync_with_numbered_registers = false,
+          -- Ignroe all by default.
+          ignore_registers = { "\"" }
+        },
+        -- I prever highlight to be done by nvim itself.
+        highlight = {
+          on_put = false,
+          on_yank = false,
+          timer = 500,
+        },
+        system_clipboard = {
+          sync_with_ring = false,
+          clipboard_register = nil,
+        },
+      }
+    end
   }
 }

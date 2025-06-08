@@ -154,6 +154,7 @@ return {
   {
     -- with lazy.nvim
     "LintaoAmons/bookmarks.nvim",
+    enable = vim.g.module_enable_bookmarks,
     -- tag = "v0.5.4", -- optional, pin the plugin at specific version for stability
     dependencies = {
       { "kkharji/sqlite.lua" },
