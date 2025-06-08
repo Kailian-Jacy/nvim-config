@@ -82,7 +82,8 @@ return {
 
         -- Others.
         "diff",
-        "ssh_config"
+        "ssh_config",
+        "gitignore"
       }
 
       -- zsh does not own its parser. So use bash.
@@ -97,6 +98,7 @@ return {
       opts.indent = {
         disable = true,
       }
+      return opts
     end,
   },
   {
