@@ -9,7 +9,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
   OS="Linux"
 else
-  echo "Not supported OS. Exit."
+  echo "Unsupported OS. Exit."
 fi
 
 ###############################################
@@ -24,12 +24,12 @@ NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
 INSTALL_DEPENDENCIES="git curl tar" # Everything relies on them...
+INSTALL_DEPENDENCIES+="cmake make" # requried by luasnip, ray-x and treesitter.
 INSTALL_DEPENDENCIES+="tmux lazygit zoxide" # handy cmd tools.
 INSTALL_DEPENDENCIES+="fzf ripgrep fd" # buildin searchs.
-INSTALL_DEPENDENCIES+="node" # required by copilot.
-INSTALL_DEPENDENCIES+="unzip zip npm lua@5.4 luarocks"
+INSTALL_DEPENDENCIES+="npm node" # required by copilot.
+INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks"
 INSTALL_DEPENDENCIES+="sqlite" # required by bookmarks.nvim
-INSTALL_DEPENDENCIES+="cmake make" # requried by luasnip, ray-x and treesitter.
 INSTALL_FONT_PATH=""
 CONTINUE_ON_ERROR=1
 INSTALL_NVIM_FROM_SOURCE=0
@@ -168,11 +168,13 @@ echo "export PATH=\$PATH:$DEFAULT_MASON_PATH:$HOME/.local/bin" >> ${DEFAULT_ENV_
 
 # Start nvim and install all the dependencies
 source ${DEFAULT_ENV_FILE_PATH}
+echo "Starting neovim to install plugins, parsers and lsps. This may take some time."
 nvim --headless +"lua print('Dependencies successfully installed.')" +q || [ $CONTINUE_ON_ERROR ]
 nvim --headless +"MasonToolsInstall" +q || [ $CONTINUE_ON_ERROR ]
 
 # Remind todo list to the user:
 cat <<EOF
+
 Neovim is successfully installed. Please:
   1. Setup API keys in $DEFAULT_ENV_FILE_PATH (e.g., OPENROUTER_API_KEY, DEEPSEEK_API_KEY).
   2. source $DEFAULT_SHELL_RC.
