@@ -484,13 +484,15 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
     win = {
       input = {
         keys = {
-          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<c-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<d-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
           ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
         },
       },
       list = {
         keys = {
-          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<c-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<d-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
           ["dd"] = { "delete_from_bookmarks", mode = { "n" } },
           ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
           ["ee"] = { "edit_bookmark", mode = { "n" } },

@@ -609,7 +609,7 @@ return {
               add_to_zoxide = function(_, item)
                 vim.cmd('silent !zoxide add "' .. item._path .. '"')
                 vim.notify("Path " .. item._path .. " added to zoxide path.", vim.log.levels.INFO)
-              end
+              end,
             },
             win = {
               input = {
@@ -647,10 +647,14 @@ return {
               input = {
                 keys = {
                   -- we won't use dd in input buffer here.
-                  ["d"] = {"bufdelete", mode={"n"}},
+                  -- ["d"] = {"bufdelete", mode={"n"}},
 
-                  ["<c-x>"] = {"bufdelete", mode={"n", "i"}},
-                  ["<d-x>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["<d-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["<c-s-x>"] = {"edit_vsplit", mode={"n", "i"}},
+                  ["<d-s-x>"] = {"edit_vsplit", mode={"n", "i"}},
+                  ["<d-bs>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<c-bs>"] = {"bufdelete", mode={"n", "i"}},
                 }
               }
             }
@@ -672,7 +676,11 @@ return {
                 picker:close()
                 Snacks.picker.actions.lcd(_, item)
                 vim.print_silent("Win pwd: " .. vim.fn.getcwd())
-              end
+              end,
+              remove_from_zoxide = function(_, item)
+                vim.cmd('silent !zoxide remove "' .. item._path .. '"')
+                vim.notify("Path " .. item._path .. " removed from zoxide record.", vim.log.levels.INFO)
+              end,
             },
             win = {
               input = {
@@ -682,6 +690,9 @@ return {
 
                   ["<c-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
                   ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+
+                  ["<d-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
+                  ["<c-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
 
                   ["v"] = {"v_new_win_here", mode={"n"}},
                   ["x"] = {"x_new_win_here", mode={"n"}},
