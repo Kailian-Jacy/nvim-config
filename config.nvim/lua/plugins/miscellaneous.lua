@@ -478,6 +478,29 @@ return {
         -- Confirmed by author.
         sources = {
           yanky = {
+            actions = {
+              -- Paste from `yanky/lua/yanky/sources/snacks.lua`. It's not respecting visual mode.
+              confirm = function(picker)
+                picker:close()
+                local selected = picker:selected({ fallback = true })
+
+                if vim.tbl_count(selected) == 1 then
+                  require("yanky.picker").actions.put("p", vim.g.__local_is_visual_mode_before_yanky_picker or false)(selected[1])
+                  return
+                end
+                local content = {
+                  regcontents = "",
+                  regtype = "V",
+                }
+                for _, current in ipairs(selected) do
+                  content.regcontents = content.regcontents .. current.regcontents
+                  if current.regtype == "v" then
+                    content.regcontents = content.regcontents .. "\n"
+                  end
+                end
+                require("yanky.picker").actions.put("p", vim.g.__local_is_visual_mode_before_yanky_picker or false)(content)
+              end,
+            },
             win = {
               input = {
                 keys = {
@@ -928,6 +951,10 @@ return {
         "<leader>yy",
         mode = {"n", "v"},
         function()
+          local current_mode = vim.fn.mode()
+          if current_mode == "v" or current_mode == "V" or current_mode == "C-V" then
+            vim.g.__local_is_visual_mode_before_yanky_picker = true
+          end
           Snacks.picker.yanky()
         end,
         desc = "Yanky ring history picker.",
