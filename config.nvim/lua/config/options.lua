@@ -63,6 +63,120 @@ end
 -- Tabline
 -- Set the current tab name as the working directory name.
 function MyTabLine()
+  local tabnames = {}
+  local groups = {} -- { tabname = { { index1, split_path1 }, { index2, split_path2 } } }
+
+  local function group_by(group, get_identifier)
+    local ret = {}
+    local group_cnt = 0
+    for _, item in pairs(group) do
+      local identifier = get_identifier(item)
+      if identifier then
+        if not ret[identifier] then
+          ret[identifier] = {}
+          group_cnt = group_cnt + 1
+        end
+        table.insert(ret[identifier], item)
+      else
+      end
+    end
+    return ret, group_cnt
+  end
+
+  local function format_tabname(uniq, tail)
+    if #uniq > 0 then
+      return uniq .. "." .. tail
+    end
+    return tail
+  end
+
+  local function split_path(path)
+    local result = {}
+    for str in string.gmatch(path:gsub("^/", ""):gsub("/$", ""), "([^/]+)") do
+      table.insert(result, str)
+    end
+    return result
+  end
+
+  for index = 1, vim.fn.tabpagenr("$") do
+    local win_num = vim.fn.tabpagewinnr(index)
+    local working_directory = vim.fn.getcwd(win_num, index)
+    local tabname = vim.fn.fnamemodify(working_directory, ":t")
+
+    tabnames[index] = tabname
+    if not groups[tabname] then
+      groups[tabname] = {}
+    end
+    table.insert(groups[tabname], { index, split_path(vim.fn.fnamemodify(working_directory, ":p:h")) })
+  end
+
+  -- Diff in group to eliminate same tabnames.
+  local round_cnt = 500 -- prevent deadloop.
+  while round_cnt > 0 do
+    -- Those who has uniq tabname gets rolled out.
+    local non_zero_count = 0
+    for tabname, body in pairs(groups) do
+      if #body == 1 then
+        groups[tabname] = nil
+      else
+        non_zero_count = non_zero_count + 1
+      end
+    end
+    if non_zero_count == 0 then
+      break
+    end
+    local new_groups = {}
+    -- For each group that has multiple string sharing the same ending.
+    for tabname, bodies in pairs(groups) do
+      local min_section_count = 100000
+      for _, index_and_sections in ipairs(bodies) do
+        min_section_count = math.min(min_section_count, #index_and_sections[2])
+      end
+      for i = 1, min_section_count + 1 do
+        local _group_by_sections, _group_cnt = group_by(bodies, function(item)
+          if item[2][i] then
+            return item[2][i] -- ith sections.
+          else
+            return "" -- for those has reached max length, use "" as special group
+          end
+        end)
+        -- special dispose those "" group (poths that reaches the maximum length)
+        if _group_by_sections[""] then
+          for _, index_and_sections in ipairs(_group_by_sections) do
+            tabnames[index_and_sections[1]] = format_tabname("", tabnames[index_and_sections[1]])
+          end
+          _group_by_sections[""] = nil
+        end
+
+        -- dispose remainder non-max groups.
+        if _group_cnt ~= 1 then
+          -- split the group.
+          for section, section_bodies in pairs(_group_by_sections) do
+            if #section_bodies == 1 then
+              -- Uniq. Just modify the global.
+              -- Debug unique tabname resolution
+              tabnames[section_bodies[1][1]] = format_tabname(section, tabnames[section_bodies[1][1]])
+            else
+              -- needs to be split further. put to new_group.
+              if not new_groups[tabname] then
+                new_groups[tabname] = {}
+              end
+              for _, index_and_sections in ipairs(section_bodies) do
+                -- trim compared ones.
+                index_and_sections[2] = { unpack(index_and_sections[2], i) }
+                table.insert(new_groups[tabname], index_and_sections)
+              end
+              goto next_tabname_round
+            end
+          end
+        end
+      end
+      ::next_tabname_round::
+    end
+    groups = new_groups
+    round_cnt = round_cnt - 1
+  end
+  -- vim.print(tabnames)
   local tabline = ""
   for index = 1, vim.fn.tabpagenr("$") do
     -- select the highlighting
@@ -78,16 +192,11 @@ function MyTabLine()
     local win_num = vim.fn.tabpagewinnr(index)
     local working_directory = vim.fn.getcwd(win_num, index)
     local project_name = vim.fn.fnamemodify(working_directory, ":t")
-    tabline = tabline .. " " .. project_name .. " "
+    tabline = tabline .. " " .. tabnames[index] .. " "
   end
 
   -- after the last tab fill with TabLineFill and reset tab page nr
   tabline = tabline .. "%#TabLineFill#%T"
-
-  -- -- right-align the label to close the current tab page
-  -- if vim.fn.tabpagenr('$') > 1 then
-  --     tabline = tabline .. '%=%#TabLine#%999Xclose'
-  -- end
   return tabline
 end
 vim.go.tabline = "%!v:lua.MyTabLine()"
