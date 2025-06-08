@@ -11,6 +11,18 @@
 vim.g.read_binary_with_xxd = false
 --------------------------------------------------
 
+-- Detection of resources.
+local function get_cpu_cores()
+  local handle = io.popen("nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1")
+  if not handle then
+    return 1
+  end
+  local result = handle:read("*n") or 1
+  handle:close()
+  return result
+end
+vim.g._resource_cpu_cores = get_cpu_cores()
+
 -- Language support. Detect and enable language.
 vim.g.module_enable_rust = true and vim.fn.executable("rustc")
 vim.g.module_enable_go = true and vim.fn.executable("go")
