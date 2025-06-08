@@ -295,6 +295,10 @@ return {
               ["<c-p>"] = "inspect",
               ["<d-p>"] = "inspect",
 
+              -- History moving
+              ["<d-s-j>"] = {"history_forward", mode = { "n", "i" }},
+              ["<d-s-k>"] = {"history_back", mode = { "n", "i" }},
+
               -- Additional actions.
               ["<c-e>"] = {"picker_print", mode={"n", "i"}}
             }
@@ -572,6 +576,7 @@ return {
             focus = "input",
             auto_close = true,
             actions = {
+              -- TODO: if it's a file, open without unfold it.
               tcd_to_item = function (picker, item)
                 picker:close()
                 vim.cmd('silent !zoxide add "' .. item._path .. '"')
