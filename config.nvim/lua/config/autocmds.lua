@@ -430,19 +430,28 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       return tbl
     end,
     actions = {
-      delete_from_bookmarks = function(picker, item)
-        local location = item.bm_location
-        local node = require("bookmarks.domain.repo").find_node_by_location(location)
-        if not node then
-          vim.notify("No node found at cursor position", vim.log.levels.WARN)
-          return
+      delete_from_bookmarks = function(picker, _)
+        local delete_from_bookmark = function(local_picker, local_item)
+          local location = local_item.bm_location
+          local node = require("bookmarks.domain.repo").find_node_by_location(location)
+          if not node then
+            vim.notify("No node found at cursor position", vim.log.levels.WARN)
+            return
+          end
+          require("bookmarks.domain.service").delete_node(node.id)
+          require("bookmarks.sign").safe_refresh_signs()
+          local_picker.list:set_selected()
+          local_picker.list:set_target()
+          local_picker:find()
         end
-        require("bookmarks.domain.service").delete_node(node.id)
-        require("bookmarks.sign").safe_refresh_signs()
-        picker.list:set_selected()
-        picker.list:set_target()
-        picker:find()
+        local sel = picker:selected()
+        local items = #sel > 0 and sel or picker:items()
+        for _, item in pairs(items) do
+          delete_from_bookmark(picker, item)
+        end
       end,
+      -- delete_from_bookmarks = function(picker, item)
+      -- end,
       edit_bookmark = function(picker, item)
         -- Get the desc of of bookmark
         local text = "Original text name"
