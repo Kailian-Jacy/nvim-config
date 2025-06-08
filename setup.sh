@@ -23,10 +23,17 @@ TMUX_CONF_LINK=~/.tmux.conf
 NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
-INSTALL_DEPENDENCIES="tmux git fzf node lazygit zoxide golang unzip zip npm ripgrep lua@5.4 sqlite luarocks make"
+INSTALL_DEPENDENCIES="git curl tar" # Everything relies on them...
+INSTALL_DEPENDENCIES+="tmux lazygit zoxide" # handy cmd tools.
+INSTALL_DEPENDENCIES+="fzf ripgrep fd" # buildin searchs.
+INSTALL_DEPENDENCIES+="node" # required by copilot.
+INSTALL_DEPENDENCIES+="unzip zip npm lua@5.4 luarocks"
+INSTALL_DEPENDENCIES+="sqlite" # required by bookmarks.nvim
+INSTALL_DEPENDENCIES+="cmake make" # requried by luasnip, ray-x and treesitter.
 INSTALL_FONT_PATH=""
 CONTINUE_ON_ERROR=1
 INSTALL_NVIM_FROM_SOURCE=0
+DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 if [[ $OS == "MacOS" ]]; then
   INSTALL_FONT_PATH="/Library/Fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES pngpaste"
@@ -41,8 +48,7 @@ CURRENT_BASEDIR=$(dirname $CURRENT_ABS)
 DEFAULT_SHELL_RC_FILENAME=".$(basename "$DEFAULT_SHELL")rc"
 DEFAULT_SHELL_RC="$HOME/$DEFAULT_SHELL_RC_FILENAME" # Ensure absolute path
 echo "Writing to shell rc: ${DEFAULT_SHELL_RC}"
-echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC" # Use quotes for safety
-DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
+echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC"
 
 if [ $INSTALL_NVIM_FROM_SOURCE -ne 0 ]; then
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES gcc cmake"
