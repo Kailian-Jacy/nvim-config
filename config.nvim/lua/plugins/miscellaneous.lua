@@ -131,7 +131,7 @@ return {
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-      { "<leader>fo", function() vim.cmd[[SnackOldfilesGlobal]] end, desc = "Recent" },
+      { "<leader>fo", function() vim.cmd[[SnackOldfiles]] end, desc = "Recent" },
 
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },

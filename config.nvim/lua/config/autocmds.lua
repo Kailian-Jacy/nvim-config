@@ -338,44 +338,32 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 })
 
 -- Old files picker.
-local snack_old_file = function(opts)
-  opts.global = opts.global or false
+local snack_old_file = function()
   local title = "OldFiles"
-  local toggle_function
-  if opts.global then
-    title = title .. " (Global)"
-    toggle_function = function(picker, _)
-      vim.cmd([[ SnackOldfilesLocal ]])
-      picker:close()
-    end
-  else
-    toggle_function = function(picker, _)
-      vim.cmd([[ SnackOldfilesGlobal ]])
-      picker:close()
-    end
-  end
-
   return function()
     Snacks.picker.pick({
+      global = false,
+      toggles = {
+        global = "g",
+      },
       title = title,
       format = function(item, picker)
         local ret = require("snacks.picker.format").filename(item, picker)
         -- ret[#ret + 1] = { item.text }
         return ret
       end,
-      finder = function(_, _)
+      finder = function(picker, _)
         local cwd = vim.fs.normalize(vim.fn.getcwd())
         local oldfile_items = vim.v.oldfiles
         if #oldfile_items == 0 then
           vim.print_silent("Oldfiles picker: No old files.")
           return {}
         end
-        -- TODO: Compare if the path within the current working directory.
 
         local tbl = {}
         for _, oldfile in ipairs(oldfile_items) do
           local full_path = vim.fs.normalize(oldfile)
-          if not opts.global and full_path:find(cwd, 1, true) ~= 1 then
+          if not picker.global and full_path:find(cwd, 1, true) ~= 1 then
             goto continue
           end
           if oldfile:find("^term:/") or oldfile:find("^scp:/") or oldfile:find("^rsync:/") then
@@ -391,7 +379,10 @@ local snack_old_file = function(opts)
         return tbl
       end,
       actions = {
-        toggle_local = toggle_function,
+        toggle_local = function(picker)
+          picker.opts.global = not picker.opts.global
+          picker:find()
+        end,
       },
       win = {
         input = {
@@ -409,16 +400,7 @@ local snack_old_file = function(opts)
   end
 end
 
-vim.api.nvim_create_user_command(
-  "SnackOldfilesGlobal",
-  snack_old_file({ global = true }),
-  { desc = "Open oldfiles in global" }
-)
-vim.api.nvim_create_user_command(
-  "SnackOldfilesLocal",
-  snack_old_file({ global = false }),
-  { desc = "Open oldfiles in local working directory" }
-)
+vim.api.nvim_create_user_command("SnackOldfiles", snack_old_file(), { desc = "Open oldfiles." })
 
 -- Bookmark related code snippet.
 vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
