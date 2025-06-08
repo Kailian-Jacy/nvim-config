@@ -6,7 +6,7 @@ return {
   },
   {
     "tzachar/cmp-tabnine",
-    -- there is some problem with tabnine installation. Just 
+    -- there is some problem with tabnine installation. Just
     -- go to the tabnine path and run the install.sh
     build = "./install.sh",
     dependencies = "hrsh7th/nvim-cmp",
@@ -245,9 +245,8 @@ return {
         sidebar = {
           apply_all = "A",
           apply_cursor = "a",
-          close = { "q" }, -- <Esc> should be doing nothing.
-          --[[switch_windows = "<Tab>",
-          reverse_switch_windows = "<S-Tab>",]]
+          close = { "q" },
+          close_from_input = { normal = "q" },
         },
       },
       hints = { enabled = false },
