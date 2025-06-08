@@ -203,6 +203,8 @@ vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = tr
 -- Migrate to normal-tabbing switching.
 vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+-- put the current window as a new tab.
+vim.keymap.set("n", "<tab>w", "<cmd>tabedit %<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
