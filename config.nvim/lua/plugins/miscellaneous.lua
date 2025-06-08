@@ -631,7 +631,7 @@ return {
           zoxide = {
             layout = { preset = "vscode", preview = false },
             -- By default, zoxide only changes the current tab cwd.
-            confirm = "zoxide_tcd",
+            confirm = "zoxide_lcd",
             actions = {
               zoxide_tcd = function (picker, item)
                 picker:close()
@@ -652,8 +652,8 @@ return {
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
                   ["t"] = {"new_tab_here", mode={"n"}},
 
-                  ["<c-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
-                  ["<d-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
+                  ["<c-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+                  ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
 
                   ["v"] = {"v_new_win_here", mode={"n"}},
                   ["x"] = {"x_new_win_here", mode={"n"}},
