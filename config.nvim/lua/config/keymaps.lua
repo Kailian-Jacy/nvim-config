@@ -41,7 +41,6 @@ vim.api.nvim_create_autocmd("FileType", {
 vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
-vim.keymap.set({ "n", "v" }, "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
   vim.g.is_highlight_on = false
   vim.cmd([[ noh ]])

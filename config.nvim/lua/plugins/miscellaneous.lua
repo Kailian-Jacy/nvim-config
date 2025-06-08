@@ -133,6 +133,9 @@ return {
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
       { "<leader>fo", function() vim.cmd[[SnackOldfiles]] end, desc = "Recent" },
 
+      -- lazygit
+      { "<leader>gg", function() Snacks.lazygit() end, desc = "Find Config File" },
+
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
       { "<leader>ss", function() Snacks.picker.lsp_symbols({ pattern = vim.g.function_get_selected_content() }) end, desc = "LSP Symbols", mode = "v" },
@@ -193,6 +196,10 @@ return {
         enabled = true
       },
       styles = {
+        lazygit = {
+          height = 0,
+          width = 0,
+        },
         input = {
           relative = "cursor",
           row = 1,
