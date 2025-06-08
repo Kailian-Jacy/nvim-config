@@ -75,6 +75,8 @@ return {
           cmd = {
             "clangd",
             "--offset-encoding=utf-16",
+            "--background-index",
+            "-j=" .. math.max((vim.g._resource_cpu_cores or 0) - 2, 2),
           },
         })
       end

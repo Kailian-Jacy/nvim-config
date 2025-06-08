@@ -324,16 +324,21 @@ return {
     end,
   },
   {
-    "levouh/tint.nvim",
-    config = function()
-      require("tint").setup({
-        transforms = {
-          require("tint.transforms").tint_with_threshold(-80, "#1C1C1C", 200), -- Try to tint by `-100`, but keep all colors at least `150` away from `#1C1C1C`
-          require("tint.transforms").saturate(0.5),
+    "tadaa/vimade",
+    opts = {
+      recipe = { "minimalist", { animate = true } },
+      ncmode = "buffers",
+      fadelevel = 0.66,
+      blocklist = {
+        default = {
+          highlights = {
+            "WinSeparator",
+          },
+          -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
+          -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },
+          -- buf_opts = { buftype = { "nofile" } },
         },
-        -- tint = -80,
-        highlight_ignore_patterns = { "WinSeparator" },
-      })
-    end,
+      },
+    },
   },
 }

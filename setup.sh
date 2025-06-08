@@ -9,7 +9,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
   OS="Linux"
 else
-  echo "Not supported OS. Exit."
+  echo "Unsupported OS. Exit."
 fi
 
 ###############################################
@@ -18,12 +18,22 @@ fi
 
 # Basic.
 DEFAULT_SHELL=/usr/bin/zsh
+NVIM_CONF_LINK=~/.config/nvim
+TMUX_CONF_LINK=~/.tmux.conf
+NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
-INSTALL_DEPENDENCIES="tmux git fzf node lazygit zoxide golang unzip zip npm ripgrep lua@5.4 sqlite luarocks make"
+INSTALL_DEPENDENCIES="git curl tar" # Everything relies on them...
+INSTALL_DEPENDENCIES+="cmake make" # requried by luasnip, ray-x and treesitter.
+INSTALL_DEPENDENCIES+="tmux lazygit zoxide" # handy cmd tools.
+INSTALL_DEPENDENCIES+="fzf ripgrep fd" # buildin searchs.
+INSTALL_DEPENDENCIES+="npm node" # required by copilot.
+INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks"
+INSTALL_DEPENDENCIES+="sqlite" # required by bookmarks.nvim
 INSTALL_FONT_PATH=""
-CONTINUE_ON_ERROR=true
-INSTALL_NVIM_FROM_SOURCE=false
+CONTINUE_ON_ERROR=1
+INSTALL_NVIM_FROM_SOURCE=0
+DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 if [[ $OS == "MacOS" ]]; then
   INSTALL_FONT_PATH="/Library/Fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES pngpaste"
@@ -38,10 +48,9 @@ CURRENT_BASEDIR=$(dirname $CURRENT_ABS)
 DEFAULT_SHELL_RC_FILENAME=".$(basename "$DEFAULT_SHELL")rc"
 DEFAULT_SHELL_RC="$HOME/$DEFAULT_SHELL_RC_FILENAME" # Ensure absolute path
 echo "Writing to shell rc: ${DEFAULT_SHELL_RC}"
-echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC" # Use quotes for safety
-DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
+echo "source $DEFAULT_ENV_FILE_PATH" >> "$DEFAULT_SHELL_RC"
 
-if $INSTALL_NVIM_FROM_SOURCE; then
+if [ $INSTALL_NVIM_FROM_SOURCE -ne 0 ]; then
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES gcc cmake"
 else
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES neovim"
@@ -86,7 +95,7 @@ echo "eval \"\$(zoxide init $(basename $DEFAULT_SHELL))\"" >> ${DEFAULT_SHELL_RC
 npm i -g vscode-langservers-extracted
 # pip3 install neovim-remote # TODO: pip3 python config later.
 
-if [ "$INSTALL_NVIM_FROM_SOURCE" = true ]; then
+if [ "$INSTALL_NVIM_FROM_SOURCE" -ne 0 ]; then
   # Clone and compile neovim.
   echo "Install neovim to: $NVIM_INSTALL_PATH"
   mkdir -p "$NVIM_INSTALL_PATH"
@@ -159,11 +168,13 @@ echo "export PATH=\$PATH:$DEFAULT_MASON_PATH:$HOME/.local/bin" >> ${DEFAULT_ENV_
 
 # Start nvim and install all the dependencies
 source ${DEFAULT_ENV_FILE_PATH}
+echo "Starting neovim to install plugins, parsers and lsps. This may take some time."
 nvim --headless +"lua print('Dependencies successfully installed.')" +q || [ $CONTINUE_ON_ERROR ]
 nvim --headless +"MasonToolsInstall" +q || [ $CONTINUE_ON_ERROR ]
 
 # Remind todo list to the user:
 cat <<EOF
+
 Neovim is successfully installed. Please:
   1. Setup API keys in $DEFAULT_ENV_FILE_PATH (e.g., OPENROUTER_API_KEY, DEEPSEEK_API_KEY).
   2. source $DEFAULT_SHELL_RC.

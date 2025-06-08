@@ -82,7 +82,8 @@ return {
 
         -- Others.
         "diff",
-        "ssh_config"
+        "ssh_config",
+        "gitignore"
       }
 
       -- zsh does not own its parser. So use bash.
@@ -97,6 +98,7 @@ return {
       opts.indent = {
         disable = true,
       }
+      return opts
     end,
   },
   {
@@ -124,11 +126,15 @@ return {
 
       -- File browsing.
       { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" },
+      { "<leader>fE", function() Snacks.picker.explorer({cwd = vim.fn.expand("%:p:h")}) end, desc = "File Explorer of the current opened file" },
       { "<leader>fe", function() Snacks.explorer({ pattern = vim.g.function_get_selected_content() }) end, desc = "File Explorer", mode = "v" },
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-      { "<leader>fo", function() vim.cmd[[SnackOldfilesGlobal]] end, desc = "Recent" },
+      { "<leader>fo", function() vim.cmd[[SnackOldfiles]] end, desc = "Recent" },
+
+      -- lazygit
+      { "<leader>gg", function() Snacks.lazygit() end, desc = "Find Config File" },
 
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
@@ -152,6 +158,9 @@ return {
       -- Diagnostics browsing.
       { "<leader>jJ", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
       { "<leader>jj", function() Snacks.picker.diagnostics_buffer() end, desc = "Buffer Diagnostics" },
+
+      -- Jump list browsing.
+      { "<leader>jk", function() Snacks.picker.jumps() end, desc = "Jump list" },
 
       -- LSP related browsing.
       { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
@@ -187,6 +196,10 @@ return {
         enabled = true
       },
       styles = {
+        lazygit = {
+          height = 0,
+          width = 0,
+        },
         input = {
           relative = "cursor",
           row = 1,
@@ -281,6 +294,10 @@ return {
               -- Inspecting.
               ["<c-p>"] = "inspect",
               ["<d-p>"] = "inspect",
+
+              -- History moving
+              ["<d-s-j>"] = {"history_forward", mode = { "n", "i" }},
+              ["<d-s-k>"] = {"history_back", mode = { "n", "i" }},
 
               -- Additional actions.
               ["<c-e>"] = {"picker_print", mode={"n", "i"}}
@@ -461,6 +478,29 @@ return {
         -- Confirmed by author.
         sources = {
           yanky = {
+            actions = {
+              -- Paste from `yanky/lua/yanky/sources/snacks.lua`. It's not respecting visual mode.
+              confirm = function(picker)
+                picker:close()
+                local selected = picker:selected({ fallback = true })
+
+                if vim.tbl_count(selected) == 1 then
+                  require("yanky.picker").actions.put("p", vim.g.__local_is_visual_mode_before_yanky_picker or false)(selected[1])
+                  return
+                end
+                local content = {
+                  regcontents = "",
+                  regtype = "V",
+                }
+                for _, current in ipairs(selected) do
+                  content.regcontents = content.regcontents .. current.regcontents
+                  if current.regtype == "v" then
+                    content.regcontents = content.regcontents .. "\n"
+                  end
+                end
+                require("yanky.picker").actions.put("p", vim.g.__local_is_visual_mode_before_yanky_picker or false)(content)
+              end,
+            },
             win = {
               input = {
                 keys = {
@@ -559,6 +599,7 @@ return {
             focus = "input",
             auto_close = true,
             actions = {
+              -- TODO: if it's a file, open without unfold it.
               tcd_to_item = function (picker, item)
                 picker:close()
                 vim.cmd('silent !zoxide add "' .. item._path .. '"')
@@ -568,7 +609,7 @@ return {
               add_to_zoxide = function(_, item)
                 vim.cmd('silent !zoxide add "' .. item._path .. '"')
                 vim.notify("Path " .. item._path .. " added to zoxide path.", vim.log.levels.INFO)
-              end
+              end,
             },
             win = {
               input = {
@@ -606,10 +647,14 @@ return {
               input = {
                 keys = {
                   -- we won't use dd in input buffer here.
-                  ["d"] = {"bufdelete", mode={"n"}},
+                  -- ["d"] = {"bufdelete", mode={"n"}},
 
-                  ["<c-x>"] = {"bufdelete", mode={"n", "i"}},
-                  ["<d-x>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<c-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["<d-x>"] = {"edit_split", mode={"n", "i"}},
+                  ["<c-s-x>"] = {"edit_vsplit", mode={"n", "i"}},
+                  ["<d-s-x>"] = {"edit_vsplit", mode={"n", "i"}},
+                  ["<d-bs>"] = {"bufdelete", mode={"n", "i"}},
+                  ["<c-bs>"] = {"bufdelete", mode={"n", "i"}},
                 }
               }
             }
@@ -618,7 +663,7 @@ return {
           zoxide = {
             layout = { preset = "vscode", preview = false },
             -- By default, zoxide only changes the current tab cwd.
-            confirm = "zoxide_tcd",
+            confirm = "zoxide_lcd",
             actions = {
               zoxide_tcd = function (picker, item)
                 picker:close()
@@ -631,7 +676,11 @@ return {
                 picker:close()
                 Snacks.picker.actions.lcd(_, item)
                 vim.print_silent("Win pwd: " .. vim.fn.getcwd())
-              end
+              end,
+              remove_from_zoxide = function(_, item)
+                vim.cmd('silent !zoxide remove "' .. item._path .. '"')
+                vim.notify("Path " .. item._path .. " removed from zoxide record.", vim.log.levels.INFO)
+              end,
             },
             win = {
               input = {
@@ -639,8 +688,11 @@ return {
                   ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
                   ["t"] = {"new_tab_here", mode={"n"}},
 
-                  ["<c-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
-                  ["<d-cr>"] = {"zoxide_lcd", mode={"n", "i"}},
+                  ["<c-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+                  ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+
+                  ["<d-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
+                  ["<c-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
 
                   ["v"] = {"v_new_win_here", mode={"n"}},
                   ["x"] = {"x_new_win_here", mode={"n"}},
@@ -910,30 +962,40 @@ return {
         "<leader>yy",
         mode = {"n", "v"},
         function()
+          local current_mode = vim.fn.mode()
+          if current_mode == "v" or current_mode == "V" or current_mode == "C-V" then
+            vim.g.__local_is_visual_mode_before_yanky_picker = true
+          end
           Snacks.picker.yanky()
         end,
         desc = "Yanky ring history picker.",
       }
     },
     dependencies = { "folke/snacks.nvim" },
-    opts = {
-      ring = {
-        history_length = 1000,
-        storage = "shada",
-        sync_with_numbered_registers = false,
-        -- Ignroe all by default.
-        ignore_registers = { "\"" }
-      },
-      -- I prever highlight to be done by nvim itself.
-      highlight = {
-        on_put = false,
-        on_yank = false,
-        timer = 500,
-      },
-      system_clipboard = {
-        sync_with_ring = false,
-        clipboard_register = nil,
-      },
-    },
+    opts = function ()
+      local storage = "shada"
+      if vim.g._resource_executable_sqlite then
+        storage = "sqlite"
+      end
+      return {
+        ring = {
+          history_length = 1000,
+          storage = storage,
+          sync_with_numbered_registers = false,
+          -- Ignroe all by default.
+          ignore_registers = { "\"" }
+        },
+        -- I prever highlight to be done by nvim itself.
+        highlight = {
+          on_put = false,
+          on_yank = false,
+          timer = 500,
+        },
+        system_clipboard = {
+          sync_with_ring = false,
+          clipboard_register = nil,
+        },
+      }
+    end
   }
 }

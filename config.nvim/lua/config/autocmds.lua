@@ -172,12 +172,13 @@ end
 local _yanky_hook_before_copy = function()
   -- get the copied content from default register.
   local content = _yanky_hook_before_copy_body(vim.fn.getreg('"'))
-
-  -- Actually move the filtered content to yanky register.
-  require("yanky.history").push({
-    regcontents = content,
-    regtype = "y",
-  })
+  if content then
+    -- Actually move the filtered content to yanky register.
+    require("yanky.history").push({
+      regcontents = vim.trim(content),
+      regtype = "y",
+    })
+  end
 end
 
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -338,44 +339,32 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 })
 
 -- Old files picker.
-local snack_old_file = function(opts)
-  opts.global = opts.global or false
+local snack_old_file = function()
   local title = "OldFiles"
-  local toggle_function
-  if opts.global then
-    title = title .. " (Global)"
-    toggle_function = function(picker, _)
-      vim.cmd([[ SnackOldfilesLocal ]])
-      picker:close()
-    end
-  else
-    toggle_function = function(picker, _)
-      vim.cmd([[ SnackOldfilesGlobal ]])
-      picker:close()
-    end
-  end
-
   return function()
     Snacks.picker.pick({
+      global = false,
+      toggles = {
+        global = "g",
+      },
       title = title,
       format = function(item, picker)
         local ret = require("snacks.picker.format").filename(item, picker)
         -- ret[#ret + 1] = { item.text }
         return ret
       end,
-      finder = function(_, _)
+      finder = function(picker, _)
         local cwd = vim.fs.normalize(vim.fn.getcwd())
         local oldfile_items = vim.v.oldfiles
         if #oldfile_items == 0 then
           vim.print_silent("Oldfiles picker: No old files.")
           return {}
         end
-        -- TODO: Compare if the path within the current working directory.
 
         local tbl = {}
         for _, oldfile in ipairs(oldfile_items) do
           local full_path = vim.fs.normalize(oldfile)
-          if not opts.global and full_path:find(cwd, 1, true) ~= 1 then
+          if not picker.global and full_path:find(cwd, 1, true) ~= 1 then
             goto continue
           end
           if oldfile:find("^term:/") or oldfile:find("^scp:/") or oldfile:find("^rsync:/") then
@@ -391,7 +380,10 @@ local snack_old_file = function(opts)
         return tbl
       end,
       actions = {
-        toggle_local = toggle_function,
+        toggle_local = function(picker)
+          picker.opts.global = not picker.opts.global
+          picker:find()
+        end,
       },
       win = {
         input = {
@@ -409,16 +401,7 @@ local snack_old_file = function(opts)
   end
 end
 
-vim.api.nvim_create_user_command(
-  "SnackOldfilesGlobal",
-  snack_old_file({ global = true }),
-  { desc = "Open oldfiles in global" }
-)
-vim.api.nvim_create_user_command(
-  "SnackOldfilesLocal",
-  snack_old_file({ global = false }),
-  { desc = "Open oldfiles in local working directory" }
-)
+vim.api.nvim_create_user_command("SnackOldfiles", snack_old_file(), { desc = "Open oldfiles." })
 
 -- Bookmark related code snippet.
 vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
@@ -448,19 +431,28 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       return tbl
     end,
     actions = {
-      delete_from_bookmarks = function(picker, item)
-        local location = item.bm_location
-        local node = require("bookmarks.domain.repo").find_node_by_location(location)
-        if not node then
-          vim.notify("No node found at cursor position", vim.log.levels.WARN)
-          return
+      delete_from_bookmarks = function(picker, _)
+        local delete_from_bookmark = function(local_picker, local_item)
+          local location = local_item.bm_location
+          local node = require("bookmarks.domain.repo").find_node_by_location(location)
+          if not node then
+            vim.notify("No node found at cursor position", vim.log.levels.WARN)
+            return
+          end
+          require("bookmarks.domain.service").delete_node(node.id)
+          require("bookmarks.sign").safe_refresh_signs()
+          local_picker.list:set_selected()
+          local_picker.list:set_target()
+          local_picker:find()
         end
-        require("bookmarks.domain.service").delete_node(node.id)
-        require("bookmarks.sign").safe_refresh_signs()
-        picker.list:set_selected()
-        picker.list:set_target()
-        picker:find()
+        local sel = picker:selected()
+        local items = #sel > 0 and sel or picker:items()
+        for _, item in pairs(items) do
+          delete_from_bookmark(picker, item)
+        end
       end,
+      -- delete_from_bookmarks = function(picker, item)
+      -- end,
       edit_bookmark = function(picker, item)
         -- Get the desc of of bookmark
         local text = "Original text name"
@@ -492,13 +484,15 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
     win = {
       input = {
         keys = {
-          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<c-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<d-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
           ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
         },
       },
       list = {
         keys = {
-          ["<c-d>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<c-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
+          ["<d-bs>"] = { "delete_from_bookmarks", mode = { "n", "i" } },
           ["dd"] = { "delete_from_bookmarks", mode = { "n" } },
           ["<c-e>"] = { "edit_bookmark", mode = { "n", "i" } },
           ["ee"] = { "edit_bookmark", mode = { "n" } },
@@ -547,6 +541,30 @@ vim.api.nvim_create_user_command("DeleteBookmarkAtCursor", function()
   require("bookmarks.sign").safe_refresh_signs()
 end, { desc = "Remove the bookmark at cursor line." })
 
+vim.api.nvim_create_user_command("ClearBookmark", function(opt)
+  opt = opt.args[1] or "wasted"
+  local all_bookmarks =
+    require("bookmarks.domain.node").get_all_bookmarks(require("bookmarks.domain.repo").ensure_and_get_active_list())
+  local to_remove_bookmarks = {}
+  if opt == "all" then
+    -- clear all bookmarks.
+    to_remove_bookmarks = all_bookmarks
+  elseif opt == "wasted" then
+    -- clear bookmarks with pending path reference.
+    for _, bookmark in ipairs(all_bookmarks) do
+      if vim.fn.filereadable(bookmark.location.path) == 0 then
+        table.insert(to_remove_bookmarks, bookmark)
+      end
+    end
+  end
+  for _, bookmark in ipairs(to_remove_bookmarks) do
+    vim.notify("Remove bookmark: " .. bookmark.location.path, vim.log.levels.DEBUG)
+    require("bookmarks.domain.service").delete_node(bookmark.id)
+  end
+  vim.print("Cleared " .. #to_remove_bookmarks .. " bookmarks.")
+  require("bookmarks.sign").safe_refresh_signs()
+end, { desc = "Remove the bookmark at cursor line.", nargs = "?" })
+
 -- Set cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
 if vim.fn.has("nvim-0.11") == 1 then
@@ -578,6 +596,7 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
     opt = opt.args
   end
   local buf = vim.api.nvim_get_current_buf()
+  local _, row, col, _ = unpack(vim.fn.getpos("."))
   if not vim.tbl_contains({ "h", "j", "k", "l" }, opt) then
     vim.notify("Invalid direction: " .. opt, vim.log.levels.WARN)
   end
@@ -590,6 +609,8 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   elseif opt == "h" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("vsplit")
+    else
+      vim.cmd("wincmd h")
     end
   elseif opt == "j" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
@@ -599,12 +620,16 @@ vim.api.nvim_create_user_command("ThrowAndReveal", function(opt)
   elseif opt == "k" then
     if vim.fn.winnr() == vim.fn.winnr(opt) then
       vim.cmd("split")
+    else
+      vim.cmd("wincmd k")
     end
   end
   vim.cmd("b " .. buf)
+  vim.cmd("call cursor" .. "(" .. row .. "," .. col .. ")")
 
   vim.cmd("wincmd p") -- go to the last win.
   require("bufjump").backward()
+  -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<c-o>", true, false, true), "n", false)
 
   vim.cmd("wincmd p") -- focus to the created win.
 end, { nargs = "?" })
@@ -663,21 +688,29 @@ vim.api.nvim_create_user_command("CopyFilePath", function(opt)
   else
     opt = opt.args
   end
+  local ret = ""
   if opt == "full" then
-    local full_path = vim.fn.expand("%:p")
-    vim.fn.setreg("*", full_path)
+    -- /path/to/cwd/filename.ext
+    ret = vim.fn.expand("%:p")
   elseif opt == "relative" then
-    local relative_path = vim.fn.expand("%:p"):gsub(vim.fn.getcwd() .. "/", "")
-    vim.fn.setreg("*", relative_path)
+    -- ./path/relative/to/cwd/filename.ext
+    local escaped_cwd = vim.fn.getcwd():gsub("([%.%-%+%*%?%[%]%^%$%(%)%%])", "%%%1")
+    ret = vim.fn.expand("%:p"):gsub(escaped_cwd .. "/", "")
   elseif opt == "dir" then
-    local workdir = vim.fn.getcwd()
-    vim.fn.setreg("*", workdir)
+    -- /path/to/cwd/
+    ret = vim.fn.getcwd()
   elseif opt == "filename" then
-    local filename = vim.fn.expand("%:t")
-    vim.fn.setreg("*", filename)
+    -- filename.ext
+    ret = vim.fn.expand("%:t")
+  elseif opt == "line" then
+    -- filename.ext:line
+    local _, line, _, _ = unpack(vim.fn.getpos("."))
+    ret = vim.fn.expand("%:t") .. ":" .. line
   else
     vim.notify("Invalid option: " .. opt, vim.log.levels.ERROR)
   end
+  vim.fn.setreg("*", ret)
+  vim.print_silent("Copied: " .. ret)
 end, { nargs = "?" })
 
 -- Macro recording related.

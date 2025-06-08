@@ -9,13 +9,31 @@
 -- Loading and converting the binary is very heavy work for vim.
 -- I'll leave an option here to allow enabling it when needed.
 vim.g.read_binary_with_xxd = false
---------------------------------------------------
 
--- Language support. Detect and enable language.
+-- Language support. Detect and enable language support.
 vim.g.module_enable_rust = true and vim.fn.executable("rustc")
 vim.g.module_enable_go = true and vim.fn.executable("go")
 vim.g.module_enable_python = true and (vim.fn.executable("python") or vim.fn.executable("python3"))
 vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
+
+--- Plugin feature support. Detect dependencies and enable feature. ---
+-- Being used by storages like bookmarks and yanky. Sometimes fallback to shada.
+vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
+vim.g.module_enable_copilot = true and vim.fn.executable("node")
+vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
+--------------------------------------------------
+
+-- Detection of resources.
+local function get_cpu_cores()
+  local handle = io.popen("nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1")
+  if not handle then
+    return 1
+  end
+  local result = handle:read("*n") or 1
+  handle:close()
+  return result
+end
+vim.g._resource_cpu_cores = get_cpu_cores()
 
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
@@ -166,9 +184,9 @@ function MyTabLine()
                 index_and_sections[2] = { unpack(index_and_sections[2], i) }
                 table.insert(new_groups[tabname], index_and_sections)
               end
-              goto next_tabname_round
             end
           end
+          goto next_tabname_round
         end
       end
       ::next_tabname_round::
@@ -208,6 +226,13 @@ vim.g.function_get_selected_content = function()
   local vend = vim.fn.getpos("'>")
   return table.concat(vim.fn.getregion(vstart, vend), "\n")
 end
+
+vim.g.get_word_under_cursor = function()
+  return vim.fn.expand("<cword>")
+end
+
+-- Temporary workaround to detect if it's the first time * being pressed.
+vim.g.is_highlight_on = false
 
 vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 --[[Running = "Running",

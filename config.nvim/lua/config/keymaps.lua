@@ -3,9 +3,26 @@
 -- Add any additional keymaps here
 vim.g.mapleader = " "
 
+-- Asterisk do not move to the next automatically.
+-- TODO: find a way to check highlights under the cursor. Go to the next one on highlight.
+vim.keymap.set({ "n" }, "*", function()
+  if vim.g.is_highlight_on == false then
+    vim.g.is_highlight_on = true
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
+  else
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*", true, false, true), "n", false)
+  end
+end, { desc = "Search and highlight but not jump to the next.", noremap = true })
+
 -- Local workaround for osc52 copy from remote.
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
+
+-- Path/Line fetching keymap.
+vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yr", "<cmd>CopyFilePath relative<cr>", { desc = "Copy relative path" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yf", "<cmd>CopyFilePath filename<cr>", { desc = "Copy filename only" })
+vim.keymap.set({ "v", "n", "x" }, "<leader>yl", "<cmd>CopyFilePath line<cr>", { desc = "Copy filename:line number" })
 
 -- Inc rename.
 vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode lsp variable name replacement." })
@@ -14,12 +31,9 @@ vim.keymap.set("v", "<leader>rn", '"zy:IncRename <c-r>z', { desc = "Visual mode 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "cpp", "c", "objc", "objcpp", "cuda", "proto" },
   callback = function()
-    vim.keymap.set(
-      { "n" },
-      "<leader>hh",
-      "<cmd>ClangdSwitchSourceHeader<cr>",
-      { desc = "Switch between header and type." }
-    )
+    vim.keymap.set({ "n" }, "<leader>hh", function()
+      vim.cmd("ClangdSwitchSourceHeader") -- remind: this is async..
+    end, { desc = "Switch between .h and .c" })
   end,
 })
 
@@ -27,8 +41,8 @@ vim.api.nvim_create_autocmd("FileType", {
 vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
-vim.keymap.set({ "n", "v" }, "<leader>gg", "<cmd>LazyGit<CR>", { desc = "LazyGit." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
+  vim.g.is_highlight_on = false
   vim.cmd([[ noh ]])
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
 end, { desc = "Esc wrapper: no highlight with esc." })
@@ -66,6 +80,9 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
     vim.api.nvim_input("gv")
   end
 end)
+
+vim.keymap.set("n", "<leader>sd", "<cmd>SvnDiffThis<cr>", { noremap = true, desc = "Svn diff this" })
+-- vim.keymap.set("n", "<leader>sa", "<cmd>SvnDiffAll<cr>", { noremap = true, desc = "Svn diff all" }) -- It's better to use autocmd
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k
 -- vim.keymap.del({ "n", "i", "v" }, "<M-k>")
@@ -186,6 +203,8 @@ vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = tr
 -- Migrate to normal-tabbing switching.
 vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+-- put the current window as a new tab.
+vim.keymap.set("n", "<tab>w", "<cmd>tabedit %<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
@@ -343,6 +362,12 @@ local cmd_mappings = {
     leaderKeymap = "<leader>fe",
     modes = { "n", "v" },
     description = "List directory on current dir.",
+  },
+  {
+    cmdKeymap = "<D-E>",
+    leaderKeymap = "<leader>fE",
+    modes = { "n", "v" },
+    description = "List directory on current file base dir.",
   },
   -- TODO: Directory from the current opened buffer.
   -- {
