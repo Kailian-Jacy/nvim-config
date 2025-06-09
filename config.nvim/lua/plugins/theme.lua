@@ -336,7 +336,7 @@ return {
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
           -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },
-          -- buf_opts = { buftype = { "nofile" } },
+          buf_opts = { filetype = { "noice" } },
         },
       },
     },
