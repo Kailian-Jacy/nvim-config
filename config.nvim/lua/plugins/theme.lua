@@ -131,6 +131,21 @@ return {
           },
         },
       })
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "noice",
+        callback = function()
+          vim.keymap.set("n", "gf", function()
+            local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
+            if f == "" then
+              vim.print_silent("no file under cursor")
+            else
+              -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("q", true, false, true), "t", false)
+              vim.cmd("close")
+              vim.cmd("e " .. f)
+            end
+          end, { buffer = true })
+        end,
+      })
     end,
   },
   -- the opts function can also be used to change the default opts:
