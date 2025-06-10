@@ -2,12 +2,6 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Start a tmux session in the background if none.
--- TODO: Not sure if working. Ans: it's not...
-vim.schedule(function()
-  vim.fn.system("tmux", { "new", "-As0" })
-end)
-
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
   -- Check if $VIMPWD/.vscode/launch.json exists.
