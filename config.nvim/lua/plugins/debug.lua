@@ -121,6 +121,7 @@ return {
         "marksman",
         -- shell
         "shfmt",
+        "bash-language-server",
         -- sql
         --[["sql-formatter",
         "sqlfluff",]]
