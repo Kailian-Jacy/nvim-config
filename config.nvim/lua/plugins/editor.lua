@@ -31,6 +31,22 @@ return {
       require("terminal").__customize.shift_down = function()
         vim.cmd("TermMove belowright " .. math.ceil(vim.o.lines * vim.g.terminal_width_bottom) .. " new")
       end
+      -- make gf safe in terminal buffer.
+      vim.api.nvim_create_autocmd({ "TermOpen" }, {
+        callback = function(args)
+          if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
+            vim.keymap.set("n", "gf", function()
+              local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
+              if f == "" then
+                vim.print_silent("no file under cursor")
+              else
+                require("terminal").close()
+                vim.cmd("e " .. f)
+              end
+            end, { buffer = true })
+          end
+        end,
+      })
       if vim.g.terminal_auto_insert then
         vim.api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "TermOpen" }, {
           callback = function(args)
