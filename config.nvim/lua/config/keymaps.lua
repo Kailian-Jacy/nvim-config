@@ -106,16 +106,42 @@ vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<cmd>wincmd h<cr>", { noremap = true
 vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<cmd>wincmd l<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<cmd>wincmd k<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
-vim.keymap.set({ "t" }, "<C-L>", "<C-L>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-H>", "<C-H>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-J>", "<C-J>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-K>", "<C-K>", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-L>", "<c-\\><c-n><c-w>l", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-H>", "<c-\\><c-n><c-w>h", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-J>", "<c-\\><c-n><c-w>j", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-K>", "<c-\\><c-n><c-w>k", { noremap = true, silent = true })
 
--- Throw buffer and reveal.
-vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<cmd>ThrowAndReveal l<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<cmd>ThrowAndReveal k<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
+-- Throw buffer and reveal. Special-cased in terminal mode.
+vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_right()
+  else
+    vim.cmd([[ThrowAndReveal l]])
+  end
+end, { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_up()
+  else
+    vim.cmd([[ThrowAndReveal k]])
+  end
+end, { noremap = true, silent = true })
+
+vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_down()
+  else
+    vim.cmd([[ThrowAndReveal j]])
+  end
+end, { noremap = true, silent = true })
+
+vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_left()
+  else
+    vim.cmd([[ThrowAndReveal h]])
+  end
+end, { noremap = true, silent = true })
 
 -- Quick fixes.
 vim.keymap.set(

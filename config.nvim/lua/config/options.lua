@@ -35,6 +35,13 @@ local function get_cpu_cores()
 end
 vim.g._resource_cpu_cores = get_cpu_cores()
 
+-- Terminal
+vim.g.terminal_width_right = 0.3
+vim.g.terminal_width_left = 0.3
+vim.g.terminal_width_bottom = 0.3
+vim.g.terminal_width_top = 0.3
+vim.g.terminal_auto_insert = true
+
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)

@@ -185,9 +185,6 @@ return {
       -- Navigation
       { "<leader>zz", function() Snacks.picker.zoxide() end, desc = "Zoxide cwd navigation" },
       { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
-
-      -- Floating terminal.
-      { "<leader>tt", function() Snacks.terminal({"tmux", "new", "-As0"}) end, mode = {"n", "v"}, desc = "Tmux floating window terminal."} 
     },
     opts = {
       bigfile = { enabled = true },
