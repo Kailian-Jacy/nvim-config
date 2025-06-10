@@ -431,7 +431,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       return tbl
     end,
     actions = {
-      delete_from_bookmarks = function(picker, _)
+      delete_from_bookmarks = function(picker, item)
         local delete_from_bookmark = function(local_picker, local_item)
           local location = local_item.bm_location
           local node = require("bookmarks.domain.repo").find_node_by_location(location)
@@ -446,7 +446,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
           local_picker:find()
         end
         local sel = picker:selected()
-        local items = #sel > 0 and sel or picker:items()
+        local items = #sel > 0 and sel or { item }
         for _, item in pairs(items) do
           delete_from_bookmark(picker, item)
         end
