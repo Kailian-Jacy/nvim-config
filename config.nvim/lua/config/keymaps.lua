@@ -466,8 +466,38 @@ local cmd_mappings = {
   {
     cmdKeymap = "<D-t>",
     leaderKeymap = "<leader>tt",
-    modes = { "n", "v" },
+    modes = { "n", "v", "t" },
     description = "Floating terminal in tmux.",
+  },
+  {
+    cmdKeymap = "<D-s-l>",
+    leaderKeymap = "<c-s-l>",
+    modes = { "t" },
+    description = "Move terminal to right split.",
+  },
+  {
+    cmdKeymap = "<D-s-k>",
+    leaderKeymap = "<c-s-k>",
+    modes = { "t" },
+    description = "Move terminal to top split.",
+  },
+  {
+    cmdKeymap = "<D-s-h>",
+    leaderKeymap = "<c-s-h>",
+    modes = { "t" },
+    description = "Move terminal to left split.",
+  },
+  {
+    cmdKeymap = "<D-s-j>",
+    leaderKeymap = "<c-s-j>",
+    modes = { "t" },
+    description = "Move terminal to bottom split.",
+  },
+  {
+    cmdKeymap = "<d-bs>",
+    leaderKeymap = "<c-bs>",
+    modes = { "t" },
+    description = "Reset terminal in tmux.",
   },
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
