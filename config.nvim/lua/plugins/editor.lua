@@ -31,6 +31,17 @@ return {
       require("terminal").__customize.shift_down = function()
         vim.cmd("TermMove belowright " .. math.ceil(vim.o.lines * vim.g.terminal_width_bottom) .. " new")
       end
+      -- lazygit floating buffer
+      local lazygit = require("terminal").terminal:new({
+        layout = { open_cmd = "float", height = 1.0, width = 1.0 },
+        cmd = { "lazygit" },
+        autoclose = true,
+      })
+      -- vim.env["GIT_EDITOR"] = "nvr -cc close -cc split --remote-wait +'set bufhidden=wipe'"
+      vim.api.nvim_create_user_command("Lazygit", function(args)
+        lazygit.cwd = args.args and vim.fn.expand(args.args)
+        lazygit:toggle(nil, true)
+      end, { nargs = "?" })
       -- make gf safe in terminal buffer.
       vim.api.nvim_create_autocmd({ "TermOpen" }, {
         callback = function(args)
@@ -73,6 +84,12 @@ return {
         end,
         mode = { "n" },
         desc = "Tmux floating toggle window terminal.",
+      },
+      {
+        "<leader>gg",
+        "<cmd>Lazygit<cr>",
+        mode = { "n" },
+        desc = "Lazygit in floating terminal",
       },
       {
         "<c-bs>",
