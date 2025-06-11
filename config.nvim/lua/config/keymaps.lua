@@ -466,7 +466,7 @@ local cmd_mappings = {
   {
     cmdKeymap = "<D-t>",
     leaderKeymap = "<leader>tt",
-    modes = { "n", "v", "t" },
+    modes = { "n", "v" },
     description = "Floating terminal in tmux.",
   },
   {

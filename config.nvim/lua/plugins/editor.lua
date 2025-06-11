@@ -59,11 +59,19 @@ return {
     end,
     keys = {
       {
+        "<D-t>",
+        function()
+          require("terminal").__customize.toggle()
+        end,
+        mode = { "t" },
+        desc = "Tmux floating toggle window terminal.",
+      },
+      {
         "<leader>tt",
         function()
           require("terminal").__customize.toggle()
         end,
-        mode = { "n", "t" },
+        mode = { "n" },
         desc = "Tmux floating toggle window terminal.",
       },
       {
