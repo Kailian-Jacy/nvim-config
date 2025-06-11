@@ -132,7 +132,13 @@ return {
         desc = "Pin the terminal to the right side.",
       },
       {
-        "<esc><esc>",
+        "<d-esc>",
+        "<c-\\><c-n>",
+        mode = { "t" },
+        desc = "Tmux floating window terminal.",
+      },
+      {
+        "<c-esc>",
         "<c-\\><c-n>",
         mode = { "t" },
         desc = "Tmux floating window terminal.",
