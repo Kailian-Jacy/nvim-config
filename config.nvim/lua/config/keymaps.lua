@@ -422,6 +422,8 @@ local cmd_mappings = {
   -- { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
   -- Inspect
   { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "List keymaps" },
+  -- Bookmarks
+  { cmdKeymap = "<D-M>", leaderKeymap = "<leader>sm", modes = { "n", "v" }, description = "List keymaps" },
   -- New buffer/instances.
   { cmdKeymap = "<D-n>", leaderKeymap = "<cmd>enew<CR>", modes = { "n" }, description = "New buffer." },
   {

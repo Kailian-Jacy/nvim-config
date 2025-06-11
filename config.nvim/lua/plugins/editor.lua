@@ -337,6 +337,14 @@ return {
         end,
       },
       {
+        "<leader>mm",
+        function()
+          vim.cmd([[ BookmarkGrepMarkedFiles ]])
+        end,
+        mode = { "n", "v" },
+        desc = "grep across bookmarked files.",
+      },
+      {
         "<leader>md",
         function()
           vim.cmd([[ DeleteBookmarkAtCursor ]])
