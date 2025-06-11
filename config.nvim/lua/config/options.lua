@@ -21,6 +21,7 @@ vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
 vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
 vim.g.module_enable_copilot = true and vim.fn.executable("node")
 vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
+vim.g.module_enable_svn = true and vim.fn.executable("svn")
 --------------------------------------------------
 
 -- Detection of resources.
