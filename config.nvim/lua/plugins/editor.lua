@@ -92,6 +92,30 @@ return {
         desc = "Lazygit in floating terminal",
       },
       {
+        "<c-l>",
+        "<c-b><right>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-k>",
+        "<c-b><up>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-j>",
+        "<c-b><down>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-h>",
+        "<c-b><left>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
         "<c-bs>",
         function()
           require("terminal").__customize.reset()

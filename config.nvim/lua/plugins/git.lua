@@ -1,7 +1,7 @@
 return {
   {
     "mhinz/vim-signify",
-    enable = vim.g.module_enable_svn,
+    enabled = vim.g.module_enable_svn,
     config = function()
       vim.cmd([[ set updatetime=100 ]])
     end,
