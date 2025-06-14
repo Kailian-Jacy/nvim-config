@@ -1,5 +1,178 @@
 return {
   {
+    "rebelot/terminal.nvim",
+    config = function()
+      vim.g.__default_terminal_layout = { open_cmd = "float", height = 1, width = 1 }
+      require("terminal").setup({
+        layout = vim.g.__default_terminal_layout,
+        cmd = { "tmux", "new", "-As0" },
+        autoclose = true,
+      })
+      -- globally bind customized logic.
+      require("terminal").__customize = {}
+      require("terminal").__customize.is_currently_focusing_on_terminal = function()
+        return require("terminal").current_term_index() ~= nil
+      end
+      require("terminal").__customize.toggle = function()
+        require("terminal").toggle(0, nil, false) -- toggle as last layout.
+      end
+      require("terminal").__customize.reset = function()
+        require("terminal").move(0, vim.g.__default_terminal_layout)
+      end
+      require("terminal").__customize.shift_right = function()
+        vim.cmd("TermMove botright " .. math.ceil(vim.o.columns * vim.g.terminal_width_right) .. " vnew")
+      end
+      require("terminal").__customize.shift_left = function()
+        vim.cmd("TermMove vert " .. math.ceil(vim.o.columns * vim.g.terminal_width_left) .. " vnew")
+      end
+      require("terminal").__customize.shift_up = function()
+        vim.cmd("TermMove top " .. math.ceil(vim.o.lines * vim.g.terminal_width_top) .. " new")
+      end
+      require("terminal").__customize.shift_down = function()
+        vim.cmd("TermMove belowright " .. math.ceil(vim.o.lines * vim.g.terminal_width_bottom) .. " new")
+      end
+      -- lazygit floating buffer
+      local lazygit = require("terminal").terminal:new({
+        layout = { open_cmd = "float", height = 1.0, width = 1.0 },
+        cmd = { "lazygit" },
+        autoclose = true,
+      })
+      -- vim.env["GIT_EDITOR"] = "nvr -cc close -cc split --remote-wait +'set bufhidden=wipe'"
+      vim.api.nvim_create_user_command("Lazygit", function(args)
+        lazygit.cwd = args.args and vim.fn.expand(args.args)
+        lazygit:toggle(nil, true)
+      end, { nargs = "?" })
+      -- make gf safe in terminal buffer.
+      vim.api.nvim_create_autocmd({ "TermOpen" }, {
+        callback = function(args)
+          if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
+            vim.keymap.set("n", "gf", function()
+              local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
+              if f == "" then
+                vim.print_silent("no file under cursor")
+              else
+                require("terminal").close()
+                vim.cmd("e " .. f)
+              end
+            end, { buffer = true })
+          end
+        end,
+      })
+      if vim.g.terminal_auto_insert then
+        vim.api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "TermOpen" }, {
+          callback = function(args)
+            if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
+              vim.cmd("startinsert")
+            end
+          end,
+        })
+      end
+    end,
+    keys = {
+      {
+        "<D-t>",
+        function()
+          require("terminal").__customize.toggle()
+        end,
+        mode = { "t" },
+        desc = "Tmux floating toggle window terminal.",
+      },
+      {
+        "<leader>tt",
+        function()
+          require("terminal").__customize.toggle()
+        end,
+        mode = { "n" },
+        desc = "Tmux floating toggle window terminal.",
+      },
+      {
+        "<leader>gg",
+        "<cmd>Lazygit<cr>",
+        mode = { "n" },
+        desc = "Lazygit in floating terminal",
+      },
+      {
+        "<c-l>",
+        "<c-b><right>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-k>",
+        "<c-b><up>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-j>",
+        "<c-b><down>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-h>",
+        "<c-b><left>",
+        mode = "t",
+        desc = "cursor movement in terminal tmux.",
+      },
+      {
+        "<c-bs>",
+        function()
+          require("terminal").__customize.reset()
+        end,
+        mode = { "t" },
+        desc = "Revert and unrevert the terminal location",
+      },
+      {
+        "<c-s-l>",
+        function()
+          require("terminal").__customize.shift_right()
+        end,
+        mode = { "t" },
+        desc = "Pin the terminal to the right side.",
+      },
+      {
+        "<c-s-h>",
+        function()
+          require("terminal").__customize.shift_left()
+        end,
+        mode = { "t" },
+        desc = "Pin the terminal to the right side.",
+      },
+      {
+        "<c-s-j>",
+        function()
+          require("terminal").__customize.shift_down()
+        end,
+        mode = { "t" },
+        desc = "Pin the terminal to the right side.",
+      },
+      {
+        "<c-s-k>",
+        function()
+          require("terminal").__customize.shift_up()
+        end,
+        mode = { "t" },
+        desc = "Pin the terminal to the right side.",
+      },
+      {
+        "<d-esc>",
+        "<c-\\><c-n>",
+        mode = { "t" },
+        desc = "Tmux floating window terminal.",
+      },
+      {
+        "<c-esc>",
+        "<c-\\><c-n>",
+        mode = { "t" },
+        desc = "Tmux floating window terminal.",
+      },
+    },
+    opts = {
+      layout = { open_cmd = "float" },
+    },
+  },
+  {
     "tzachar/local-highlight.nvim",
     opts = {
       disable_file_types = { "help" },
@@ -186,6 +359,14 @@ return {
         function()
           vim.cmd([[ BookmarksDesc ]])
         end,
+      },
+      {
+        "<leader>mm",
+        function()
+          vim.cmd([[ BookmarkGrepMarkedFiles ]])
+        end,
+        mode = { "n", "v" },
+        desc = "grep across bookmarked files.",
       },
       {
         "<leader>md",

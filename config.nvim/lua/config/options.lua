@@ -21,6 +21,7 @@ vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
 vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
 vim.g.module_enable_copilot = true and vim.fn.executable("node")
 vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
+vim.g.module_enable_svn = true and vim.fn.executable("svn")
 --------------------------------------------------
 
 -- Detection of resources.
@@ -34,6 +35,13 @@ local function get_cpu_cores()
   return result
 end
 vim.g._resource_cpu_cores = get_cpu_cores()
+
+-- Terminal
+vim.g.terminal_width_right = 0.3
+vim.g.terminal_width_left = 0.3
+vim.g.terminal_width_bottom = 0.3
+vim.g.terminal_width_top = 0.3
+vim.g.terminal_auto_insert = true
 
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.

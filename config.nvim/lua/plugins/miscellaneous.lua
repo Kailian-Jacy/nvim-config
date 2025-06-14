@@ -133,9 +133,6 @@ return {
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
       { "<leader>fo", function() vim.cmd[[SnackOldfiles]] end, desc = "Recent" },
 
-      -- lazygit
-      { "<leader>gg", function() Snacks.lazygit() end, desc = "Find Config File" },
-
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
       { "<leader>ss", function() Snacks.picker.lsp_symbols({ pattern = vim.g.function_get_selected_content() }) end, desc = "LSP Symbols", mode = "v" },
@@ -185,9 +182,6 @@ return {
       -- Navigation
       { "<leader>zz", function() Snacks.picker.zoxide() end, desc = "Zoxide cwd navigation" },
       { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
-
-      -- Floating terminal.
-      { "<leader>tt", function() Snacks.terminal({"tmux", "new", "-As0"}) end, mode = {"n", "v"}, desc = "Tmux floating window terminal."} 
     },
     opts = {
       bigfile = { enabled = true },

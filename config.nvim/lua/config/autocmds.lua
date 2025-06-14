@@ -2,12 +2,6 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Start a tmux session in the background if none.
--- TODO: Not sure if working. Ans: it's not...
-vim.schedule(function()
-  vim.fn.system("tmux", { "new", "-As0" })
-end)
-
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
   -- Check if $VIMPWD/.vscode/launch.json exists.
@@ -404,6 +398,35 @@ end
 vim.api.nvim_create_user_command("SnackOldfiles", snack_old_file(), { desc = "Open oldfiles." })
 
 -- Bookmark related code snippet.
+vim.api.nvim_create_user_command("BookmarkGrepMarkedFiles", function()
+  local Repo = require("bookmarks.domain.repo")
+  local Node = require("bookmarks.domain.node")
+  local active_list = Repo.ensure_and_get_active_list()
+  local bookmarks = Node.get_all_bookmarks(active_list)
+
+  -- Get unique file paths from bookmarks
+  local files = {}
+  local seen = {}
+  for _, bookmark in ipairs(bookmarks) do
+    if not seen[bookmark.location.path] then
+      seen[bookmark.location.path] = true
+      table.insert(files, bookmark.location.path)
+    end
+  end
+
+  local search_content = ""
+  if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+    search_content = vim.g.function_get_selected_content()
+  end
+
+  -- Call snacks to grep through these files.
+  Snacks.picker.grep({
+    title = "Grep Bookmarked Files",
+    dirs = files,
+    hidden = true,
+    search = search_content,
+  })
+end, { desc = "Remove the bookmark at cursor line.", nargs = "?" })
 vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
   Snacks.picker.pick({
     title = "Bookmarks",
@@ -431,7 +454,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       return tbl
     end,
     actions = {
-      delete_from_bookmarks = function(picker, _)
+      delete_from_bookmarks = function(picker, item)
         local delete_from_bookmark = function(local_picker, local_item)
           local location = local_item.bm_location
           local node = require("bookmarks.domain.repo").find_node_by_location(location)
@@ -446,7 +469,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
           local_picker:find()
         end
         local sel = picker:selected()
-        local items = #sel > 0 and sel or picker:items()
+        local items = #sel > 0 and sel or { item }
         for _, item in pairs(items) do
           delete_from_bookmark(picker, item)
         end
