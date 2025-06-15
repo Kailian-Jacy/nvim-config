@@ -595,14 +595,14 @@ if vim.fn.has("nvim-0.11") == 1 then
   vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
 end
 
-vim.api.nvim_create_autocmd({
-  "TermOpen",
-  "WinEnter",
-}, {
-  pattern = "term://*",
-  command = "startinsert",
-})
-
+-- vim.api.nvim_create_autocmd({
+--   "TermOpen",
+--   "WinEnter",
+-- }, {
+--   pattern = "term://*",
+--   command = "startinsert",
+-- })
+--
 -- multiple instances of neovide.
 vim.api.nvim_create_user_command("NeovideNew", function()
   vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
