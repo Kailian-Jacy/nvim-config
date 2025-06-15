@@ -37,12 +37,12 @@ return {
       task_editor = {
         bindings = {
           i = {
-            ["c-cr"] = "Submit",
-            ["d-cr"] = "Submit",
+            ["<c-cr>"] = "Submit",
+            ["<d-cr>"] = "Submit",
           },
           n = {
-            ["c-cr"] = "Submit",
-            ["d-cr"] = "Submit",
+            ["<c-cr>"] = "Submit",
+            ["<d-cr>"] = "Submit",
           },
         },
       },
