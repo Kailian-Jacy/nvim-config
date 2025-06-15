@@ -18,6 +18,10 @@ end, { desc = "Search and highlight but not jump to the next.", noremap = true }
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
+-- Command mode keymaps:
+vim.keymap.set("c", "<c-e>", "<end>", { desc = "move cursor to the end" })
+vim.keymap.set("c", "<c-a>", "<home>", { desc = "move cursor to the end" })
+
 -- Path/Line fetching keymap.
 vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
 vim.keymap.set({ "v", "n", "x" }, "<leader>yr", "<cmd>CopyFilePath relative<cr>", { desc = "Copy relative path" })
