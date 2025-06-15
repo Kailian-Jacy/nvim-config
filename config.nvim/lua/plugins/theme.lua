@@ -203,6 +203,27 @@ return {
           c = { fg = nil, bg = nil },
         },
       }
+      local overseer = require("overseer")
+      local overseer_config_block = {}
+      if overseer then
+        overseer_config_block = {
+          "overseer",
+          label = "", -- Prefix for task counts
+          colored = true, -- Color the task icons and counts
+          symbols = {
+            {
+              [overseer.STATUS.FAILURE] = "F:",
+              [overseer.STATUS.SUCCESS] = "S:",
+              [overseer.STATUS.RUNNING] = "R:",
+            },
+          },
+          unique = false, -- Unique-ify non-running task count by name
+          name = nil, -- List of task names to search for
+          name_not = false, -- When true, invert the name search
+          status = nil, -- List of task statuses to display
+          status_not = false, -- When true, invert the status search
+        }
+      end
       require("lualine").setup({
         options = {
           theme = theme,
@@ -225,7 +246,9 @@ return {
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},
-          lualine_y = {},
+          lualine_y = {
+            overseer_config_block,
+          },
           lualine_z = {
             {
               function()

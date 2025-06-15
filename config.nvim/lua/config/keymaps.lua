@@ -426,6 +426,9 @@ local cmd_mappings = {
   -- { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
   -- Inspect
   { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "List keymaps" },
+  -- Task management
+  { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n" }, description = "Review last task output" },
+  { cmdKeymap = "<D-L>", leaderKeymap = "<leader>lL", modes = { "n" }, description = "Task list" },
   -- Bookmarks
   { cmdKeymap = "<D-M>", leaderKeymap = "<leader>sm", modes = { "n", "v" }, description = "List keymaps" },
   -- New buffer/instances.
