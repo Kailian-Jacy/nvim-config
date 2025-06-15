@@ -24,7 +24,7 @@ vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
 vim.g.module_enable_svn = true and vim.fn.executable("svn")
 --------------------------------------------------
 
--- Detection of resources.
+-- Automatic detection of resources.
 local function get_cpu_cores()
   local handle = io.popen("nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1")
   if not handle then
@@ -34,7 +34,17 @@ local function get_cpu_cores()
   handle:close()
   return result
 end
+local function get_os_type()
+  if vim.fn.has("mac") then
+    return "MACOS"
+  elseif vim.fn.has("win32") then
+    return "WINDOWS"
+  elseif vim.fn.has("linux") then
+    return "LINUX"
+  end
+end
 vim.g._resource_cpu_cores = get_cpu_cores()
+vim.g._env_os_type = get_os_type()
 
 -- Terminal
 vim.g.terminal_width_right = 0.3
@@ -321,7 +331,11 @@ vim.g.yanky_ring_max_accept_length = 1000
 vim.g.import_user_snippets = true
 vim.g.user_vscode_snippets_path = {
   vim.fn.stdpath("config") .. "/snip/", -- How to get: https://arc.net/l/quote/fjclcvra
-  vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/"), -- Default Vscode snippet path under MacOS.
+}
+if vim.g._env_os_type == "MACOS" then
+  vim.g.user_vscode_snippets_path[#vim.g.user_vscode_snippets_path + 1] =
+    vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
+end
 }
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
