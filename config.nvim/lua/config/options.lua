@@ -336,7 +336,6 @@ if vim.g._env_os_type == "MACOS" then
   vim.g.user_vscode_snippets_path[#vim.g.user_vscode_snippets_path + 1] =
     vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
 end
-}
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
 -- Linking: ln -s "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" /Users/kailianjacy/.config/nvim/snip.
