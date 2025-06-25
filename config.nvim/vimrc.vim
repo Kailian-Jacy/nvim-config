@@ -32,6 +32,9 @@ set title
 set linebreak
 set smoothscroll
 
+nnoremap <expr> k (v:count == 0 ? 'gk' : 'k')
+nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
+
 "highlight WinSeparator guifg=#565f89
 
 " using range-aware function
