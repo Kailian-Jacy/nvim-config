@@ -57,7 +57,6 @@ return {
       -- Setup autocmd.
       vim.api.nvim_create_user_command("TaskLoad", function()
         require("overseer").load_template("customized.customized")
-        require("overseer").load_template("builtin")
       end, { desc = "Load task" })
 
       vim.api.nvim_create_user_command("TaskEdit", function()
