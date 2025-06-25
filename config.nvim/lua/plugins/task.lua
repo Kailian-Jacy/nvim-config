@@ -145,7 +145,7 @@ return {
         vim.print("Call `TaskLoad` autocmd when finish edition.")
       end, { desc = "Open task configuration file" })
 
-      if vim.fn.filereadable(path) then
+      if vim.fn.filereadable(path) == 1 then
         vim.cmd([[ TaskLoad ]])
       end
     end,
