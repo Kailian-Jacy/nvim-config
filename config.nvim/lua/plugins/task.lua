@@ -32,6 +32,9 @@ return {
             ["<c-cr>"] = "OpenFloat",
             ["<d-cr>"] = "OpenFloat",
             ["<c-s-r>"] = "OpenVsplit",
+            ["dd"] = "<cmd>OverseerQuickAction dispose<cr>",
+            ["<c-bs>"] = "<cmd>OverseerQuickAction dispose<cr>",
+            ["<d-bs>"] = "<cmd>OverseerQuickAction dispose<cr>",
             ["a"] = "RunAction",
           },
           direction = "left",
@@ -41,7 +44,7 @@ return {
             i = {
               ["<c-cr>"] = "Submit",
               ["<d-cr>"] = "Submit",
-              ["<c-c>"] = "Cancel",
+              ["<C-c>"] = "Cancel",
               ["<d-c>"] = "Cancel",
             },
             n = {
@@ -53,14 +56,29 @@ return {
             },
           },
         },
+        component_aliases = {
+          -- Most tasks are initialized with the default components
+          default = {
+            { "display_duration", detail_level = 2 },
+            "on_output_summarize",
+            "on_exit_set_status",
+            "on_complete_notify",
+            -- { "on_complete_dispose", require_view = { "SUCCESS", "FAILURE" } }, -- resolve manually.
+          },
+          -- Tasks from tasks.json use these components
+          default_vscode = {
+            "default",
+            "on_result_diagnostics",
+          },
+        },
       })
+      local path = vim.fn.stdpath("config") .. "/lua/overseer/template" .. "/customized/customized.lua"
       -- Setup autocmd.
       vim.api.nvim_create_user_command("TaskLoad", function()
         require("overseer").load_template("customized.customized")
       end, { desc = "Load task" })
 
       vim.api.nvim_create_user_command("TaskEdit", function()
-        local path = vim.fn.stdpath("config") .. "/lua/overseer/template" .. "/customized/customized.lua"
         local template = [[
 local overseer = require("overseer")
 return {
@@ -126,6 +144,10 @@ return {
         vim.cmd("e" .. path)
         vim.print("Call `TaskLoad` autocmd when finish edition.")
       end, { desc = "Open task configuration file" })
+
+      if vim.fn.filereadable(path) then
+        vim.cmd([[ TaskLoad ]])
+      end
     end,
   },
 }
