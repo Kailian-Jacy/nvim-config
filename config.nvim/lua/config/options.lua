@@ -98,6 +98,7 @@ end
 
 -- Tabline
 -- Set the current tab name as the working directory name.
+-- Use lua snip like `lua vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", "example tabname")` to set tabname.
 function MyTabLine()
   local tabnames = {}
   local groups = {} -- { tabname = { { index1, split_path1 }, { index2, split_path2 } } }
@@ -137,7 +138,10 @@ function MyTabLine()
   for index = 1, vim.fn.tabpagenr("$") do
     local win_num = vim.fn.tabpagewinnr(index)
     local working_directory = vim.fn.getcwd(win_num, index)
-    local tabname = vim.fn.fnamemodify(working_directory, ":t")
+    local tabname = vim.fn.gettabvar(index, "tabname")
+    if tabname == nil or tabname == "" then
+      tabname = vim.fn.fnamemodify(working_directory, ":t")
+    end
 
     tabnames[index] = tabname
     if not groups[tabname] then
