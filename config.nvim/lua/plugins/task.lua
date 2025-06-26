@@ -21,7 +21,7 @@ return {
     },
     config = function()
       require("overseer").setup({
-        -- TODO: Find some way to set for `_disposed_` and `on_complete_dispose`.
+        strategy = "jobstart",
         task_list = {
           bindings = {
             ["<c-k>"] = "<c-w><c-k>",
