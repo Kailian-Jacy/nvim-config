@@ -8,3 +8,4 @@ foo.*
 data
 bookmarks.*
 lazy-lock.json
+customized.lua
