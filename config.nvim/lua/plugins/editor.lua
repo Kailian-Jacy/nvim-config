@@ -198,6 +198,10 @@ return {
         "H",
         function()
           require("bufjump").backward()
+          -- if terminal, jump one more.
+          if vim.startswith(vim.api.nvim_buf_get_name(0), "term://") then
+            require("bufjump").backward()
+          end
         end,
         mode = "n",
         desc = "jump to last buffer.",
@@ -206,6 +210,10 @@ return {
         "L",
         function()
           require("bufjump").forward()
+          -- if terminal, jump one more.
+          if vim.startswith(vim.api.nvim_buf_get_name(0), "term://") then
+            require("bufjump").backward()
+          end
         end,
         mode = "n",
         desc = "jump to last buffer.",
