@@ -41,6 +41,19 @@ vim.api.nvim_create_user_command("OpenLaunchJson", function()
   vim.cmd("edit " .. launch_json)
 end, { desc = "Open the launch.json related to the current workdir. If non-exists, confirms to create." })
 
+-- Command to set up currrent tab name
+vim.api.nvim_create_user_command("SetTabName", function(opt)
+  opt = opt or {}
+  opt.args = opt.args or { "" }
+  local tabname = opt.args[1]
+
+  vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", tabname)
+end, { desc = "Set the current tabname", nargs = "?" })
+
+vim.api.nvim_create_user_command("ReetTabName", function()
+  vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", "")
+end, { desc = "Reset the current tabname." })
+
 -- Open and edit the lua script.
 vim.api.nvim_create_user_command("SnipEdit", function()
   local default_snip_path = vim.fn.stdpath("config") .. "/snip/all.json"
