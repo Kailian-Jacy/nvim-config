@@ -220,7 +220,7 @@ return {
           unique = false, -- Unique-ify non-running task count by name
           name = nil, -- List of task names to search for
           name_not = false, -- When true, invert the name search
-          status = nil, -- List of task statuses to display
+          status = { overseer.STATUS.FAILURE, overseer.STATUS.SUCCESS, overseer.STATUS.RUNNING }, -- List of task statuses to display
           status_not = false, -- When true, invert the status search
         }
       end
