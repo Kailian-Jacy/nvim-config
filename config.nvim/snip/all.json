@@ -94,5 +94,12 @@
 			"Do not stop until finish these all steps or meet something you can't dipose."
 		],
 		"desc": "Snippet for test-driven development workflow"
+	},
+	"llm.comment.testcase": {
+		"prefix": "aitest",
+		"body": [
+			"@ai: generate test case for this."
+		],
+		"desc": "Instruct ai to generate test case for this function."
 	}
 }
