@@ -276,13 +276,9 @@ return {
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
 
-              -- Searching from the directory.
-              ["<C-/>"] = {"search_here", mode={"n", "i"}},
-              ["<D-/>"] = {"search_here", mode={"n", "i"}},
-
               -- Searching from all the current files or selected files.
-              ["<C-?>"] = {"search_from_file", mode={"n", "i"}},
-              ["<D-?>"] = {"search_from_file", mode={"n", "i"}},
+              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
 
               -- Maximize.
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
@@ -316,12 +312,8 @@ return {
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["t"] = {"new_tab_here", mode={"n", "i"}},
 
-              -- Search from the directory
-              ["<c-/>"] = {"search_here", mode={"n", "i"}},
-              ["<D-/>"] = {"search_here", mode={"n", "i"}},
-
-              ["<C-?>"] = {"search_from_file", mode={"n", "i"}},
-              ["<D-?>"] = {"search_from_file", mode={"n", "i"}},
+              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
 
               -- Window switching
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
@@ -649,6 +641,10 @@ return {
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
 
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
+
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["z"] = {"add_to_zoxide", mode = {"n"}},
@@ -661,6 +657,10 @@ return {
                   ["p"] = "inspect",
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
@@ -717,6 +717,10 @@ return {
 
                   ["<c-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
                   ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
                   ["<d-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
                   ["<c-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
