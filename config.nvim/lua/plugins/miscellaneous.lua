@@ -280,6 +280,10 @@ return {
               ["<C-/>"] = {"search_here", mode={"n", "i"}},
               ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
+              -- Searching from all the current files or selected files.
+              ["<C-?>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-?>"] = {"search_from_file", mode={"n", "i"}},
+
               -- Maximize.
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
@@ -315,6 +319,9 @@ return {
               -- Search from the directory
               ["<c-/>"] = {"search_here", mode={"n", "i"}},
               ["<D-/>"] = {"search_here", mode={"n", "i"}},
+
+              ["<C-?>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-?>"] = {"search_from_file", mode={"n", "i"}},
 
               -- Window switching
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
@@ -463,6 +470,32 @@ return {
               picker:close()
               Snacks.picker.grep({
                 cwd = item._path
+              })
+            end)
+          end,
+          search_from_file = function (picker, _)
+            -- If any files selected, search from the files.
+            local multi_selection = picker:selected { fallback = false }
+
+            -- If non selected, search from all in the list.
+            if not multi_selection or #multi_selection == 0 then
+              multi_selection = {}
+              for item, _ in picker:iter() do
+                if item.file and not vim.tbl_contains(multi_selection, "--glob=" .. item.file) then
+                  table.insert(multi_selection, "--glob=" .. item.file)
+                end
+              end
+            else
+              local files = {}
+              for _, item in ipairs(multi_selection) do
+                table.insert(files, "--glob="..item.file)
+              end
+              multi_selection = files
+            end
+            vim.schedule(function()
+              picker:close()
+              Snacks.picker.grep({
+                args = multi_selection
               })
             end)
           end
