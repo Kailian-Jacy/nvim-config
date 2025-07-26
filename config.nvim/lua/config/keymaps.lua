@@ -6,12 +6,7 @@ vim.g.mapleader = " "
 -- Asterisk do not move to the next automatically.
 -- TODO: find a way to check highlights under the cursor. Go to the next one on highlight.
 vim.keymap.set({ "n" }, "*", function()
-  if vim.g.is_highlight_on == false then
-    vim.g.is_highlight_on = true
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
-  else
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*", true, false, true), "n", false)
-  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
 end, { desc = "Search and highlight but not jump to the next.", noremap = true })
 
 -- Paste to cmd + v
@@ -53,7 +48,6 @@ vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
-  vim.g.is_highlight_on = false
   vim.cmd([[ noh ]])
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
 end, { desc = "Esc wrapper: no highlight with esc." })

@@ -254,9 +254,6 @@ vim.g.get_word_under_cursor = function()
   return vim.fn.expand("<cword>")
 end
 
--- Temporary workaround to detect if it's the first time * being pressed.
-vim.g.is_highlight_on = false
-
 vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 --[[Running = "Running",
   Stopped = "Stopped",
