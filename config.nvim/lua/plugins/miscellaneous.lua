@@ -496,6 +496,44 @@ return {
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          grep = {
+            actions = {
+              ---@param picker snacks.Picker
+              ---@param item? snacks.picker.Item
+              remove_file_from_list = function (picker, item)
+                -- get filename of the item.
+                if not item or not item.file then
+                  return
+                end
+                -- exclude it from searching
+                -- FIXME: how to get the original picker opts.
+                table.insert(picker.main, "--iglob=!" .. item.file)
+                -- respawn search.
+                picker.list:set_target()
+                picker:find()
+              end
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+
+                  ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                  ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                }
+              },
+              list = {
+                keys = {
+                  ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+
+                  ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                  ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                }
+              }
+            }
+          },
           yanky = {
             actions = {
               -- Paste from `yanky/lua/yanky/sources/snacks.lua`. It's not respecting visual mode.
