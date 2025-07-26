@@ -2,16 +2,6 @@
 
 set -e
 
-# detect OS.
-OS="Linux"
-if [[ "$(uname)" == "Darwin" ]]; then
-  OS="MacOS"
-elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
-  OS="Linux"
-else
-  echo "Unsupported OS. Exit."
-fi
-
 ###############################################
 #   Options 
 ###############################################
@@ -23,15 +13,15 @@ TMUX_CONF_LINK=~/.tmux.conf
 NEOVIDE_CONF_LINK=~/.config/neovide/config.toml
 NVIM_INSTALL_PATH=$HOME/.local/nvim/
 DEFAULT_ENV_FILE_PATH=~/.zprofile
-INSTALL_DEPENDENCIES="git curl tar" # Everything relies on them...
-INSTALL_DEPENDENCIES+="cmake make" # requried by luasnip, ray-x and treesitter.
-INSTALL_DEPENDENCIES+="tmux lazygit zoxide" # handy cmd tools.
-INSTALL_DEPENDENCIES+="fzf ripgrep fd" # buildin searchs.
-INSTALL_DEPENDENCIES+="npm node" # required by copilot.
-INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks"
-INSTALL_DEPENDENCIES+="sqlite" # required by bookmarks.nvim
+INSTALL_DEPENDENCIES="git curl " # Everything relies on them...
+INSTALL_DEPENDENCIES+="cmake make gcc " # requried by luasnip, ray-x and treesitter.
+INSTALL_DEPENDENCIES+="tmux lazygit zoxide " # handy cmd tools.
+INSTALL_DEPENDENCIES+="fzf ripgrep fd " # buildin searchs.
+INSTALL_DEPENDENCIES+="npm node " # required by copilot.
+INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks "
+INSTALL_DEPENDENCIES+="sqlite " # required by bookmarks.nvim
 INSTALL_FONT_PATH=""
-CONTINUE_ON_ERROR=1
+CONTINUE_ON_ERROR=true
 INSTALL_NVIM_FROM_SOURCE=0
 DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 if [[ $OS == "MacOS" ]]; then
@@ -43,6 +33,14 @@ else
 fi
 
 # generated options.
+OS="Linux"
+if [[ "$(uname)" == "Darwin" ]]; then
+  OS="MacOS"
+elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
+  OS="Linux"
+else
+  echo "Unsupported OS. Exit."
+fi
 CURRENT_ABS=$(realpath $0)
 CURRENT_BASEDIR=$(dirname $CURRENT_ABS)
 DEFAULT_SHELL_RC_FILENAME=".$(basename "$DEFAULT_SHELL")rc"
