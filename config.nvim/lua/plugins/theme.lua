@@ -48,12 +48,15 @@ return {
             WinSeparator = { fg = "#565f89" },
             -- Message region separator
             MsgSeparator = { bg = "" },
-            -- Diff color palette
-            DiffAdd = { bg = "#4a2f90" },
             -- Scrollbar
             SatelliteCursor = { fg = "#F8F8F2" },
             -- LSP.
             LspInlayHint = { fg = "#969696" },
+            -- Diff
+            DiffAdd = { bg = "#1e4839", fg = "#b9e0d3" },
+            DiffDelete = { bg = "#4c232d", fg = "#e8b9b8" },
+            DiffChange = {},
+            DiffText = { link = "DiffAdd" },
           }
         end,
       })
