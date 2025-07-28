@@ -5,7 +5,7 @@ return {
       vim.g.__default_terminal_layout = { open_cmd = "float", height = 1, width = 1 }
       require("terminal").setup({
         layout = vim.g.__default_terminal_layout,
-        cmd = { "tmux", "new", "-As0" },
+        cmd = { "tmux", "new", "-As", vim.g.terminal_default_tmux_session_name or "nvim-attached" },
         autoclose = true,
       })
       -- globally bind customized logic.
