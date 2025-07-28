@@ -22,17 +22,7 @@ return {
         stay_on_this_version = true,
         anaconda_base_path = "/opt/homebrew/Caskroom/miniconda/base",
         -- anaconda_envs_path = "/home/cado/.conda/envs",
-        settings = {
-          search = {
-            cwd = false,
-            bare_envs = {
-              command = "fd python$ ~/.venv/",
-            },
-            conda_envs = {
-              command = "fd python3$ /opt/homebrew/Caskroom/miniconda/*/bin",
-            },
-          },
-        },
+        pipenv_path = "~/.venv",
       })
       require("venv-selector").retrieve_from_cache()
     end,
