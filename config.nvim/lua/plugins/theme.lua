@@ -48,12 +48,15 @@ return {
             WinSeparator = { fg = "#565f89" },
             -- Message region separator
             MsgSeparator = { bg = "" },
-            -- Diff color palette
-            DiffAdd = { bg = "#4a2f90" },
             -- Scrollbar
             SatelliteCursor = { fg = "#F8F8F2" },
             -- LSP.
             LspInlayHint = { fg = "#969696" },
+            -- Diff
+            DiffAdd = { bg = "#1e4839", fg = "#b9e0d3" },
+            DiffDelete = { bg = "#4c232d", fg = "#e8b9b8" },
+            DiffChange = {},
+            DiffText = { link = "DiffAdd" },
           }
         end,
       })
@@ -131,6 +134,21 @@ return {
           },
         },
       })
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "noice",
+        callback = function()
+          vim.keymap.set("n", "gf", function()
+            local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
+            if f == "" then
+              vim.print_silent("no file under cursor")
+            else
+              -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("q", true, false, true), "t", false)
+              vim.cmd("close")
+              vim.cmd("e " .. f)
+            end
+          end, { buffer = true })
+        end,
+      })
     end,
   },
   -- the opts function can also be used to change the default opts:
@@ -188,6 +206,27 @@ return {
           c = { fg = nil, bg = nil },
         },
       }
+      local overseer = require("overseer")
+      local overseer_config_block = {}
+      if overseer then
+        overseer_config_block = {
+          "overseer",
+          label = "", -- Prefix for task counts
+          colored = true, -- Color the task icons and counts
+          symbols = {
+            {
+              [overseer.STATUS.FAILURE] = "F:",
+              [overseer.STATUS.SUCCESS] = "S:",
+              [overseer.STATUS.RUNNING] = "R:",
+            },
+          },
+          unique = false, -- Unique-ify non-running task count by name
+          name = nil, -- List of task names to search for
+          name_not = false, -- When true, invert the name search
+          status = { overseer.STATUS.FAILURE, overseer.STATUS.SUCCESS, overseer.STATUS.RUNNING }, -- List of task statuses to display
+          status_not = false, -- When true, invert the status search
+        }
+      end
       require("lualine").setup({
         options = {
           theme = theme,
@@ -210,12 +249,18 @@ return {
           lualine_b = {},
           lualine_c = {},
           lualine_x = {},
-          lualine_y = {},
+          lualine_y = {
+            overseer_config_block,
+          },
           lualine_z = {
             {
               function()
                 -- prefix.
                 local sys_sign = function()
+                  -- Use user defined option first.
+                  if vim.g._status_bar_system_icon and #vim.g._status_bar_system_icon > 0 then
+                    return vim.g._status_bar_system_icon
+                  end
                   local sysname = vim.loop.os_uname().sysname
                   if sysname == "Darwin" then
                     return "󰀵" -- Mac icon
@@ -299,6 +344,15 @@ return {
             color_nr = nil, -- cterm
             highlight = "Search",
           },
+          Visual = {
+            text = { "v" },
+            priority = 1,
+            gui = nil,
+            color = "#FFB86C",
+            cterm = nil,
+            color_nr = nil, -- cterm
+            highlight = "Visual",
+          },
         },
         handlers = {
           cursor = true,
@@ -311,6 +365,39 @@ return {
       })
       require("gitsigns").setup()
       require("scrollbar.handlers.gitsigns").setup()
+      require("scrollbar.handlers").register("lastjump", function(bufnr)
+        if vim.api.nvim_get_current_buf() ~= bufnr then
+          return { { line = 0, text = "" } } -- dummy-return to prevent error
+        end
+        if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+          local _, vstart, _, _ = unpack(vim.fn.getpos("v"))
+          local _, vend, _, _ = unpack(vim.fn.getpos("."))
+          if vstart > vend then
+            vstart, vend = vend, vstart
+          end
+          local ret = {}
+          for line = vstart, vend, 1 do
+            table.insert(ret, {
+              line = line,
+              type = "Visual",
+              level = 1,
+            })
+          end
+          return ret
+        end
+        return { { line = 0, text = "" } } -- dummy-return to prevent error
+      end)
+      -- FIXME: only updates when redrawing the bar. and cmd-cr Dunno why..
+      --
+      -- vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI", "CursorMoved", "CursorMovedI", "ModeChanged" }, {
+      --   pattern = { "*" },
+      --   callback = function()
+      --     if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+      --       vim.print("123")
+      --       require("scrollbar").render()
+      --     end
+      --   end,
+      -- })
     end,
   },
   {
@@ -336,7 +423,7 @@ return {
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
           -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },
-          -- buf_opts = { buftype = { "nofile" } },
+          buf_opts = { filetype = { "noice", "qf" } },
         },
       },
     },

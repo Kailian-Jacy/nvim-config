@@ -133,9 +133,6 @@ return {
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
       { "<leader>fo", function() vim.cmd[[SnackOldfiles]] end, desc = "Recent" },
 
-      -- lazygit
-      { "<leader>gg", function() Snacks.lazygit() end, desc = "Find Config File" },
-
       -- Symbol browsing
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
       { "<leader>ss", function() Snacks.picker.lsp_symbols({ pattern = vim.g.function_get_selected_content() }) end, desc = "LSP Symbols", mode = "v" },
@@ -185,9 +182,6 @@ return {
       -- Navigation
       { "<leader>zz", function() Snacks.picker.zoxide() end, desc = "Zoxide cwd navigation" },
       { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
-
-      -- Floating terminal.
-      { "<leader>tt", function() Snacks.terminal({"tmux", "new", "-As0"}) end, mode = {"n", "v"}, desc = "Tmux floating window terminal."} 
     },
     opts = {
       bigfile = { enabled = true },
@@ -282,9 +276,9 @@ return {
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
 
-              -- Searching from the directory.
-              ["<C-/>"] = {"search_here", mode={"n", "i"}},
-              ["<D-/>"] = {"search_here", mode={"n", "i"}},
+              -- Searching from all the current files or selected files.
+              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
 
               -- Maximize.
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
@@ -318,9 +312,8 @@ return {
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["t"] = {"new_tab_here", mode={"n", "i"}},
 
-              -- Search from the directory
-              ["<c-/>"] = {"search_here", mode={"n", "i"}},
-              ["<D-/>"] = {"search_here", mode={"n", "i"}},
+              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
 
               -- Window switching
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
@@ -471,12 +464,76 @@ return {
                 cwd = item._path
               })
             end)
+          end,
+          search_from_file = function (picker, _)
+            -- If any files selected, search from the files.
+            local multi_selection = picker:selected { fallback = false }
+
+            -- If non selected, search from all in the list.
+            if not multi_selection or #multi_selection == 0 then
+              multi_selection = {}
+              for item, _ in picker:iter() do
+                if item.file and not vim.tbl_contains(multi_selection, "--glob=" .. item.file) then
+                  table.insert(multi_selection, "--glob=" .. item.file)
+                end
+              end
+            else
+              local files = {}
+              for _, item in ipairs(multi_selection) do
+                table.insert(files, "--glob="..item.file)
+              end
+              multi_selection = files
+            end
+            vim.schedule(function()
+              picker:close()
+              Snacks.picker.grep({
+                args = multi_selection
+              })
+            end)
           end
         },
         -- As neovim has no window-local keymap.
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          grep = {
+            actions = {
+              ---@param picker snacks.Picker
+              ---@param item? snacks.picker.Item
+              remove_file_from_list = function (picker, item)
+                -- get filename of the item.
+                if not item or not item.file then
+                  return
+                end
+                -- exclude it from searching
+                -- FIXME: how to get the original picker opts.
+                table.insert(picker.main, "--iglob=!" .. item.file)
+                -- respawn search.
+                picker.list:set_target()
+                picker:find()
+              end
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+
+                  ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                  ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                }
+              },
+              list = {
+                keys = {
+                  ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+
+                  ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                  ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
+                }
+              }
+            }
+          },
           yanky = {
             actions = {
               -- Paste from `yanky/lua/yanky/sources/snacks.lua`. It's not respecting visual mode.
@@ -622,6 +679,10 @@ return {
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
 
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
+
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["z"] = {"add_to_zoxide", mode = {"n"}},
@@ -634,6 +695,10 @@ return {
                   ["p"] = "inspect",
 
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
@@ -690,6 +755,10 @@ return {
 
                   ["<c-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
                   ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
 
                   ["<d-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
                   ["<c-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},

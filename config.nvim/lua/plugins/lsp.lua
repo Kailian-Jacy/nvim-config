@@ -104,8 +104,8 @@ return {
         -- for c/cpp linter not recognizing the include path, use envs.
         -- export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$(pwd)/include
         -- export C_INCLUDE_PATH=$C_INCLUDE_PATH:$(pwd)/include
-        c = { "cpplint" },
-        cpp = { "cpplint" },
+        -- c = { "cpplint" }, -- too annoying...
+        -- cpp = { "cpplint" },
         docker = { "hadolint" },
         -- lua = { "luacheck" },
         -- markdown = { "markdownlint-cli2" },

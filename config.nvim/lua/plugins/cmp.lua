@@ -352,6 +352,7 @@ return {
           { name = "async_path", max_item_count = 7 },
           { name = "cmdline", max_item_count = 7 },
           { name = "cmdline_history", max_item_count = 7 },
+          { name = "buffer", max_item_count = 7 }, -- used for replacement
         }),
       })
     end,

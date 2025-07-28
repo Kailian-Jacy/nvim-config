@@ -2,12 +2,6 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Start a tmux session in the background if none.
--- TODO: Not sure if working. Ans: it's not...
-vim.schedule(function()
-  vim.fn.system("tmux", { "new", "-As0" })
-end)
-
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
   -- Check if $VIMPWD/.vscode/launch.json exists.
@@ -46,6 +40,19 @@ vim.api.nvim_create_user_command("OpenLaunchJson", function()
 
   vim.cmd("edit " .. launch_json)
 end, { desc = "Open the launch.json related to the current workdir. If non-exists, confirms to create." })
+
+-- Command to set up currrent tab name
+vim.api.nvim_create_user_command("SetTabName", function(opt)
+  opt = opt or {}
+  opt.args = opt.args or { "" }
+  local tabname = opt.args[1]
+
+  vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", tabname)
+end, { desc = "Set the current tabname", nargs = "?" })
+
+vim.api.nvim_create_user_command("ReetTabName", function()
+  vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", "")
+end, { desc = "Reset the current tabname." })
 
 -- Open and edit the lua script.
 vim.api.nvim_create_user_command("SnipEdit", function()
@@ -404,6 +411,35 @@ end
 vim.api.nvim_create_user_command("SnackOldfiles", snack_old_file(), { desc = "Open oldfiles." })
 
 -- Bookmark related code snippet.
+vim.api.nvim_create_user_command("BookmarkGrepMarkedFiles", function()
+  local Repo = require("bookmarks.domain.repo")
+  local Node = require("bookmarks.domain.node")
+  local active_list = Repo.ensure_and_get_active_list()
+  local bookmarks = Node.get_all_bookmarks(active_list)
+
+  -- Get unique file paths from bookmarks
+  local files = {}
+  local seen = {}
+  for _, bookmark in ipairs(bookmarks) do
+    if not seen[bookmark.location.path] then
+      seen[bookmark.location.path] = true
+      table.insert(files, bookmark.location.path)
+    end
+  end
+
+  local search_content = ""
+  if vim.tbl_contains({ "v", "V", "s" }, vim.fn.mode()) then
+    search_content = vim.g.function_get_selected_content()
+  end
+
+  -- Call snacks to grep through these files.
+  Snacks.picker.grep({
+    title = "Grep Bookmarked Files",
+    dirs = files,
+    hidden = true,
+    search = search_content,
+  })
+end, { desc = "Remove the bookmark at cursor line.", nargs = "?" })
 vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
   Snacks.picker.pick({
     title = "Bookmarks",
@@ -431,7 +467,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
       return tbl
     end,
     actions = {
-      delete_from_bookmarks = function(picker, _)
+      delete_from_bookmarks = function(picker, item)
         local delete_from_bookmark = function(local_picker, local_item)
           local location = local_item.bm_location
           local node = require("bookmarks.domain.repo").find_node_by_location(location)
@@ -446,7 +482,7 @@ vim.api.nvim_create_user_command("BookmarkSnackPicker", function()
           local_picker:find()
         end
         local sel = picker:selected()
-        local items = #sel > 0 and sel or picker:items()
+        local items = #sel > 0 and sel or { item }
         for _, item in pairs(items) do
           delete_from_bookmark(picker, item)
         end
@@ -572,14 +608,14 @@ if vim.fn.has("nvim-0.11") == 1 then
   vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:ver25"
 end
 
-vim.api.nvim_create_autocmd({
-  "TermOpen",
-  "WinEnter",
-}, {
-  pattern = "term://*",
-  command = "startinsert",
-})
-
+-- vim.api.nvim_create_autocmd({
+--   "TermOpen",
+--   "WinEnter",
+-- }, {
+--   pattern = "term://*",
+--   command = "startinsert",
+-- })
+--
 -- multiple instances of neovide.
 vim.api.nvim_create_user_command("NeovideNew", function()
   vim.cmd([[ ! open -n "/Applications/Neovide.app" --args --grid 80x25 ]])
@@ -743,6 +779,8 @@ vim.api.nvim_create_autocmd("VimEnter", {
 vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
     vim.g.LAST_WORKING_DIRECTORY = vim.fn.getcwd()
+    -- Detach from tmux shell.
+    vim.fn.system("tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
   end,
 })
 

@@ -1,5 +1,12 @@
 return {
   {
+    "mhinz/vim-signify",
+    enabled = vim.g.module_enable_svn,
+    config = function()
+      vim.cmd([[ set updatetime=100 ]])
+    end,
+  },
+  {
     "lewis6991/gitsigns.nvim",
     keys = {
       {

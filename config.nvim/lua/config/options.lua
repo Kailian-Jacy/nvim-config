@@ -21,9 +21,10 @@ vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
 vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
 vim.g.module_enable_copilot = true and vim.fn.executable("node")
 vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
+vim.g.module_enable_svn = true and vim.fn.executable("svn")
 --------------------------------------------------
 
--- Detection of resources.
+-- Automatic detection of resources.
 local function get_cpu_cores()
   local handle = io.popen("nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1")
   if not handle then
@@ -33,7 +34,25 @@ local function get_cpu_cores()
   handle:close()
   return result
 end
+local function get_os_type()
+  if vim.fn.has("mac") then
+    return "MACOS"
+  elseif vim.fn.has("win32") then
+    return "WINDOWS"
+  elseif vim.fn.has("linux") then
+    return "LINUX"
+  end
+end
 vim.g._resource_cpu_cores = get_cpu_cores()
+vim.g._env_os_type = get_os_type()
+
+-- Terminal
+vim.g.terminal_width_right = 0.3
+vim.g.terminal_width_left = 0.3
+vim.g.terminal_width_bottom = 0.3
+vim.g.terminal_width_top = 0.3
+vim.g.terminal_auto_insert = true
+vim.g.terminal_default_tmux_session_name = "nvim-attached"
 
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
@@ -80,6 +99,7 @@ end
 
 -- Tabline
 -- Set the current tab name as the working directory name.
+-- Use lua snip like `lua vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", "example tabname")` to set tabname.
 function MyTabLine()
   local tabnames = {}
   local groups = {} -- { tabname = { { index1, split_path1 }, { index2, split_path2 } } }
@@ -119,7 +139,10 @@ function MyTabLine()
   for index = 1, vim.fn.tabpagenr("$") do
     local win_num = vim.fn.tabpagewinnr(index)
     local working_directory = vim.fn.getcwd(win_num, index)
-    local tabname = vim.fn.fnamemodify(working_directory, ":t")
+    local tabname = vim.fn.gettabvar(index, "tabname")
+    if tabname == nil or tabname == "" then
+      tabname = vim.fn.fnamemodify(working_directory, ":t")
+    end
 
     tabnames[index] = tabname
     if not groups[tabname] then
@@ -231,9 +254,6 @@ vim.g.get_word_under_cursor = function()
   return vim.fn.expand("<cword>")
 end
 
--- Temporary workaround to detect if it's the first time * being pressed.
-vim.g.is_highlight_on = false
-
 vim.opt.fillchars = "diff:╱,eob:~,fold: ,foldclose:,foldopen:,foldsep: "
 --[[Running = "Running",
   Stopped = "Stopped",
@@ -283,20 +303,13 @@ vim.g.neovide_window_blurred = false
 -- Setting floating blur amount.
 vim.g.neovide_floating_blur_amount_x = 5
 vim.g.neovide_floating_blur_amount_y = 5
+vim.g.neovide_input_use_logo = 1
 
 -- Global tabstop.
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 0
 vim.opt.expandtab = true
-
--- Paste to cmd + v
-vim.g.neovide_input_use_logo = 1
--- vim.api.nvim_set_keymap("", "<D-v>", "+p<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("!", "<D-v>", "<C-R>+", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("t", "<D-v>", '<C-\\><C-o>"+p', { noremap = true, silent = true })
--- vim.api.nvim_set_keymap("v", "<D-v>", "<C-R>+", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("c", "<D-v>", "<C-r>+", { noremap = true, silent = true })
 
 -- copilot endpoint
 vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
@@ -320,8 +333,11 @@ vim.g.yanky_ring_max_accept_length = 1000
 vim.g.import_user_snippets = true
 vim.g.user_vscode_snippets_path = {
   vim.fn.stdpath("config") .. "/snip/", -- How to get: https://arc.net/l/quote/fjclcvra
-  vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/"), -- Default Vscode snippet path under MacOS.
 }
+if vim.g._env_os_type == "MACOS" then
+  vim.g.user_vscode_snippets_path[#vim.g.user_vscode_snippets_path + 1] =
+    vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
+end
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
 -- Linking: ln -s "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" /Users/kailianjacy/.config/nvim/snip.

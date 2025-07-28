@@ -6,17 +6,23 @@ vim.g.mapleader = " "
 -- Asterisk do not move to the next automatically.
 -- TODO: find a way to check highlights under the cursor. Go to the next one on highlight.
 vim.keymap.set({ "n" }, "*", function()
-  if vim.g.is_highlight_on == false then
-    vim.g.is_highlight_on = true
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
-  else
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*", true, false, true), "n", false)
-  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("*``", true, false, true), "n", false)
 end, { desc = "Search and highlight but not jump to the next.", noremap = true })
+
+-- Paste to cmd + v
+-- vim.api.nvim_set_keymap("", "<D-v>", "+p<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("!", "<D-v>", "<C-R>+", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("t", "<D-v>", '<C-\\><C-o>"+p', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap("v", "<D-v>", "<C-R>+", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("c", "<D-v>", "<C-r>+", { noremap = true, silent = true })
 
 -- Local workaround for osc52 copy from remote.
 vim.keymap.set({ "n", "v" }, "D", '"*d')
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
+
+-- Command mode keymaps:
+vim.keymap.set("c", "<c-e>", "<end>", { desc = "move cursor to the end" })
+vim.keymap.set("c", "<c-a>", "<home>", { desc = "move cursor to the end" })
 
 -- Path/Line fetching keymap.
 vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
@@ -42,7 +48,6 @@ vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
-  vim.g.is_highlight_on = false
   vim.cmd([[ noh ]])
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
 end, { desc = "Esc wrapper: no highlight with esc." })
@@ -106,16 +111,42 @@ vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<cmd>wincmd h<cr>", { noremap = true
 vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<cmd>wincmd l<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<cmd>wincmd k<cr>", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
-vim.keymap.set({ "t" }, "<C-L>", "<C-L>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-H>", "<C-H>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-J>", "<C-J>", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-K>", "<C-K>", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-L>", "<c-\\><c-n><c-w>l", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-H>", "<c-\\><c-n><c-w>h", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-J>", "<c-\\><c-n><c-w>j", { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-K>", "<c-\\><c-n><c-w>k", { noremap = true, silent = true })
 
--- Throw buffer and reveal.
-vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", "<cmd>ThrowAndReveal l<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", "<cmd>ThrowAndReveal k<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", "<cmd>ThrowAndReveal j<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", "<cmd>ThrowAndReveal h<CR>", { noremap = true, silent = true })
+-- Throw buffer and reveal. Special-cased in terminal mode.
+vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_right()
+  else
+    vim.cmd([[ThrowAndReveal l]])
+  end
+end, { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_up()
+  else
+    vim.cmd([[ThrowAndReveal k]])
+  end
+end, { noremap = true, silent = true })
+
+vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_down()
+  else
+    vim.cmd([[ThrowAndReveal j]])
+  end
+end, { noremap = true, silent = true })
+
+vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", function()
+  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
+    require("terminal").__customize.shift_left()
+  else
+    vim.cmd([[ThrowAndReveal h]])
+  end
+end, { noremap = true, silent = true })
 
 -- Quick fixes.
 vim.keymap.set(
@@ -396,6 +427,11 @@ local cmd_mappings = {
   -- { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n", "v" }, description = "Inspect in line mode." },
   -- Inspect
   { cmdKeymap = "<D-k>", leaderKeymap = "<leader>sk", modes = { "n" }, description = "List keymaps" },
+  -- Task management
+  { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n" }, description = "Review last task output" },
+  { cmdKeymap = "<D-L>", leaderKeymap = "<leader>lL", modes = { "n" }, description = "Task list" },
+  -- Bookmarks
+  { cmdKeymap = "<D-M>", leaderKeymap = "<leader>sm", modes = { "n", "v" }, description = "List keymaps" },
   -- New buffer/instances.
   { cmdKeymap = "<D-n>", leaderKeymap = "<cmd>enew<CR>", modes = { "n" }, description = "New buffer." },
   {
@@ -442,6 +478,36 @@ local cmd_mappings = {
     leaderKeymap = "<leader>tt",
     modes = { "n", "v" },
     description = "Floating terminal in tmux.",
+  },
+  {
+    cmdKeymap = "<D-s-l>",
+    leaderKeymap = "<c-s-l>",
+    modes = { "t" },
+    description = "Move terminal to right split.",
+  },
+  {
+    cmdKeymap = "<D-s-k>",
+    leaderKeymap = "<c-s-k>",
+    modes = { "t" },
+    description = "Move terminal to top split.",
+  },
+  {
+    cmdKeymap = "<D-s-h>",
+    leaderKeymap = "<c-s-h>",
+    modes = { "t" },
+    description = "Move terminal to left split.",
+  },
+  {
+    cmdKeymap = "<D-s-j>",
+    leaderKeymap = "<c-s-j>",
+    modes = { "t" },
+    description = "Move terminal to bottom split.",
+  },
+  {
+    cmdKeymap = "<d-bs>",
+    leaderKeymap = "<c-bs>",
+    modes = { "t" },
+    description = "Reset terminal in tmux.",
   },
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },

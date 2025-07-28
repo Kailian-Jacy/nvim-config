@@ -8,3 +8,6 @@ foo.*
 data
 bookmarks.*
 lazy-lock.json
+customized.lua
+node_modules/*
+repro.lua
