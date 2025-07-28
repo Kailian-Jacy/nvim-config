@@ -4,7 +4,10 @@
 
 M = {}
 
-M.before_all = function() end
+M.before_all = function()
+  -- Status bar sign.
+  -- vim.g._status_bar_system_icon = "?"
+end
 M.after_options = function()
   -- Temporary workaround for tencent gbk encodings.
   -- vim.g.clipboard = nil

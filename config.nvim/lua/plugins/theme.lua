@@ -254,6 +254,10 @@ return {
               function()
                 -- prefix.
                 local sys_sign = function()
+                  -- Use user defined option first.
+                  if vim.g._status_bar_system_icon and #vim.g._status_bar_system_icon > 0 then
+                    return vim.g._status_bar_system_icon
+                  end
                   local sysname = vim.loop.os_uname().sysname
                   if sysname == "Darwin" then
                     return "󰀵" -- Mac icon
