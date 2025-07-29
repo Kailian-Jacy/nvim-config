@@ -257,6 +257,7 @@ NoUIKeyMap = function()
     return
   end
   vim.g.nvim_dap_noui_backup_keymap = vim.api.nvim_get_keymap("n")
+  local widgets = require("dap.ui.widgets")
   local keys = {
     -- DAP --
     -- run
@@ -265,12 +266,26 @@ NoUIKeyMap = function()
     ["n"] = { f = require("dap").step_over, desc = "step_over" },
     ["s"] = { f = require("dap").step_into, desc = "step_into" },
     ["o"] = { f = require("dap").step_out, desc = "step_out" },
-    ["S"] = { f = require("dap").terminate, desc = "stop debug session" },
     ["u"] = { f = require("dap").up, desc = "up" },
-    ["D"] = { f = require("dap").down, desc = "down" },
+    ["d"] = { f = require("dap").down, desc = "down" },
+
+    -- Widgets for resources.
+    ["<D-f>"] = { f = function() widgets.centered_float(widgets.frames) end, desc = "Widget: Frames" },
+    ["<D-s>"] = { f = function() widgets.centered_float(widgets.sessions) end, desc = "Widget: Session" },
+    ["<D-p>"] = { f = function() widgets.centered_float(widgets.scopes) end, desc = "Widget: Variable in Scopes" },
+    -- TODO:  Breakpoints & conditional breakpoints waits to be finished
+    --
+    -- ["<D-b>"] = { f = widgets.centered_float(widgets.break), desc = "Widget: Variable in Scopes" },
+    ["<D-r>"] = { f = require("dap").repl.toggle, desc = "repl toggle" },
+
+
     ["C"] = { f = require("dap").run_to_cursor, desc = "run_to_cursor" },
     ["b"] = { f = require("dap").toggle_breakpoint, desc = "toggle_breakpoint" },
-    ["P"] = { f = require("dap").pause, desc = "pause" },
+
+    ["S"] = { f = require("dap").terminate, desc = "stop debug session" },
+    ["<c-c>"] = { f = require("dap").pause, desc = "pause" },
+
+    ["P"] = { f = require("dap.ui.widgets").preview, m = { "n", "v" }, desc = "preview the content" },
     ["p"] = { f = require("dap.ui.widgets").hover, m = { "n", "v" }, desc = "hover" },
   }
   for key, value in pairs(keys) do
