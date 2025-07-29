@@ -169,6 +169,10 @@ return {
             option = { show_autosnippets = true, use_show_condition = false },
           },
           {
+            name = "async_path",
+            priority = 150,
+          },
+          {
             name = "nvim_lsp",
             priority = 150,
           },
@@ -199,10 +203,6 @@ return {
             end,
             priority = 110,
             group_index = 1,
-          },
-          {
-            name = "async_path",
-            priority = 100,
           },
           {
             name = "dotenv",
