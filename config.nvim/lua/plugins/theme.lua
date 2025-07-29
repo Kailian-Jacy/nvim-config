@@ -283,8 +283,15 @@ return {
                     return ""
                   end
                 end
+                local debug_keymap = function()
+                  if vim.g.debugging_keymap == true then
+                    return "d"
+                  else
+                    return ""
+                  end
+                end
                 local status_sign = function()
-                  local signs = recording() .. maximized()
+                  local signs = recording() .. maximized() .. debug_keymap()
                   if #signs > 0 then
                     return "[" .. signs .. "] "
                   end
@@ -308,7 +315,7 @@ return {
                 local cwd = function()
                   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
                 end
-                return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
+                return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
             },
           },
