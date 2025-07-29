@@ -231,6 +231,7 @@ return {
         options = {
           theme = theme,
           global_status = true,
+          section_separators = '', component_separators = ''
         },
         sections = {
           -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
@@ -283,8 +284,15 @@ return {
                     return ""
                   end
                 end
+                local debug_keymap = function()
+                  if vim.g.debugging_keymap == true then
+                    return "d"
+                  else
+                    return ""
+                  end
+                end
                 local status_sign = function()
-                  local signs = recording() .. maximized()
+                  local signs = recording() .. maximized() .. debug_keymap()
                   if #signs > 0 then
                     return "[" .. signs .. "] "
                   end
@@ -308,8 +316,14 @@ return {
                 local cwd = function()
                   return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
                 end
-                return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. debug_sign() .. ""
+                return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
+              color = function ()
+                if vim.g.debugging_keymap then
+                  return { bg = '#7358D6' }
+                end
+                return { fg = nil, bg = nil }
+              end
             },
           },
         },

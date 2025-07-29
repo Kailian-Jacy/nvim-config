@@ -243,7 +243,7 @@ vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
 end)
 
 -- Mapping and unmapping during debugging.
-vim.g.nvim_dap_noui_backup_keymap = {}
+vim.g.nvim_dap_noui_backup_keymap = nil
 
 local rhs_options = {}
 function rhs_options:map_cr(cmd_string)
@@ -252,6 +252,10 @@ function rhs_options:map_cr(cmd_string)
 end
 
 NoUIKeyMap = function()
+  if vim.g.nvim_dap_noui_backup_keymap ~= nil then
+    vim.print_silent("Already in debugging keymap.")
+    return
+  end
   vim.g.nvim_dap_noui_backup_keymap = vim.api.nvim_get_keymap("n")
   local keys = {
     -- DAP --
@@ -287,6 +291,10 @@ NoUIKeyMap = function()
 end
 
 NoUIUnmap = function()
+  if vim.g.nvim_dap_noui_backup_keymap == nil then
+    vim.print_silent("Already left debugging keymap.")
+    return
+  end
   --[[if not _GO_NVIM_CFG.dap_debug_keymap then
   return
   end]]
@@ -334,7 +342,7 @@ NoUIUnmap = function()
       end
     end
   end
-  vim.g.nvim_dap_noui_backup_keymap = {}
+  vim.g.nvim_dap_noui_backup_keymap = nil
 end
 
 -- check if debug session activating
@@ -368,6 +376,19 @@ end
 vim.keymap.set("n", "<leader>DD", NoUIGeneircDebug)
 vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 
+-- Debugging keymaps set/unset.
+vim.keymap.set({"n", "v", "x"}, "<leader>dD", function ()
+  if vim.g.debugging_keymap == true then 
+    NoUIUnmap()
+    vim.g.debugging_keymap = false
+  else 
+    NoUIKeyMap()
+    vim.g.debugging_keymap = true
+  end
+  require("lualine").refresh()
+end, { desc = "Toggle debugging keymaps mode." })
+
+
 -- Cmd-related mappings.
 ---@class CmdMapping
 ---@field cmdKeymap string
@@ -387,6 +408,8 @@ local cmd_mappings = {
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
   -- Comment related.
   { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "n", "v" }, description = "Comment" },
+  -- Debugging related.
+  { cmdKeymap = "<D-D>", leaderKeymap = "<leader>dD", modes = { "n", "v", "i" }, description = "Toggle debug keymaps", back_to_insert = true },
   -- Directory/file related
   {
     cmdKeymap = "<D-e>",

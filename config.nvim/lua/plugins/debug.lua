@@ -1,6 +1,7 @@
 return {
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
+    lazy = false,
     cmd = {
       "MasonToolsInstall",
     },
@@ -217,8 +218,16 @@ return {
         vim.print_silent("Debug Session intialized ")
         vim.g.debugging_status = "DebugOthers"
         require("lualine").refresh()
-        NoUIKeyMap()
+        -- NoUIKeyMap()
       end
+      -- dap.listeners.after.attach["nvim-dap-noui"] = function (_, _)
+      --   vim.print_silent("Debug Session Attached to process.")
+      -- end
+      -- dap.listeners.after.launch["nvim-dap-noui"] = function (_, _)
+      --   vim.print_silent("Debug Session Launched.")
+      -- end
+
+      -- Starting.
       dap.listeners.before["event_stopped"]["nvim-dap-noui"] = function(_, _)
         vim.g.debugging_status = "Running"
         require("lualine").refresh()
@@ -227,13 +236,47 @@ return {
         vim.g.debugging_status = "Stopped"
         require("lualine").refresh()
       end
-      -- unmap keymap after that.
-      dap.listeners.before["event_terminated"]["nvim-dap-noui"] = function(_, _)
+
+      -- Ending.
+      dap.listeners.before.event_terminated["nvim-dap-noui"] = function(_, _)
         vim.g.debugging_status = "NoDebug"
-        vim.print_silent("Debug Session terminated ")
+        vim.print_silent("Debug Session Terminated.")
         require("lualine").refresh()
-        NoUIUnmap()
+        -- NoUIUnmap()
       end
+      dap.listeners.before.event_exited["nvim-dap-noui"] = function(_, _)
+        vim.g.debugging_status = "NoDebug"
+        vim.print_silent("Debug Session Exited.")
+        require("lualine").refresh()
+        -- NoUIUnmap()
+      end
+      dap.listeners.before.disconnect["nvim-dap-noui"] = function(_, _)
+        vim.g.debugging_status = "NoDebug"
+        vim.print_silent("Debug Session Disconnected.")
+        require("lualine").refresh()
+        -- NoUIUnmap()
+      end
+
+      -- dap.listeners.on_session["nvim-dap-noui"] = function(old_session, new_session)
+      --   -- Error code. new session is nil does not mean ending.
+      --   if new_session == nil then
+      --     -- Session change on last session ends..
+      --     vim.g.debugging_status = "NoDebug"
+      --     vim.print_silent("Debug Session ends.")
+      --     require("lualine").refresh()
+      --   elseif old_session  == nil then
+      --     -- Session change on last session ends..
+      --     vim.g.debugging_status = "DebugOthers"
+      --     vim.print_silent("Debug Session Started.")
+      --     require("lualine").refresh()
+      --   else
+      --     -- Switching session.
+      --     vim.g.debugging_status = "DebugOthers"
+      --     vim.print_silent("Debug Session Switched.")
+      --     require("lualine").refresh()
+      --   end
+      --   -- NoUIUnmap()
+      -- end
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
 
@@ -253,6 +296,13 @@ return {
           -- vim.notify(debugger_exe_name .. " loaded.")
           return exe_path
         end
+      end
+      if get_full_path_of("OpenDebugAD7") then
+        dap.adapters.cppdbg = {
+          id = 'cppdbg',
+          type = 'executable',
+          command = get_full_path_of("OpenDebugAD7"),
+        }
       end
       if get_full_path_of("codelldb") then
         dap.adapters.codelldb = {
