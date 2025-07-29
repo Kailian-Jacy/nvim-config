@@ -243,7 +243,7 @@ vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
 end)
 
 -- Mapping and unmapping during debugging.
-vim.g.nvim_dap_noui_backup_keymap = {}
+vim.g.nvim_dap_noui_backup_keymap = nil
 
 local rhs_options = {}
 function rhs_options:map_cr(cmd_string)
@@ -252,6 +252,10 @@ function rhs_options:map_cr(cmd_string)
 end
 
 NoUIKeyMap = function()
+  if vim.g.nvim_dap_noui_backup_keymap ~= nil then
+    vim.print_silent("Already in debugging keymap.")
+    return
+  end
   vim.g.nvim_dap_noui_backup_keymap = vim.api.nvim_get_keymap("n")
   local keys = {
     -- DAP --
@@ -287,6 +291,10 @@ NoUIKeyMap = function()
 end
 
 NoUIUnmap = function()
+  if vim.g.nvim_dap_noui_backup_keymap == nil then
+    vim.print_silent("Already left debugging keymap.")
+    return
+  end
   --[[if not _GO_NVIM_CFG.dap_debug_keymap then
   return
   end]]
@@ -334,7 +342,7 @@ NoUIUnmap = function()
       end
     end
   end
-  vim.g.nvim_dap_noui_backup_keymap = {}
+  vim.g.nvim_dap_noui_backup_keymap = nil
 end
 
 -- check if debug session activating

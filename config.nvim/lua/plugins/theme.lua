@@ -231,6 +231,7 @@ return {
         options = {
           theme = theme,
           global_status = true,
+          section_separators = '', component_separators = ''
         },
         sections = {
           -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
@@ -317,6 +318,12 @@ return {
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
+              color = function ()
+                if vim.g.debugging_keymap then
+                  return { bg = '#7358D6' }
+                end
+                return { fg = nil, bg = nil }
+              end
             },
           },
         },
