@@ -473,21 +473,21 @@ return {
             if not multi_selection or #multi_selection == 0 then
               multi_selection = {}
               for item, _ in picker:iter() do
-                if item.file and not vim.tbl_contains(multi_selection, "--glob=" .. item.file) then
-                  table.insert(multi_selection, "--glob=" .. item.file)
+                if item.file and not vim.tbl_contains(multi_selection, item.file) then
+                  table.insert(multi_selection, item.file)
                 end
               end
             else
               local files = {}
               for _, item in ipairs(multi_selection) do
-                table.insert(files, "--glob="..item.file)
+                table.insert(files, item.file)
               end
               multi_selection = files
             end
             vim.schedule(function()
               picker:close()
               Snacks.picker.grep({
-                args = multi_selection,
+                dirs = multi_selection,
                 certain_files = true,
                 toggles = {
                   certain_files = "f" .. #(multi_selection)
