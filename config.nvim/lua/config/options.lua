@@ -1,30 +1,10 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
--- Optional Features
---------------------------------------------------
--- If reading binary with xxd and show as human-readable text.
---
--- Disabled for now. Generally, reading binary in vim does not make any sense.
--- Loading and converting the binary is very heavy work for vim.
--- I'll leave an option here to allow enabling it when needed.
-vim.g.read_binary_with_xxd = false
-
--- Language support. Detect and enable language support.
-vim.g.module_enable_rust = true and vim.fn.executable("rustc")
-vim.g.module_enable_go = true and vim.fn.executable("go")
-vim.g.module_enable_python = true and (vim.fn.executable("python") or vim.fn.executable("python3"))
-vim.g.module_enable_cpp = true and vim.fn.executable("gcc")
-
---- Plugin feature support. Detect dependencies and enable feature. ---
--- Being used by storages like bookmarks and yanky. Sometimes fallback to shada.
-vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
-vim.g.module_enable_copilot = true and vim.fn.executable("node")
-vim.g.module_enable_bookmarks = true and vim.g._resource_executable_sqlite
-vim.g.module_enable_svn = true and vim.fn.executable("svn")
---------------------------------------------------
-
--- Automatic detection of resources.
+-- Helper functions and resource detection.
+local _if_not_set_or_true = function(var)
+  return var == nil or var == true
+end
 local function get_cpu_cores()
   local handle = io.popen("nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1")
   if not handle then
@@ -34,6 +14,9 @@ local function get_cpu_cores()
   handle:close()
   return result
 end
+
+---@alias OS_TYPE  "UNKNOWN" | "MACOS" | "WINDOWS" | "LINUX"
+---@return OS_TYPE
 local function get_os_type()
   if vim.fn.has("mac") then
     return "MACOS"
@@ -42,9 +25,59 @@ local function get_os_type()
   elseif vim.fn.has("linux") then
     return "LINUX"
   end
+  return "UNKNOWN"
 end
+
+-- Being used by storages like bookmarks and yanky. Sometimes fallback to shada.
+vim.g._resource_executable_sqlite = vim.fn.executable("sqlite3")
 vim.g._resource_cpu_cores = get_cpu_cores()
+---@type OS_TYPE
 vim.g._env_os_type = get_os_type()
+
+---@class ModuleConfig
+---@field enabled boolean
+
+-- Optional Features
+--------------------------------------------------
+-- If reading binary with xxd and show as human-readable text.
+--
+-- Disabled for now. Generally, reading binary in vim does not make any sense.
+-- Loading and converting the binary is very heavy work for vim.
+-- I'll leave an option here to allow enabling it when needed.
+vim.g.read_binary_with_xxd = false
+
+-- Modules enabling setup. Modules variables could be overriden by local.lua
+---@type table<ModuleConfig>
+local default_modules_config = {
+  rust = {
+    enabled = vim.fn.executable("rustc"),
+  },
+  go = {
+    enabled = vim.fn.executable("go"),
+  },
+  python = {
+    enabled = vim.fn.executable("python") or vim.fn.executable("python3"),
+  },
+  cpp = {
+    enabled = vim.fn.executable("gcc"),
+  },
+  --- Plugin feature support. Detect dependencies and enable feature. ---
+
+  copilot = {
+    enabled = vim.fn.executable("node"),
+  },
+  bookmarks = {
+    enabled = vim.g._resource_executable_sqlite,
+  },
+  svn = {
+    enabled = vim.fn.executable("svn"),
+  },
+}
+
+vim.print(vim.g.modules)
+vim.g.modules = vim.tbl_deep_extend("keep", (vim.g.modules or {}), default_modules_config)
+
+--------------------------------------------------
 
 -- Terminal
 vim.g.terminal_width_right = 0.3

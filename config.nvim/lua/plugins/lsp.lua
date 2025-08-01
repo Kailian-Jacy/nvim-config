@@ -65,8 +65,10 @@ return {
       lspconfig.yamlls.setup({})
       -- python
       lspconfig.pyright.setup({})
+      -- nix
+      lspconfig.nil_ls.setup({})
 
-      if vim.g.module_enable_cpp then
+      if vim.g.modules.cpp and vim.g.modules.cpp.enabled then
         -- cmake
         lspconfig.cmake.setup({})
         lspconfig.clangd.setup({
@@ -81,7 +83,7 @@ return {
         })
       end
 
-      if vim.g.module_enable_go then
+      if vim.g.modules.go and vim.g.modules.go.enabled then
         -- cmake
         lspconfig.gopls.setup({})
       end

@@ -4,9 +4,16 @@
 
 M = {}
 
+local modules = {}
+
 M.before_all = function()
   -- Status bar sign.
   -- vim.g._status_bar_system_icon = "?"
+
+  -- -- Set `vim.g.modules` customization with `modules`
+  -- modules.svn = false
+  -- -- Be sure to write them back
+  -- vim.g.modules = modules
 end
 M.after_options = function()
   -- Temporary workaround for tencent gbk encodings.

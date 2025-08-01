@@ -1,7 +1,7 @@
 return {
   {
     "mhinz/vim-signify",
-    enabled = vim.g.module_enable_svn,
+    enabled = vim.g.modules.svn and vim.g.modules.svn.enabled,
     config = function()
       vim.cmd([[ set updatetime=100 ]])
     end,
@@ -80,7 +80,7 @@ return {
     -- DiffviewOpen oldCommit..newCommit to perform diff. Left is old, and right is new.
     "sindrets/diffview.nvim",
     event = "VeryLazy",
-  }
+  },
   --{
   --"tpope/vim-fugitive",
   --},

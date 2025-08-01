@@ -3,7 +3,7 @@ return {
   -- from ai store.
   {
     "github/copilot.vim",
-    enabled = vim.g.module_enable_copilot,
+    enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
   },
   {
     "tzachar/cmp-tabnine",
@@ -27,7 +27,7 @@ return {
       mcphub.setup({
         auto_approve = true,
       })
-      if vim.g.module_enable_rust and vim.fn.executable("rustc") then
+      if (vim.g.modules.rust and vim.g.modules.rust.enabled) and vim.fn.executable("rustc") then
         mcphub.add_server("rust-playground")
         local cache_dir = vim.fn.stdpath("cache")
         if #cache_dir == 0 then
