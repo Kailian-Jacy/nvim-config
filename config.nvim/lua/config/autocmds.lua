@@ -2,6 +2,47 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
+vim.api.nvim_create_user_command("MasonInstallAll", function(opts)
+  local ensure_installed = require("mason").ensure_installed
+
+  local to_install = {}
+  if opts.args == nil or #opts.args == 0 then
+    -- Install all.
+    vim.print("No catergories pointed, installing all packages.")
+    for _, packages in pairs(ensure_installed) do
+      for i = 1, #packages do
+        to_install[#to_install + 1] = packages[i]
+      end
+    end
+  elseif ensure_installed[opts.args] then
+    for i = 1, #packages do
+      to_install[#to_install + 1] = ensure_installed[opts.args][i]
+    end
+  else
+    vim.notify("catergory " .. opts.args .. " not defined. stopped.", vim.log.levels.ERROR)
+    return
+  end
+  -- Dispose each item.
+  for _, v in ipairs(to_install) do
+    if type(v) == "function" then
+      local fallback = v() -- If return string, fallback to mason install.
+      if fallback and #fallback > 0 then
+        v = fallback
+      end
+    end
+    if type(v) == "string" then
+      vim.schedule(function()
+        if not require("mason").is_installed(v) then
+          vim.cmd("MasonInstall " .. v)
+        end
+      end)
+    end
+  end
+end, {
+  desc = "Demand mason to install all the dependencies defined by `mason.ensure_installed`.",
+  nargs = "?",
+})
+
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
   -- Check if $VIMPWD/.vscode/launch.json exists.

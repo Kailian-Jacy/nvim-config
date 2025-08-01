@@ -1,5 +1,158 @@
 return {
   {
+    "williamboman/mason.nvim",
+    cmd = {
+      "Mason",
+      "MasonInstall",
+    },
+    -- disable mason keymaps.
+    keys = function(_)
+      return {}
+    end,
+    config = function()
+      ---@param package_name string
+      ---@return boolean
+      require("mason").is_installed = function(package_name)
+        local mason_registry = require("mason-registry")
+        local package = mason_registry.get_package(package_name)
+        return package:is_installed()
+      end
+
+      ---@param package_name string
+      ---@param link_source string
+      require("mason").link_as_install = function(package_name, link_source)
+        local package_path = require("mason-core.installer.InstallLocation").global():package()
+        local bin_path = require("mason-core.installer.InstallLocation").global():bin()
+
+        -- Create package directory
+        local package_dir = package_path .. "/" .. package_name
+        vim.fn.mkdir(package_dir, "p")
+
+        -- Create symlink from link_source to package_path/package_name/package_name
+        local package_binary = package_dir .. "/" .. package_name
+        vim.fn.delete(package_binary) -- Remove if exists
+        vim.loop.fs_symlink(link_source, package_binary)
+
+        -- Create symlink from package binary to bin_path/package_name
+        local bin_binary = bin_path .. "/" .. package_name
+        vim.fn.delete(bin_binary) -- Remove if exists
+        vim.loop.fs_symlink(package_binary, bin_binary)
+
+        -- Make sure the binary is executable
+        vim.fn.setfperm(package_binary, "rwxr-xr-x")
+        vim.fn.setfperm(bin_binary, "rwxr-xr-x")
+      end
+
+      ---@param package_name string
+      ---@param executable_name? string
+      --- Try to link from executable before falling back to install from mason.
+      require("mason").try_link_before_install = function(package_name, executable_name)
+        executable_name = executable_name or package_name
+        local path = vim.fn.exepath(executable_name)
+        -- no local rust-analyzer, return to mason to install.
+        if #path == 0 then
+          return package_name
+        end
+        vim.print(path)
+        if not require("mason").is_installed(package_name) then
+          require("mason").link_as_install(package_name, path)
+        end
+      end
+      require("mason").ensure_installed = {
+        rust = {
+          -- install rust-analyzer manually and link to there.
+          -- "bacon",
+          function()
+            require("mason").try_link_before_install("rust-analyzer")
+          end,
+          "codelldb", -- Also used for Rust
+        },
+        make = {
+          "checkmake",
+        },
+        cmake = {
+          "cmake-language-server",
+          "cmakelint",
+          "cmakelang",
+        },
+        cpp = {
+          "clang-format",
+          "clangd",
+          "codelldb", -- Also used for Rust
+          -- "cpplint",
+          "cpptools",
+        },
+        python = {
+          -- "black",
+          -- "delve",
+          "pyright",
+          "debugpy",
+          -- "ruff",
+        },
+        docker = {
+          -- "hadolint",
+          -- "docker-compose-language-service",
+          -- "dockerfile-language-server",
+        },
+        golang = {
+          "gofumpt",
+          "goimports",
+          "gomodifytags",
+          "gopls",
+          "impl",
+        },
+        json = {
+          "jsonlint",
+          "fixjson",
+        },
+        lua = {
+          "lua-language-server",
+          -- "luacheck",
+          "stylua",
+          "luaformatter",
+        },
+        vimscript = {
+          "vim-language-server",
+        },
+        markdown = {
+          "markdown-toc",
+          "markdownlint-cli2",
+          "marksman",
+        },
+        shell = {
+          "shfmt",
+          "bash-language-server",
+        },
+        sql = {
+          -- "sql-formatter",
+          -- "sqlfluff",
+        },
+        toml = {
+          "taplo",
+        },
+        tex = {
+          -- "texlab",
+        },
+        yaml = {
+          "yaml-language-server",
+        },
+        xml = {
+          "lemminx",
+        },
+        nix = {
+          "nixpkgs-fmt",
+          "nil",
+        },
+      }
+
+      -- Create MasonInstallAll autocmd.
+      -- Setup with ensure_installed.
+      require("mason").setup({
+        max_concurrent_installers = 10,
+      })
+    end,
+  },
+  {
     "nvim-treesitter/nvim-treesitter-textobjects",
     dependencies = {
       { "nvim-treesitter/nvim-treesitter" },
