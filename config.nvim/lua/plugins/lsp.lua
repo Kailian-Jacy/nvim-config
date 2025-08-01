@@ -72,22 +72,23 @@ return {
         },
         cmake = {
           "cmake-language-server",
-          "cmakelint",
+          -- "cmakelint", -- cmakelang includes cmake-lint.
           "cmakelang",
         },
         cpp = {
           "clang-format",
           "clangd",
-          "codelldb", -- Also used for Rust
-          -- "cpplint",
-          "cpptools",
+          -- "cpplint", -- A little bit too annoying..
+
+          -- "cpptools", -- vscode cppdbg, executable `OpenDebugAD7`. In replacement to codelldb. Known to have certain limitations, use codelldb if possible.
+          "codelldb",
         },
         python = {
           -- "black",
           -- "delve",
           "pyright",
-          "debugpy",
-          -- "ruff",
+          "debugpy", -- Installing it anyway, despite its ususally being installed from venv manager. Mason should be a fallback option.
+          "ruff", -- Used as formatter as well linter.
         },
         docker = {
           -- "hadolint",
@@ -99,7 +100,7 @@ return {
           "goimports",
           "gomodifytags",
           "gopls",
-          "impl",
+          "impl", -- TODO: not tried yet...
         },
         json = {
           "jsonlint",
@@ -116,12 +117,13 @@ return {
         },
         markdown = {
           "markdown-toc",
-          "markdownlint-cli2",
+          -- "markdownlint-cli2",
           "marksman",
         },
         shell = {
           "shfmt",
           "bash-language-server",
+          "bash-debug-adapter",
         },
         sql = {
           -- "sql-formatter",
@@ -138,9 +140,11 @@ return {
         },
         xml = {
           "lemminx",
+          "xmlformatter",
         },
         nix = {
           "nixpkgs-fmt",
+          "nixfmt",
           "nil",
         },
       }
@@ -149,6 +153,8 @@ return {
       -- Setup with ensure_installed.
       require("mason").setup({
         max_concurrent_installers = 10,
+        -- Mason should serve as a fallback manager to language-sepcific pkg manager.
+        PATH = "prepend",
       })
     end,
   },
@@ -255,7 +261,8 @@ return {
         json = { "jsonlint" },
         -- rust = { "bacon" }, For rust we just use rust-analysis.
         makefile = { "checkmake" },
-        cmake = { "cmakelang" },
+        -- cmake = { "cmakelang" },
+        cmake = { "cmake-lint" },
         -- for c/cpp linter not recognizing the include path, use envs.
         -- export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$(pwd)/include
         -- export C_INCLUDE_PATH=$C_INCLUDE_PATH:$(pwd)/include
@@ -297,14 +304,17 @@ return {
       formatters_by_ft = {
         -- Conform will run multiple formatters sequentially
         -- You can customize some of the format options for the filetype (:help conform.format)
+        nix = { "nixfmt", "nixpkgs-fmt" },
         lua = { "stylua" },
         c = { "clang-format" },
+        cmake = { "cmake-format" },
         cpp = { "clang-format" },
-        cmake = { "cmake-lint" },
         python = { "ruff" },
         golang = { "goimports", "gopls" },
         rust = { "rustfmt", lsp_format = "fallback" },
         json = { "fixjson" },
+        xml = { "xmlformatter" },
+        bash = { "shfmt" },
         -- Conform will run the first available formatter
       },
       format_on_save = false,

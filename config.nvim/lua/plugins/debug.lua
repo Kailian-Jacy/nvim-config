@@ -132,7 +132,6 @@ return {
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
 
-      -- Register Codelldb adapter here: for rust and cpp.
       local function get_full_path_of(debugger_exe_name)
         local exe_path = vim.fn.trim(vim.fn.system("which " .. debugger_exe_name))
 
@@ -149,33 +148,36 @@ return {
           return exe_path
         end
       end
-      if get_full_path_of("OpenDebugAD7") then
-        dap.adapters.cppdbg = {
-          id = "cppdbg",
-          type = "executable",
-          command = get_full_path_of("OpenDebugAD7"),
-        }
+
+      ---@param name string
+      ---@param exe_name? string
+      local function dap_register_if_executable(name, exe_name)
+        exe_name = exe_name or name
+        if vim.fn.executable(exe_name) then
+          dap.adapters[name] = {
+            id = name,
+            type = "executable",
+            command = get_full_path_of(exe_name),
+          }
+        end
       end
-      if get_full_path_of("codelldb") then
-        dap.adapters.codelldb = {
-          type = "executable",
-          -- Developer says it's important to have absolute path.
-          command = get_full_path_of("codelldb"),
-          -- env = {},
-          name = "codelldb",
-        }
-      end
-      if vim.fn.executable("debugpy") then
-        dap.adapters.debugpy = {
-          type = "executable",
-          -- We want to update the actual debugpy instance it points to
-          --   as used python executable is updated.
-          -- So we are not using full path here.
-          command = "debugpy",
-          -- env = {},
-          name = "debugpy",
-        }
-      end
+      dap_register_if_executable("cppdbg", "OpenDebugAD7")
+      dap_register_if_executable("codelldb")
+      dap_register_if_executable("gopls")
+      -- TODO: Not tried yet..
+      dap_register_if_executable("sh", "bash-debug-adapter")
+
+      -- As debugpy is sometimes provided by venv, when switching venv, availability of debugpy may change.
+      -- So we just register it here, if debugpy does not exists, we'll let dap reports executable missing.
+      dap.adapters.debugpy = {
+        type = "executable",
+        -- We want to update the actual debugpy instance it points to
+        --   as used python executable is updated.
+        -- So we are not using full path here.
+        command = "debugpy",
+        -- env = {},
+        name = "debugpy",
+      }
     end,
   },
   --[[{
