@@ -74,7 +74,6 @@ local default_modules_config = {
   },
 }
 
-vim.print(vim.g.modules)
 vim.g.modules = vim.tbl_deep_extend("keep", (vim.g.modules or {}), default_modules_config)
 
 --------------------------------------------------
