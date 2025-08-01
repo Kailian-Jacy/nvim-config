@@ -76,6 +76,41 @@
 		],
 		"description": "example config.json config for Rust programs."
 	},
+	"debug.launch_json.remote_gdbserver": {
+		"prefix": "remotegdbserverlaunchjsonconfig",
+		"body": [
+			"{",
+			"  \"name\": \"Remote debug process with gdbserver (not working)\",",
+			"  \"type\": \"codelldb\",",
+			"  \"request\": \"attach\",",
+			"  \"targetCreateCommands\": [\"target create \\${workspaceFolder}/../../qsshome/scene/bin/scened\"],",
+			"  \"processCreateCommands\": [\"gdb-remote localhost:12345\"],",
+			"  \"stopOnEntry\": true,",
+			"  \"description\": \"Check doc https://github.com/vadimcn/codelldb/blob/v1.11.5/MANUAL.md#connecting-to-a-gdbserver-style-agent\"",
+			"}"
+		],
+		"description": "Example remote debug config for connecting to gdbserver (experimental)."
+	},
+	"debug.launch_json.remote_lldb": {
+		"prefix": "remotelldblaunchjsonconfig",
+		"body": [
+			"{",
+			"  \"name\": \"Remote debug process with lldb-server\",",
+			"  \"type\": \"codelldb\",",
+			"  \"request\": \"attach\",",
+			"  \"stopOnEntry\": true,",
+			"  \"pid\": \"2449676\",",
+			"  // \"program\": \"scened\",",
+			"  \"initCommands\": [",
+			"    \"platform select remote-linux\",",
+			"    \"platform connect connect://localhost:12345\",",
+			"    \"settings set target.inherit-env false\"",
+			"  ],",
+			"  \"description\": \"remote: lldb-server p --server --listen *:12345. Doc: https://github.com/vadimcn/codelldb/blob/v1.11.5/MANUAL.md#connecting-to-lldb-server-agent\"",
+			"}"
+		],
+		"description": "Example remote debug config for connecting to lldb-server."
+	},
 	"llm.prompt.fix": {
 		"prefix": "fix",
 		"body": [
