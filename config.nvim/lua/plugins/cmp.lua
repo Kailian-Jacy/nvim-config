@@ -1,7 +1,7 @@
 return {
-  {
-    "SergioRibera/cmp-dotenv",
-  },
+  -- {
+  --   "SergioRibera/cmp-dotenv",
+  -- },
   {
     "hrsh7th/cmp-nvim-lsp",
   },
@@ -162,11 +162,18 @@ return {
         experimental = {
           ghost_text = false, -- this feature conflict with copilot.vim's preview.
         },
+        -- Sources are from groups:
+        -- 1. High priority: Snips under certain conditions. Small group, rare: LuaSnip, Path.
+        -- 2. Main stream: LSP related code information. Function, fields, rank by reference distance.
+        -- 3. Low priority: From other possible contents. Text, yanked text. Env var.
         sources = cmp.config.sources({
           {
             name = "luasnip",
             priority = 150,
-            option = { show_autosnippets = true, use_show_condition = false },
+            option = {
+              show_autosnippets = true,
+              use_show_condition = false,
+            },
           },
           {
             name = "async_path",
@@ -204,25 +211,29 @@ return {
             priority = 110,
             group_index = 1,
           },
-          {
-            name = "dotenv",
-            priority = 100,
-            -- Defaults
-            option = {
-              path = vim.g.dotenv_dir,
-              load_shell = true,
-              item_kind = cmp.lsp.CompletionItemKind.Variable,
-              eval_on_confirm = false,
-              show_documentation = true,
-              show_content_on_docs = true,
-              documentation_kind = "markdown",
-              dotenv_environment = ".*",
-              file_priority = function(a, b)
-                -- Prioritizing local files
-                return a:upper() < b:upper()
-              end,
-            },
-          },
+          -- Temporarily removing dotenv.
+          -- It's rarely used, and introducing many rubbish envvar.
+          -- Being marked as variable type makes them enjoying lsp level priority.
+          -- And it has something to do with matching logic. 
+          -- {
+          --   name = "dotenv",
+          --   priority = 20,
+          --   -- Defaults
+          --   option = {
+          --     path = vim.g.dotenv_dir,
+          --     load_shell = true,
+          --     item_kind = cmp.lsp.CompletionItemKind.Variable,
+          --     eval_on_confirm = false,
+          --     show_documentation = true,
+          --     show_content_on_docs = true,
+          --     documentation_kind = "markdown",
+          --     dotenv_environment = ".*",
+          --     file_priority = function(a, b)
+          --       -- Prioritizing local files
+          --       return a:upper() < b:upper()
+          --     end,
+          --   },
+          -- },
           {
             name = "cmp_tabnine",
             priority = 90,
@@ -232,12 +243,12 @@ return {
           },
         }),
         sorting = {
-          priority_weight = 100,
+          priority_weight = 2,
           comparators = {
-            cmp.config.compare.locality,
             cmp.config.compare.recently_used,
-            cmp.config.compare.score,
             cmp.config.compare.kind,
+            cmp.config.compare.locality,
+            cmp.config.compare.score,
             cmp.config.compare.exact,
             cmp.config.compare.offset,
             require("cmp-under-comparator").under,
