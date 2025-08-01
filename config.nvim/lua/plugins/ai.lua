@@ -167,7 +167,7 @@ return {
         }
       end,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "openrouter_gemini_flash", -- Recommend using Claude
+      provider = "openrouter_claude_4", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
       providers = {
         ollama = {
