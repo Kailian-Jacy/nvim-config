@@ -487,7 +487,11 @@ return {
             vim.schedule(function()
               picker:close()
               Snacks.picker.grep({
-                args = multi_selection
+                args = multi_selection,
+                certain_files = true,
+                toggles = {
+                  certain_files = "f" .. #(multi_selection)
+                }
               })
             end)
           end
