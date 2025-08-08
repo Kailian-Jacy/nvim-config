@@ -18,6 +18,10 @@ return {
         "<leader>lr",
         "<cmd>OverseerRun<cr>",
       },
+      {
+        "<leader>lR",
+        "<cmd>OverseerRestartLast<cr>",
+      },
     },
     config = function()
       require("overseer").setup({
