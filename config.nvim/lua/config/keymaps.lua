@@ -251,14 +251,16 @@ function rhs_options:map_cr(cmd_string)
   return self
 end
 
-NoUIKeyMap = function()
+vim.g.nvim_dap_keymap = function()
+  -- Prevent keymapping set during keymap.
   if vim.g.nvim_dap_noui_backup_keymap ~= nil then
     vim.print_silent("Already in debugging keymap.")
     return
   end
+
   vim.g.nvim_dap_noui_backup_keymap = vim.api.nvim_get_keymap("n")
   local widgets = require("dap.ui.widgets")
-  local keys = {
+  vim.g.nvim_dap_noui_keymap_list = {
     -- DAP --
     -- run
     -- ['r'] = { f = require('go.dap').run, desc = 'run' },
@@ -288,7 +290,8 @@ NoUIKeyMap = function()
     ["P"] = { f = require("dap.ui.widgets").preview, m = { "n", "v" }, desc = "preview the content" },
     ["p"] = { f = require("dap.ui.widgets").hover, m = { "n", "v" }, desc = "hover" },
   }
-  for key, value in pairs(keys) do
+
+  for key, value in pairs(vim.g.nvim_dap_noui_keymap_list) do
     local mode, keymap = key:match("([^|]*)|?(.*)")
     if type(value) == "string" then
       value = rhs_options.map_cr(value):with_noremap():with_silent()
@@ -305,49 +308,27 @@ NoUIKeyMap = function()
   end
 end
 
-NoUIUnmap = function()
+vim.g.nvim_dap_upmap = function()
   if vim.g.nvim_dap_noui_backup_keymap == nil then
     vim.print_silent("Already left debugging keymap.")
     return
   end
-  --[[if not _GO_NVIM_CFG.dap_debug_keymap then
-  return
-  end]]
-  local unmap_keys = {
-    -- 'r',
-    "c",
-    "n",
-    "s",
-    "o",
-    "S",
-    "u",
-    "D",
-    "C",
-    "b",
-    "P",
-    "p",
-    --[['K',
-  'B',
-  'R',
-  'O',
-  'a',
-  'w',]]
-  }
-  for _, value in pairs(unmap_keys) do
+
+  for value, _ in pairs(vim.g.nvim_dap_noui_keymap_list) do
     local cmd = "silent! unmap " .. value
     vim.cmd(cmd)
   end
 
   vim.cmd([[silent! vunmap p]])
 
-  for _, k in pairs(unmap_keys) do
+  for k, _ in pairs(vim.g.nvim_dap_noui_keymap_list) do
     for _, v in pairs(vim.g.nvim_dap_noui_backup_keymap or {}) do
       if v.lhs == k then
         local nr = (v.noremap == 1)
         local sl = (v.slient == 1)
         local exp = (v.expr == 1)
         local mode = v.mode
-        local desc = v.desc or "go-dap"
+        local desc = v.desc or "dap noui keymap"
         if v.mode == " " then
           mode = { "n", "v" }
         end
@@ -393,11 +374,11 @@ vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 
 -- Debugging keymaps set/unset.
 vim.keymap.set({"n", "v", "x"}, "<leader>dD", function ()
-  if vim.g.debugging_keymap == true then 
-    NoUIUnmap()
+  if vim.g.debugging_keymap == true then
+    vim.g.nvim_dap_upmap()
     vim.g.debugging_keymap = false
-  else 
-    NoUIKeyMap()
+  else
+    vim.g.nvim_dap_keymap()
     vim.g.debugging_keymap = true
   end
   require("lualine").refresh()
