@@ -1,10 +1,16 @@
 -- AI completions.
 return {
-  -- from ai store.
+  -- tencent copilot (gongfeng).
   {
-    "github/copilot.vim",
+    "copilot.vim",
+    dir = vim.fn.stdpath("config") .. "/pack/gongfeng/start/vim",
     enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
   },
+  -- from ai store.
+  -- {
+  --   "github/copilot.vim",
+  --   enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+  -- },
   {
     "tzachar/cmp-tabnine",
     -- there is some problem with tabnine installation. Just
@@ -12,10 +18,6 @@ return {
     build = "./install.sh",
     dependencies = "hrsh7th/nvim-cmp",
   },
-  -- tencent copilot (gongfeng).
-  --[[{
-    "copilot.vim",
-  },]]
   {
     "ravitemer/mcphub.nvim",
     dependencies = {

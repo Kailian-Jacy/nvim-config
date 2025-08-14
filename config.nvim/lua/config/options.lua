@@ -280,7 +280,7 @@ vim.opt.shiftwidth = 0
 vim.opt.expandtab = true
 
 -- copilot endpoint
-vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
+-- vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
 
 -- [ These are the Options needs to be set when migration to new machine. ]
 
