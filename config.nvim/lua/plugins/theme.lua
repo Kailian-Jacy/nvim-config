@@ -434,6 +434,7 @@ return {
       blocklist = {
         default = {
           highlights = {
+            "WinSeparator"
             -- sp = {rgb={255,0,0}, intensity=0.5}, -- adds 50% red to special characters
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
