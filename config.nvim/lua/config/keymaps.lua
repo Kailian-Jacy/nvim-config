@@ -229,13 +229,24 @@ vim.keymap.set("n", "<leader>bd", function()
 end, { noremap = true, silent = false })
 
 -- Tab-related.
-vim.keymap.set("n", "<tab><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>d", "<cmd>tabclose<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>", function()
+  if vim.g.pinned_tab ~= nil and vim.api.nvim_get_current_tabpage == vim.g.pinned_tab.id then
+    if vim.g.last_tab ~= nil then
+      -- Go to the last tab.
+      vim.api.nvim_set_current_tabpage(vim.g.last_tab)
+    elseif #vim.g.tabs >= 1 then
+      -- Go to the first tabpage if possible.
+      vim.api.nvim_set_current_tabpage(vim.g.tabs[1])
+    end
+  elseif vim.g.pinned_tab ~= nil then
+    vim.api.nvim_set_current_tabpage(vim.g.pinned_tab.id)
+  end
+end, { noremap = true, silent = true })
+vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 -- Migrate to normal-tabbing switching.
 vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
--- put the current window as a new tab.
-vim.keymap.set("n", "<tab>w", "<cmd>tabedit %<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()

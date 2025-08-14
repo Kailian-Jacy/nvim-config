@@ -14,6 +14,10 @@ M.before_all = function()
   -- modules.svn = false
   -- -- Be sure to write them back
   -- vim.g.modules = modules
+
+  -- Tab name indicator. Name will be marked if any matching.
+  -- The former, the priorer.
+  -- vim.g.tab_path_mark = { ["Branch_OB_Publish"] = "P", ["Branch_GServers_%d+"] = "G", ["Branch_NServers_%d+"] = "N" }
 end
 M.after_options = function()
   -- Temporary workaround for tencent gbk encodings.
