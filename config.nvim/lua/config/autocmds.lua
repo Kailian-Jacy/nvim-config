@@ -372,6 +372,15 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     -- Create a new tab
     vim.cmd("tabnew")
 
+    -- Judge the svn version of the file.
+    local svn_version_cmd = "svn info " .. file_path
+    svn_version_cmd = svn_version_cmd .. " | grep Revision:"
+    svn_version_cmd = svn_version_cmd .. " | awk '{print $2}'"
+    local version_handle = io.popen(svn_version_cmd)
+    local version = version_handle:read("*all")
+
+    vim.fn.settabvar(vim.api.nvim_get_current_tabpage(), "tabname", version)
+
     -- Try to get the file content from SVN (svn cat)
     local svn_cmd = "svn cat " .. file_path
     svn_cmd = svn_cmd .. " | iconv -f GBK -t UTF-8 " -- now workaround for GBK.  TODO: zianxu: auto detect from fileencodings.
@@ -400,6 +409,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     vim.api.nvim_win_set_buf(0, buf2)
     vim.bo[buf2].modifiable = false
     vim.bo[buf2].filetype = filetype
+    vim.cmd("file " .. file_path .. ":" .. version)
 
     vim.cmd("diffthis")
     -- vim.cmd("windo diffthis")

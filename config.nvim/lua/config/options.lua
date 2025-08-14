@@ -39,7 +39,7 @@ vim.g.tabname = function(tab_id)
     name = tabname
   end
 
-  if vim.g.tab_path_mark then
+  if name == "" and vim.g.tab_path_mark then
     -- Take the tab workdir, match against the settings.
     local working_directory = get_tab_workdir(tab_id)
     for pattern, predefined_name in pairs(vim.g.tab_path_mark) do
