@@ -231,7 +231,8 @@ return {
         options = {
           theme = theme,
           global_status = true,
-          section_separators = '', component_separators = ''
+          section_separators = "",
+          component_separators = "",
         },
         sections = {
           -- lualine_a = { "vim.g.is_debugging or ''" }, -- Used to display is Debugging information.
@@ -314,16 +315,16 @@ return {
                   return ""
                 end
                 local cwd = function()
-                  return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+                  return vim.g.tabname(vim.api.nvim_get_current_tabpage())
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
-              color = function ()
+              color = function()
                 if vim.g.debugging_keymap then
-                  return { bg = '#7358D6' }
+                  return { bg = "#7358D6" }
                 end
                 return { fg = nil, bg = nil }
-              end
+              end,
             },
           },
         },
@@ -433,7 +434,7 @@ return {
       blocklist = {
         default = {
           highlights = {
-            "WinSeparator",
+            -- sp = {rgb={255,0,0}, intensity=0.5}, -- adds 50% red to special characters
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
           -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },

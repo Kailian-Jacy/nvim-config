@@ -230,23 +230,13 @@ end, { noremap = true, silent = false })
 
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>", function()
-  if vim.g.pinned_tab ~= nil and vim.api.nvim_get_current_tabpage == vim.g.pinned_tab.id then
-    if vim.g.last_tab ~= nil then
-      -- Go to the last tab.
-      vim.api.nvim_set_current_tabpage(vim.g.last_tab)
-    elseif #vim.g.tabs >= 1 then
-      -- Go to the first tabpage if possible.
-      vim.api.nvim_set_current_tabpage(vim.g.tabs[1])
-    end
-  elseif vim.g.pinned_tab ~= nil then
-    vim.api.nvim_set_current_tabpage(vim.g.pinned_tab.id)
-  end
-end, { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>", "<cmd>BlinkPinnedTab<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
+
 -- Migrate to normal-tabbing switching.
-vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<C-tab>", "<cmd>TabNext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<S-C-tab>", "<cmd>TabNext inc<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>up", "<cmd>PinTab<CR>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
@@ -283,14 +273,28 @@ vim.g.nvim_dap_keymap = function()
     ["d"] = { f = require("dap").down, desc = "down" },
 
     -- Widgets for resources.
-    ["<D-f>"] = { f = function() widgets.centered_float(widgets.frames) end, desc = "Widget: Frames" },
-    ["<D-s>"] = { f = function() widgets.centered_float(widgets.sessions) end, desc = "Widget: Session" },
-    ["<D-p>"] = { f = function() widgets.centered_float(widgets.scopes) end, desc = "Widget: Variable in Scopes" },
+    ["<D-f>"] = {
+      f = function()
+        widgets.centered_float(widgets.frames)
+      end,
+      desc = "Widget: Frames",
+    },
+    ["<D-s>"] = {
+      f = function()
+        widgets.centered_float(widgets.sessions)
+      end,
+      desc = "Widget: Session",
+    },
+    ["<D-p>"] = {
+      f = function()
+        widgets.centered_float(widgets.scopes)
+      end,
+      desc = "Widget: Variable in Scopes",
+    },
     -- TODO:  Breakpoints & conditional breakpoints waits to be finished
     --
     -- ["<D-b>"] = { f = widgets.centered_float(widgets.break), desc = "Widget: Variable in Scopes" },
     ["<D-r>"] = { f = require("dap").repl.toggle, desc = "repl toggle" },
-
 
     ["C"] = { f = require("dap").run_to_cursor, desc = "run_to_cursor" },
     ["b"] = { f = require("dap").toggle_breakpoint, desc = "toggle_breakpoint" },
@@ -384,7 +388,7 @@ vim.keymap.set("n", "<leader>DD", NoUIGeneircDebug)
 vim.keymap.set("n", "<leader>Dt", "<cmd>DapTerminate<CR>")
 
 -- Debugging keymaps set/unset.
-vim.keymap.set({"n", "v", "x"}, "<leader>dD", function ()
+vim.keymap.set({ "n", "v", "x" }, "<leader>dD", function()
   if vim.g.debugging_keymap == true then
     vim.g.nvim_dap_upmap()
     vim.g.debugging_keymap = false
@@ -394,7 +398,6 @@ vim.keymap.set({"n", "v", "x"}, "<leader>dD", function ()
   end
   require("lualine").refresh()
 end, { desc = "Toggle debugging keymaps mode." })
-
 
 -- Cmd-related mappings.
 ---@class CmdMapping
@@ -416,7 +419,13 @@ local cmd_mappings = {
   -- Comment related.
   { cmdKeymap = "<D-c>", leaderKeymap = "<leader>cm", modes = { "n", "v" }, description = "Comment" },
   -- Debugging related.
-  { cmdKeymap = "<D-D>", leaderKeymap = "<leader>dD", modes = { "n", "v", "i" }, description = "Toggle debug keymaps", back_to_insert = true },
+  {
+    cmdKeymap = "<D-D>",
+    leaderKeymap = "<leader>dD",
+    modes = { "n", "v", "i" },
+    description = "Toggle debug keymaps",
+    back_to_insert = true,
+  },
   -- Directory/file related
   {
     cmdKeymap = "<D-e>",

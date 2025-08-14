@@ -95,6 +95,115 @@ vim.api.nvim_create_user_command("OpenLaunchJson", function()
 end, { desc = "Open the launch.json related to the current workdir. If non-exists, confirms to create." })
 
 -- Command to set up currrent tab name
+vim.api.nvim_create_user_command("PinTab", function(opt)
+  local current_id = vim.api.nvim_get_current_tabpage()
+  local name = opt.args[1] or ""
+
+  if vim.g.pinned_tab and vim.g.pinned_tab.id == current_id then
+    -- If the current tab has been pinned. Unpin it.
+    vim.cmd("UnpinTab")
+  else
+    -- Else, set the current tab to be pinned.
+    vim.g.pinned_tab = { id = current_id, name = name }
+    if name and #name > 0 then
+      vim.fn.settabvar(current_id, "tabname", name)
+    end
+  end
+
+  vim.g._update_tabs()
+end, { desc = "Pin current tab", nargs = "?" })
+
+vim.api.nvim_create_user_command("UnpinTab", function(opt)
+  local current_id = vim.api.nvim_get_current_tabpage()
+
+  vim.g.pinned_tab = nil
+  vim.fn.settabvar(current_id, "tabname", "")
+  vim.g._update_tabs()
+end, { desc = "Pin current tab", nargs = "?" })
+
+vim.api.nvim_create_user_command("BlinkPinnedTab", function(opt)
+  if vim.g.pinned_tab == nil then
+    return
+  end
+  local current_id = vim.api.nvim_get_current_tabpage()
+
+  if vim.g.pinned_tab ~= nil and current_id == vim.g.pinned_tab.id then
+    if vim.g.last_tab ~= nil then
+      -- Go to the last tab.
+      vim.api.nvim_set_current_tabpage(vim.g.last_tab)
+    elseif #vim.g.tabs >= 1 then
+      -- Go to the first tabpage if possible.
+      vim.api.nvim_set_current_tabpage(vim.g.tabs[1])
+    end
+  elseif vim.g.pinned_tab ~= nil then
+    vim.api.nvim_set_current_tabpage(vim.g.pinned_tab.id)
+  end
+end, { desc = "Go to and back from the pinned tab." })
+
+vim.api.nvim_create_user_command("TabNext", function(opt)
+  -- decide direction
+  opt = opt.args
+  if #opt == 0 then
+    opt = "dec"
+  end
+  local dec = 0
+  if opt == "inc" then
+    dec = 1
+  elseif opt == "dec" then
+    dec = -1
+  else
+    -- Invalid
+    return
+  end
+
+  local current_id = vim.api.nvim_get_current_tabpage()
+  if vim.g.pinned_tab and current_id == vim.g.pinned_tab.id and #vim.g.tabs > 0 then
+    if dec == 1 then
+      vim.api.nvim_set_current_tabpage(vim.g.tabs[1])
+    else
+      vim.api.nvim_set_current_tabpage(vim.g.tabs[#vim.g.tabs])
+    end
+  end
+  for i, v in ipairs(vim.g.tabs) do
+    if v == current_id then
+      vim.api.nvim_set_current_tabpage(vim.g.tabs[1 + (i - dec - 1) % #vim.g.tabs])
+    end
+  end
+end, { desc = "Move to the next tab in list.", nargs = "?" })
+
+vim.api.nvim_create_autocmd("TabLeave", {
+  pattern = "*",
+  callback = function()
+    -- vim.print("TabLeave " .. vim.api.nvim_get_current_tabpage())
+    vim.g.last_tab = vim.api.nvim_get_current_tabpage()
+  end,
+})
+
+vim.api.nvim_create_autocmd("TabClosed", {
+  pattern = "*",
+  callback = function()
+    local closed_tab = vim.fn.expand("<afile>")
+    if vim.g.pinned_tab and closed_tab == vim.g.pinned_tab.id then
+      vim.cmd("UnpinTab")
+    end
+    if vim.g.last_tab == closed_tab then
+      vim.g.last_tab = nil
+    end
+    -- Will be updated in another events.
+  end,
+})
+
+-- vim.api.nvim_create_autocmd("TabEnter", {
+--   pattern = "*",
+--   callback = function()
+--     vim.print("TabEnter " .. vim.api.nvim_get_current_tabpage())
+--   end,
+-- })
+vim.api.nvim_create_autocmd({ "TabEnter", "TabNew", "TabNewEntered", "TabClosed" }, {
+  pattern = "*",
+  callback = vim.g._update_tabs,
+})
+
 vim.api.nvim_create_user_command("SetTabName", function(opt)
   opt = opt or {}
   opt.args = opt.args or { "" }

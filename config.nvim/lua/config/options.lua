@@ -1,6 +1,62 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
+-- Customized Tabs
+vim.g.tabs = {}
+vim.g.pinned_tab = nil
+vim.g.last_tab = nil
+vim.g.pinned_tab_marker = "󰐃"
+
+vim.g._update_tabs = function()
+  -- Get all the tabs.
+  local tabs = vim.api.nvim_list_tabpages()
+  --
+  -- -- Exclude the special tabs
+  -- if vim.g.pinned_tab ~= nil then
+  --   for i, tab_id in ipairs(tabs) do
+  --     if tab_id == vim.g.pinned_tab.id then
+  --       table.remove(tabs, i)
+  --       break
+  --     end
+  --   end
+  -- end
+
+  vim.g.tabs = tabs
+  vim.cmd("redrawtabline")
+end
+
+local get_tab_workdir = function(index)
+  local win_num = vim.fn.tabpagewinnr(index)
+  return vim.fn.getcwd(win_num, index)
+end
+
+vim.g.tabname = function(tab_id)
+  -- Naming: priority: tabname var > general dedup mark > workdir path name.
+  local name = ""
+  local tabname = vim.fn.gettabvar(tab_id, "tabname")
+
+  if tabname and #tabname > 0 then
+    name = tabname
+  end
+
+  if vim.g.tab_path_mark then
+    -- Take the tab workdir, match against the settings.
+    local working_directory = get_tab_workdir(tab_id)
+    for pattern, predefined_name in pairs(vim.g.tab_path_mark) do
+      if string.match(working_directory, pattern) then
+        name = "[" .. predefined_name .. "]" .. vim.fn.fnamemodify(working_directory, ":t")
+        break
+      end
+    end
+  end
+
+  if name == "" then
+    local working_directory = get_tab_workdir(tab_id)
+    name = vim.fn.fnamemodify(working_directory, ":t")
+  end
+  return name
+end
+
 -- Helper functions and resource detection.
 local _if_not_set_or_true = function(var)
   return var == nil or var == true
@@ -138,17 +194,12 @@ end
 ---@field name? string
 ---@field prefix? string
 
-local get_tab_workdir = function(index)
-  local win_num = vim.fn.tabpagewinnr(index)
-  return vim.fn.getcwd(win_num, index)
-end
-
 ---@param tab_descriptions table<TabDescriptions>
 function TablineString(tab_descriptions)
   local tabline = ""
   for index = 1, #tab_descriptions do
     local tab_descriptor = tab_descriptions[index]
-    local tab_id, tab_name, tab_prefix = tab_descriptor.id, tab_descriptor.name, (tab_descriptor.prefix or "")
+    local tab_id, tab_name, tab_prefix = tab_descriptor.index, tab_descriptor.name, (tab_descriptor.prefix or "")
 
     -- Select highlighting based on active tab
     if tab_id == vim.fn.tabpagenr() then
@@ -170,37 +221,32 @@ end
 function Tabline()
   ---@type table<TabDescriptions>
   local tabs = {}
+  ---@type TabDescriptions?
+  local pinned_tab = nil
+
   for index = 1, vim.fn.tabpagenr("$") do
-    local name = ""
-    local prefix = ""
+    local name = vim.g.tabname(index)
 
-    -- Naming: priority: tabname var > general dedup mark > workdir path name.
-    local tabname = vim.fn.gettabvar(index, "tabname")
-    if tabname and #tabname > 0 then
-      name = tabname
-    end
-
-    if vim.g.tab_path_mark then
-      -- Take the tab workdir, match against the settings.
-      local working_directory = get_tab_workdir(index)
-      for pattern, predefined_name in pairs(vim.g.tab_path_mark) do
-        if string.match(working_directory, pattern) then
-          name = predefined_name .. "." .. vim.fn.fnamemodify(working_directory, ":t")
-          break
-        end
-      end
-    end
-
-    if name == "" then
-      local working_directory = get_tab_workdir(index)
-      name = vim.fn.fnamemodify(working_directory, ":t")
+    -- Put the pinned tab at the very beginning
+    if vim.g.pinned_tab and vim.g.pinned_tab.id == index then
+      pinned_tab = {
+        index = index,
+        name = name,
+        prefix = vim.g.pinned_tab_marker .. " "
+      }
+      goto next_tab
     end
 
     tabs[#tabs + 1] = {
-      id = index,
+      index = index,
       name = name,
-      prefix = prefix,
+      prefix = "",
     }
+    ::next_tab::
+  end
+
+  if pinned_tab then
+    table.insert(tabs, 1, pinned_tab)
   end
 
   -- Predispose: set the name for those working directory matching given style
