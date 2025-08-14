@@ -388,8 +388,6 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     local handle = io.popen(svn_cmd)
     local svn_content = handle:read("*all")
     local success = handle:close() -- Capture the exit code to check if svn command succeeded
-    vim.print(success)
-    vim.print(svn_content)
 
     local buf2
     if success and svn_content and #svn_content > 0 then
