@@ -237,6 +237,7 @@ vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = tr
 vim.keymap.set("n", "<C-tab>", "<cmd>TabNext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>TabNext inc<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>up", "<cmd>PinTab<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>uP", ":PinTab ", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()

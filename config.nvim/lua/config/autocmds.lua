@@ -97,9 +97,9 @@ end, { desc = "Open the launch.json related to the current workdir. If non-exist
 -- Command to set up currrent tab name
 vim.api.nvim_create_user_command("PinTab", function(opt)
   local current_id = vim.api.nvim_get_current_tabpage()
-  local name = opt.args[1] or ""
+  local name = opt.args or ""
 
-  if vim.g.pinned_tab and vim.g.pinned_tab.id == current_id then
+  if vim.g.pinned_tab and vim.g.pinned_tab.id == current_id and #name > 0 then
     -- If the current tab has been pinned. Unpin it.
     vim.cmd("UnpinTab")
   else
