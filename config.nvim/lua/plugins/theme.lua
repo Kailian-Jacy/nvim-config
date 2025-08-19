@@ -315,7 +315,7 @@ return {
                   return ""
                 end
                 local cwd = function()
-                  return vim.g.tabname(vim.api.nvim_get_current_tabpage())
+                  return vim.g.tabname(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()))
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
