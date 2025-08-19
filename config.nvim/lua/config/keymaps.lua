@@ -230,13 +230,21 @@ end, { noremap = true, silent = false })
 
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>", "<cmd>BlinkPinnedTab<cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<tab>", "<cmd>FlipPinnedTab<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 
 -- Migrate to normal-tabbing switching.
-vim.keymap.set("n", "<C-tab>", "<cmd>TabNext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<S-C-tab>", "<cmd>TabNext inc<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<leader>up", "<cmd>PinTab<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>up", function()
+  if vim.g.pinned_tab and vim.api.nvim_current_tabpage() == vim.g.pinned_tab.id then
+    -- Call on the pinned tab. Unpin it.
+    vim.cmd("UnpinTab")
+  else
+    -- Pin the tab elsewise.
+    vim.cmd("PinTab")
+  end
+end, { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>uP", ":PinTab ", { noremap = true, silent = true })
 
 -- context display

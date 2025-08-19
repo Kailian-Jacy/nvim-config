@@ -315,7 +315,12 @@ return {
                   return ""
                 end
                 local cwd = function()
-                  return vim.g.tabname(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()))
+                  local workdir = vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+                  local tabname = vim.g.tabname(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()))
+                  if tabname ~= workdir then
+                    return workdir .. " => " .. tabname
+                  end
+                  return tabname
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
               end,
@@ -434,7 +439,7 @@ return {
       blocklist = {
         default = {
           highlights = {
-            "WinSeparator"
+            "WinSeparator",
             -- sp = {rgb={255,0,0}, intensity=0.5}, -- adds 50% red to special characters
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.

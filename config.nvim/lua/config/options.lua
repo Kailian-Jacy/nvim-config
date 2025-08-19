@@ -2,28 +2,16 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
 -- Customized Tabs
-vim.g.tabs = {}
+---@class PinnedTab
+---@field id integer
+---@field name string
+---@field buffers table<integer>
+
+---@type PinnedTab?
 vim.g.pinned_tab = nil
+
 vim.g.last_tab = nil
 vim.g.pinned_tab_marker = "󰐃"
-
-vim.g._update_tabs = function()
-  -- Get all the tabs.
-  local tabs = vim.api.nvim_list_tabpages()
-  --
-  -- -- Exclude the special tabs
-  -- if vim.g.pinned_tab ~= nil then
-  --   for i, tab_id in ipairs(tabs) do
-  --     if tab_id == vim.g.pinned_tab.id then
-  --       table.remove(tabs, i)
-  --       break
-  --     end
-  --   end
-  -- end
-
-  vim.g.tabs = tabs
-  vim.cmd("redrawtabline")
-end
 
 local get_tab_workdir = function(index)
   local win_num = vim.fn.tabpagewinnr(index)
@@ -228,21 +216,15 @@ function Tabline()
     local name = vim.g.tabname(index)
 
     -- Put the pinned tab at the very beginning
-    if vim.g.pinned_tab and vim.g.pinned_tab.id == index then
-      pinned_tab = {
-        index = index,
-        name = name,
-        prefix = vim.g.pinned_tab_marker .. " "
-      }
-      goto next_tab
-    end
-
     tabs[#tabs + 1] = {
       index = index,
       name = name,
       prefix = "",
     }
-    ::next_tab::
+
+    if index == 1 and vim.g.pinned_tab then
+      tabs[#tabs].prefix = vim.g.pinned_tab_marker .. " "
+    end
   end
 
   if pinned_tab then
