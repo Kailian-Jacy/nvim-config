@@ -57,9 +57,31 @@ end, {
 
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
-  -- Check if $VIMPWD/.vscode/launch.json exists.
-  local vscode_dir = vim.fn.getcwd() .. "/.vscode"
-  local launch_json = vscode_dir .. "/launch.json"
+  -- Search .vscode/launch.json recursively above from the current working directory
+  local function find_launch_json(start_dir)
+    local current_dir = start_dir
+    while current_dir ~= "/" and current_dir ~= "" do
+      local vscode_dir = current_dir .. "/.vscode"
+      local launch_json = vscode_dir .. "/launch.json"
+
+      if vim.fn.filereadable(launch_json) == 1 then
+        return launch_json, vscode_dir
+      end
+
+      -- Move up one directory
+      current_dir = vim.fn.fnamemodify(current_dir, ":h")
+    end
+    return nil, nil
+  end
+
+  -- Try to find existing launch.json first
+  local launch_json, vscode_dir = find_launch_json(vim.fn.getcwd())
+
+  -- If not found, use current working directory for creation
+  if not launch_json then
+    vscode_dir = vim.fn.getcwd() .. "/.vscode"
+    launch_json = vscode_dir .. "/launch.json"
+  end
 
   if vim.fn.filereadable(launch_json) == 0 then
     -- Popup select to confirm creation. Map to [Y]es or [N]o.
