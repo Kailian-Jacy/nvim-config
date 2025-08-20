@@ -384,8 +384,17 @@ function NoUIGeneircDebug()
     return
   end
   -- (Re-)reads launch.json if present
-  if vim.fn.filereadable(".vscode/launch.json") then
-    require("dap.ext.vscode").load_launchjs(nil, {
+  -- Try to find existing launch.json first
+  local launch_json, vscode_dir = vim.g.find_launch_json(vim.fn.getcwd())
+
+  -- If not found, use current working directory for creation
+  if not launch_json then
+    vscode_dir = vim.fn.getcwd() .. "/.vscode"
+    launch_json = vscode_dir .. "/launch.json"
+  end
+
+  if vim.fn.filereadable(launch_json) then
+    require("dap.ext.vscode").load_launchjs(launch_json, {
       debugpy = { "python" },
       cpptools = { "c", "cpp" },
     })
