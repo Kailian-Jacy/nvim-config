@@ -86,7 +86,16 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
   end
 end)
 
-vim.keymap.set("n", "<leader>sd", "<cmd>SvnDiffThis<cr>", { noremap = true, desc = "Svn diff this" })
+if vim.g.modules.svn and vim.g.modules.svn.enabled then
+  vim.keymap.set("n", "<leader>sd", function ()
+    local tab_debug = vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug")
+    if tab_debug == true then
+      vim.cmd([[SvnDiffThisClose]])
+    else
+      vim.cmd([[SvnDiffThis]])
+    end
+  end, { noremap = true, desc = "Svn diff this" })
+end
 -- vim.keymap.set("n", "<leader>sa", "<cmd>SvnDiffAll<cr>", { noremap = true, desc = "Svn diff all" }) -- It's better to use autocmd
 
 -- Do not move line with alt. Sometimes it's triggered by esc j/k

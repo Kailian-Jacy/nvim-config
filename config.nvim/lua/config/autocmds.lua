@@ -2,6 +2,23 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
+-- Tool functions.
+vim.g.find_launch_json = function(start_dir)
+  local current_dir = start_dir
+  while current_dir ~= "/" and current_dir ~= "" do
+    local vscode_dir = current_dir .. "/.vscode"
+    local launch_json = vscode_dir .. "/launch.json"
+
+    if vim.fn.filereadable(launch_json) == 1 then
+      return launch_json, vscode_dir
+    end
+
+    -- Move up one directory
+    current_dir = vim.fn.fnamemodify(current_dir, ":h")
+  end
+  return nil, nil
+end
+
 -- Tasks: Overseer
 vim.api.nvim_create_user_command("OverseerRestartLast", function()
   local overseer = require("overseer")
@@ -58,24 +75,9 @@ end, {
 -- Open the launch.json related to the current workdir. If non-exists, confirms to create.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()
   -- Search .vscode/launch.json recursively above from the current working directory
-  local function find_launch_json(start_dir)
-    local current_dir = start_dir
-    while current_dir ~= "/" and current_dir ~= "" do
-      local vscode_dir = current_dir .. "/.vscode"
-      local launch_json = vscode_dir .. "/launch.json"
-
-      if vim.fn.filereadable(launch_json) == 1 then
-        return launch_json, vscode_dir
-      end
-
-      -- Move up one directory
-      current_dir = vim.fn.fnamemodify(current_dir, ":h")
-    end
-    return nil, nil
-  end
 
   -- Try to find existing launch.json first
-  local launch_json, vscode_dir = find_launch_json(vim.fn.getcwd())
+  local launch_json, vscode_dir = vim.g.find_launch_json(vim.fn.getcwd())
 
   -- If not found, use current working directory for creation
   if not launch_json then
@@ -377,11 +379,94 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 
 -- Svn Related.
 if vim.g.modules.svn and vim.g.modules.svn.enabled then
-  vim.api.nvim_create_user_command("SvnDiffThis", function()
+  vim.api.nvim_create_user_command("SvnDiffShiftVersion", function(opts)
+    opts = opts.args or "prev"
+
+    -- Close the current tabpage
+    local tab_debug = vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug")
+    if not tab_debug then
+      vim.notify("not in the diff tab.", vim.log.levels.ERROR)
+      return
+    end
+    local last_version =
+      vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "tabname")
+
+    -- Get all the svn editted versions for this file. Let's get 100 for the time being.
+    local file_path = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()) -- Get the file path of the buffer
+
+    local version_handle = io.popen("svn log -q -l 100 " .. file_path .. " | grep \"^r[0-9]\" | cut -d ' ' -f 1") or {}
+    local all_versions_str = version_handle:read("*all")
+    version_handle:close()
+
+    -- Scan the results from all versions.
+    local all_versions = {}
+    for version in all_versions_str:gmatch("([^\r\n]+)") do
+      if version and #version > 0 then
+        table.insert(all_versions, version)
+      end
+    end
+
+    -- Search next version.
+    local current_index = nil
+    for i, version in ipairs(all_versions) do
+      if version == last_version then
+        current_index = i
+        break
+      end
+    end
+
+    if not current_index then
+      vim.notify("Current version '" .. last_version .. "' not found in SVN history", vim.log.levels.ERROR)
+      return
+    end
+
+    local target_index
+    if opts == "prev" then
+      -- Previous version (older, higher index since list is descending)
+      target_index = current_index + 1
+    elseif opts == "next" then
+      -- Next version (newer, lower index since list is descending)
+      target_index = current_index - 1
+    else
+      vim.notify("Invalid option '" .. opts .. "'. Use 'prev' or 'next'", vim.log.levels.ERROR)
+      return
+    end
+
+    if target_index < 1 then
+      vim.print_silent("No newer version available (already at newest)")
+      return
+    end
+
+    if target_index > #all_versions then
+      vim.print_silent("No older version available (already at oldest)")
+      return
+    end
+
+    local target_version = all_versions[target_index]
+
+    -- Close current diff tab and open new one with target version
+    vim.cmd("tabclose")
+    vim.cmd("SvnDiffThis " .. target_version:gsub("^r", "")) -- Remove 'r' prefix for svn command
+  end, { desc = "Close the svn diff tab." })
+
+  vim.api.nvim_create_user_command("SvnDiffThisClose", function()
+    -- Close the current tabpage
+    local tab_debug = vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug")
+    if tab_debug then
+      vim.cmd("tabclose")
+    else
+      vim.notify("not in the diff tab.", vim.log.levels.ERROR)
+    end
+  end, { desc = "Close the svn diff tab." })
+
+  -- SVN diff locally.
+  vim.api.nvim_create_user_command("SvnDiffThis", function(opts)
+    local demanded_version = opts.args
+
     -- Get the current buffer's filetype, index, and file path
     local buf_number = vim.api.nvim_get_current_buf() -- Get the current buffer number
-    local filetype = vim.bo[buf_number].filetype -- Get the filetype of the buffer
     local file_path = vim.api.nvim_buf_get_name(buf_number) -- Get the file path of the buffer
+    local filetype = vim.bo[buf_number].filetype -- Get the filetype of the buffer
 
     -- Create a new tab
     vim.cmd("tabnew")
@@ -393,39 +478,53 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     local version_handle = io.popen(svn_version_cmd)
     local version = version_handle:read("*all")
 
+    -- Mark current tabpage. Name & svn debug.
     vim.fn.settabvar(vim.api.nvim_get_current_tabpage(), "tabname", version)
+    vim.fn.settabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug", true)
 
-    -- Try to get the file content from SVN (svn cat)
-    local svn_cmd = "svn cat " .. file_path
-    svn_cmd = svn_cmd .. " | iconv -f GBK -t UTF-8 " -- now workaround for GBK.  TODO: zianxu: auto detect from fileencodings.
-    svn_cmd = svn_cmd .. " | sed s/^M//g "
-    local handle = io.popen(svn_cmd)
-    local svn_content = handle:read("*all")
-    local success = handle:close() -- Capture the exit code to check if svn command succeeded
+    -- Name for the versioned buffer.
+    local old_version_buffer_name = file_path .. ":" .. version
 
-    local buf2
-    if success and svn_content and #svn_content > 0 then
-      buf2 = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_lines(buf2, 0, -1, false, vim.split(string.gsub(svn_content, "\n$", ""), "\n"))
-    -- TODO: Judge error type.
-    else
-      -- If it's new buffer, create an empty buffer
-      vim.print("Debug: New page.")
-      buf2 = vim.api.nvim_create_buf(false, true) -- Create an empty buffer
-    end
-    vim.cmd("edit " .. file_path)
-    vim.cmd("diffthis")
-
-    -- Original buffer in vertical split.
     vim.cmd("vsplit")
-    vim.api.nvim_win_set_buf(0, buf2)
-    vim.bo[buf2].modifiable = false
-    vim.bo[buf2].filetype = filetype
-    vim.cmd("file " .. file_path .. ":" .. version)
 
-    vim.cmd("diffthis")
-    -- vim.cmd("windo diffthis")
-  end, { desc = "SVN diff this file in a new tabpage." })
+    -- Try to get the file content from SVN (svn cat) if not existing.
+    if vim.fn.bufwinnr(old_version_buffer_name) <= 0 then
+      -- not opened.
+      local svn_cmd = "svn cat " .. file_path
+      if demanded_version then
+        svn_cmd = svn_cmd .. " -r " .. demanded_version
+      end
+      svn_cmd = svn_cmd .. " | iconv -f GBK -t UTF-8 " -- now workaround for GBK.  TODO: zianxu: auto detect from fileencodings.
+      svn_cmd = svn_cmd .. " | sed s/^M//g "
+      local handle = io.popen(svn_cmd)
+      local svn_content = handle:read("*all")
+      local success = handle:close() -- Capture the exit code to check if svn command succeeded
+
+      local buf2
+      if success and svn_content and #svn_content > 0 then
+        buf2 = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(buf2, 0, -1, false, vim.split(string.gsub(svn_content, "\n$", ""), "\n"))
+      -- TODO: Judge error type.
+      else
+        -- If it's new buffer, create an empty buffer
+        vim.print("svn cat error.")
+        buf2 = vim.api.nvim_create_buf(false, true) -- Create an empty buffer
+      end
+      vim.api.nvim_win_set_buf(0, buf2)
+      vim.bo[buf2].modifiable = false
+      vim.bo[buf2].filetype = filetype
+      vim.cmd("file " .. old_version_buffer_name)
+    else
+      -- Exist. Just switch to it.
+      vim.api.nvim_win_set_buf(0, vim.fn.bufwinnr(old_version_buffer_name))
+    end
+
+    -- Original buffer in vertical split right side. Cursor stays left side.
+    vim.cmd("wincmd l")
+    vim.cmd("edit " .. file_path) -- already opened.
+
+    vim.cmd("windo diffthis")
+  end, { desc = "SVN diff this file in a new tabpage.", nargs = "?" })
 
   vim.api.nvim_create_user_command("SvnDiffAll", function()
     local function parse_file_changes(input)
