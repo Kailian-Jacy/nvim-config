@@ -930,6 +930,48 @@ vim.api.nvim_create_user_command("CopyFilePath", function(opt)
     -- filename.ext:line
     local _, line, _, _ = unpack(vim.fn.getpos("."))
     ret = vim.fn.expand("%:t") .. ":" .. line
+  elseif opt == "git" then
+    -- Get full path
+    local full_path = vim.fn.expand("%:p")
+    ret = full_path
+
+    -- Check if git_repo_url is configured
+    if vim.g.git_repo_url then
+      local matched = false
+      for pattern, base_url in pairs(vim.g.git_repo_url) do
+        if full_path:find(pattern) then
+          matched = true
+
+          local pattern_pos = full_path:find(pattern)
+          if pattern_pos then
+            local after_pattern = full_path:sub(pattern_pos + string.len(pattern) + 1)
+            local trimmed_url = base_url:gsub("/$", "")
+            ret = trimmed_url .. "/" .. after_pattern
+          end
+          break
+        end
+      end
+
+      -- If no pattern matched, extract path after "release/" if it exists
+      if not matched then
+        local release_pos = full_path:find("/release/")
+        if release_pos then
+          ret = full_path:sub(release_pos + 9) -- 9 = length of "/release/"
+          vim.notify("No repo matches. URL after release copied.", vim.log.levels.INFO)
+        else
+          vim.notify("No repo matches and no release directory found.", vim.log.levels.WARN)
+        end
+      end
+    else
+      -- If git_repo_url is not configured, try to extract after "release/"
+      local release_pos = full_path:find("/release/")
+      if release_pos then
+        ret = full_path:sub(release_pos + 9) -- 9 = length of "/release/"
+        vim.notify("git_repo_url not configured. Path after release copied.", vim.log.levels.INFO)
+      else
+        vim.notify("git_repo_url not configured and no release directory found.", vim.log.levels.WARN)
+      end
+    end
   else
     vim.notify("Invalid option: " .. opt, vim.log.levels.ERROR)
   end

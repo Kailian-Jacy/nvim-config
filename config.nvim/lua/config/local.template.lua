@@ -18,6 +18,16 @@ M.before_all = function()
   -- Tab name indicator. Name will be marked if any matching.
   -- The former, the priorer.
   -- vim.g.tab_path_mark = { ["Branch_OB_Publish"] = "P", ["Branch_GServers_%d+"] = "G", ["Branch_NServers_%d+"] = "N" }
+  --
+  -- Version Control repo path.
+  -- The former, the priorer.
+  -- vim.g.git_repo_url = {
+  --   ["Branch_OB_Publish"] = "https://git.woa.com/ied_svn/ied_qssvr_rep/tree/HEAD/qssvr_proj/branches/Branch_OB_Publish/release/",
+  --   ["Branch_GServers_%d+"] = "G",
+  --   ["Branch_NServers_%d+"] = "N",
+  --   ["release.bak"] = "https://git.woa.com/ied_svn/ied_qssvr_rep/blob/HEAD/qssvr_proj/trunk/release/",
+  --   ["release"] = "https://git.woa.com/ied_svn/ied_qssvr_rep/blob/HEAD/qssvr_proj/trunk/release/",
+  -- }
 end
 M.after_options = function()
   -- Temporary workaround for tencent gbk encodings.
