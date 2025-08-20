@@ -967,6 +967,8 @@ vim.api.nvim_create_autocmd("VimEnter", {
 vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
     vim.g.LAST_WORKING_DIRECTORY = vim.fn.getcwd()
+  end,
+})
 vim.api.nvim_create_autocmd("VimLeave", {
   callback = function()
     -- Detach from tmux shell.
