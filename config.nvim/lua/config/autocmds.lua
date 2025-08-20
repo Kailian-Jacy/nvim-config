@@ -475,7 +475,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     local svn_version_cmd = "svn info " .. file_path
     svn_version_cmd = svn_version_cmd .. " | grep Revision:"
     svn_version_cmd = svn_version_cmd .. " | awk '{print $2}'"
-    local version_handle = io.popen(svn_version_cmd)
+    local version_handle = io.popen(svn_version_cmd) or {}
     local version = version_handle:read("*all")
 
     -- Mark current tabpage. Name & svn debug.
@@ -490,7 +490,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     -- Try to get the file content from SVN (svn cat) if not existing.
     -- FIXME: Buffer with this name already exists
     --
-    if vim.fn.bufwinnr(old_version_buffer_name) <= 0 then
+    if vim.fn.bufloaded(old_version_buffer_name) <= 0 then
       vim.print("dont exists")
       -- not opened.
       local svn_cmd = "svn cat " .. file_path
