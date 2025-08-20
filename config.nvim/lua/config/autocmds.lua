@@ -488,10 +488,12 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     vim.cmd("vsplit")
 
     -- Try to get the file content from SVN (svn cat) if not existing.
+    -- FIXME: Buffer with this name already exists
+    --
     if vim.fn.bufwinnr(old_version_buffer_name) <= 0 then
       -- not opened.
       local svn_cmd = "svn cat " .. file_path
-      if demanded_version then
+      if demanded_version and #demanded_version > 0 then
         svn_cmd = svn_cmd .. " -r " .. demanded_version
       end
       svn_cmd = svn_cmd .. " | iconv -f GBK -t UTF-8 " -- now workaround for GBK.  TODO: zianxu: auto detect from fileencodings.
@@ -504,7 +506,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
       if success and svn_content and #svn_content > 0 then
         buf2 = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_buf_set_lines(buf2, 0, -1, false, vim.split(string.gsub(svn_content, "\n$", ""), "\n"))
-      -- TODO: Judge error type.
+        -- TODO: Judge error type.
       else
         -- If it's new buffer, create an empty buffer
         vim.print("svn cat error: svn command: " .. svn_cmd)
