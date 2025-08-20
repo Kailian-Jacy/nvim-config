@@ -496,7 +496,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
       end
       svn_cmd = svn_cmd .. " | iconv -f GBK -t UTF-8 " -- now workaround for GBK.  TODO: zianxu: auto detect from fileencodings.
       svn_cmd = svn_cmd .. " | sed s/^M//g "
-      local handle = io.popen(svn_cmd)
+      local handle = io.popen(svn_cmd) or {}
       local svn_content = handle:read("*all")
       local success = handle:close() -- Capture the exit code to check if svn command succeeded
 
@@ -507,7 +507,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
       -- TODO: Judge error type.
       else
         -- If it's new buffer, create an empty buffer
-        vim.print("svn cat error.")
+        vim.print("svn cat error: svn command: " .. svn_cmd)
         buf2 = vim.api.nvim_create_buf(false, true) -- Create an empty buffer
       end
       vim.api.nvim_win_set_buf(0, buf2)
