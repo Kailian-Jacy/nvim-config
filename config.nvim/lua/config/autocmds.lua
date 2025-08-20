@@ -491,6 +491,7 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
     -- FIXME: Buffer with this name already exists
     --
     if vim.fn.bufwinnr(old_version_buffer_name) <= 0 then
+      vim.print("dont exists")
       -- not opened.
       local svn_cmd = "svn cat " .. file_path
       if demanded_version and #demanded_version > 0 then
@@ -518,7 +519,8 @@ if vim.g.modules.svn and vim.g.modules.svn.enabled then
       vim.cmd("file " .. old_version_buffer_name)
     else
       -- Exist. Just switch to it.
-      vim.api.nvim_win_set_buf(0, vim.fn.bufwinnr(old_version_buffer_name))
+      vim.print("exists")
+      vim.cmd("buffer " .. old_version_buffer_name)
     end
 
     -- Original buffer in vertical split right side. Cursor stays left side.
