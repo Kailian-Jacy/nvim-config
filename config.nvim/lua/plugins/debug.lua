@@ -1,5 +1,18 @@
 return {
   {
+    "theHamsta/nvim-dap-virtual-text",
+    ksys = {
+      {
+        "<leader>ud",
+        "<cmd>DapVirtualTextToggle<cr>",
+        desc = "Toggle DAP Virtual Text",
+      }
+    },
+    config = function()
+      require("nvim-dap-virtual-text").setup()
+    end
+  },
+  {
     "mfussenegger/nvim-dap",
     keys = {
       -- { "<leader>d", "", desc = "+debug", mode = {"n", "v"} },
