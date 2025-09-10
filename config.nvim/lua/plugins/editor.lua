@@ -304,9 +304,12 @@ return {
         desc = "add todo mark at this line.",
       },
     },
-    config = function()
-      require("todo-comments").setup({})
-    end,
+    opts = {
+      signs = false,
+      keywords = {
+        CHECK = { color = "warning" },
+      },
+    },
   },
   {
     -- with lazy.nvim
