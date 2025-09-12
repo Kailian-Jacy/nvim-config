@@ -1075,6 +1075,13 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 vim.api.nvim_create_autocmd("VimLeave", {
   callback = function()
     -- Detach from tmux shell.
+    -- Try to detach from the subprocess.
+    local tmux_client_pid = vim.g.__tmux_get_current_attached_cliend_pid()
+    if #tmux_client_pid > 0 then
+      vim.cmd("!kill -s SIGHUP " .. tmux_client_pid)
+    else
+      vim.cmd("!tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
+    end
     -- https://github.com/neovim/neovim/issues/21856
     vim.cmd("!tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
     vim.cmd('sleep 10m')

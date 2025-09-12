@@ -130,6 +130,13 @@ vim.g.terminal_width_top = 0.3
 vim.g.terminal_auto_insert = true
 vim.g.terminal_default_tmux_session_name = "nvim-attached"
 
+-- Tmux
+--- A helper function that returns the attached tmux client pid.
+vim.g.__tmux_get_current_attached_cliend_pid = function()
+  local result = vim.fn.system("pstree -p " .. vim.fn.getpid() .. " | grep tmux | grep client | sed -E 's/.*[ |(]([0-9]+)[ |)].*/\\1/' | tr -d '\\n'")
+  return result
+end
+
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)
