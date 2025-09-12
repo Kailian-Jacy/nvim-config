@@ -1075,8 +1075,9 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 vim.api.nvim_create_autocmd("VimLeave", {
   callback = function()
     -- Detach from tmux shell.
-    vim.fn.system("tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
-    vim.cmd(":q!") -- Don't know why it's not existing without this.
+    -- https://github.com/neovim/neovim/issues/21856
+    vim.cmd("!tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
+    vim.cmd('sleep 10m')
   end,
 })
 
