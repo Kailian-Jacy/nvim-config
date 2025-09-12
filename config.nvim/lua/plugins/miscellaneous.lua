@@ -107,9 +107,6 @@ return {
     lazy = false,
     dependencies = {
       "folke/todo-comments.nvim",
-      config = function()
-          require("todo-comments").setup({})
-      end,
     },
     keys = {
       { "<leader>bb", function() Snacks.picker.buffers() end, desc = "Buffers" },
