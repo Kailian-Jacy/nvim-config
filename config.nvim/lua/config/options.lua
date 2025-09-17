@@ -146,7 +146,7 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
 -- Highlighting Source.
 vim.cmd([[ syntax off ]]) -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
-vim.g.use_treesitter_highlight = true -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
+vim.g.use_treesitter_highlight = { "c", "cpp" } -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
 
 -- Undo history even when the file is closed.
 vim.opt.undofile = true

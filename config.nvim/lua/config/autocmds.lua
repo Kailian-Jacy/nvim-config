@@ -573,6 +573,18 @@ end
 --   end),
 -- })
 
+-- Highlight related.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "*" },
+  callback = function()
+    if vim.tbl_contains(vim.g.use_treesitter_highlight, vim.bo.filetype) then
+      vim.cmd[[ TSBufEnable highlight ]]
+    else
+      vim.bo.syntax = "on"
+    end
+  end,
+})
+
 -- Quickfix related.
 -- Page closing
 vim.api.nvim_create_autocmd("FileType", {
