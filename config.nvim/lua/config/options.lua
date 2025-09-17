@@ -130,6 +130,24 @@ vim.g.terminal_width_top = 0.3
 vim.g.terminal_auto_insert = true
 vim.g.terminal_default_tmux_session_name = "nvim-attached"
 
+-- Tmux
+
+--- A helper function that returns the attached tmux client pids. It's a table since there could be multiple sessions attached.
+--- @return table<string>
+vim.g.__tmux_get_current_attached_cliend_pid = function()
+  local result = vim.fn.system(
+    "pstree -p " .. vim.fn.getpid() .. " | grep tmux | grep client | sed -E 's/.*[ |(]([0-9]+)[ |)].*/\\1/' "
+  )
+  local tmux_client_pids = {}
+  for line in result:gmatch("[^\n]+") do
+    table.insert(tmux_client_pids, line)
+  end
+  -- TODO: under linux, grep -z "^TMUX" /tmp/pidOfTmux/environ
+  -- returns a path to the tmux session socket. which can be used to control the very client.
+  -- But found no way to get the path (/private/tmp/tmux-501/default) under macos. Seems like private to each process.
+  return tmux_client_pids
+end
+
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)
