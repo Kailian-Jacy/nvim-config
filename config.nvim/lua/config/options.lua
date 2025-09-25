@@ -21,9 +21,14 @@ end
 vim.g.tabname = function(tab_id)
   -- Naming: priority: tabname var > general dedup mark > workdir path name.
   local name = ""
-  local tabname = vim.fn.gettabvar(tab_id, "tabname")
 
-  if tabname and #tabname > 0 then
+  local tabname = vim.fn.gettabvar(tab_id, "tabname", "")
+  if tabname == vim.NIL then
+    tabname = ""
+  end
+  tabname = tostring(tabname)
+
+  if tabname ~= "" then
     name = tabname
   end
 

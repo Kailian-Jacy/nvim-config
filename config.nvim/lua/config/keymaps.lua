@@ -87,7 +87,7 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
 end)
 
 if vim.g.modules.svn and vim.g.modules.svn.enabled then
-  vim.keymap.set("n", "<leader>sd", function ()
+  vim.keymap.set("n", "<leader>sd", function()
     local tab_debug = vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug")
     if tab_debug == true then
       vim.cmd([[SvnDiffThisClose]])
@@ -246,7 +246,7 @@ vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = tr
 vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>up", function()
-  if vim.g.pinned_tab and vim.api.nvim_current_tabpage() == vim.g.pinned_tab.id then
+  if vim.g.pinned_tab and vim.api.nvim_get_current_tabpage() == vim.g.pinned_tab.id then
     -- Call on the pinned tab. Unpin it.
     vim.cmd("UnpinTab")
   else
