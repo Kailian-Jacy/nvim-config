@@ -1,6 +1,10 @@
 return {
   {
     "mfussenegger/nvim-dap",
+    dependencies = {
+      "jbyuki/one-small-step-for-vimkind",
+    },
+    lazy = false,
     keys = {
       -- { "<leader>d", "", desc = "+debug", mode = {"n", "v"} },
       -- break points.
@@ -177,6 +181,18 @@ return {
         command = "debugpy",
         -- env = {},
         name = "debugpy",
+      }
+      dap.adapters.neovimlua = function(callback, config)
+        callback({ type = 'server', host = config.host or "127.0.0.1", port = config.port or 8086 })
+      end
+
+      -- Lua debug neovim itself configuration
+      dap.configurations.lua = {
+        {
+          type = 'neovimlua',
+          request = 'attach',
+          name = "Attach to running Neovim instance",
+        }
       }
     end,
   },
