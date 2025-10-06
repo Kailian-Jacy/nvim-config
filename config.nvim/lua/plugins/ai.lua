@@ -169,7 +169,7 @@ return {
         }
       end,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "openrouter_claude_4", -- Recommend using Claude
+      provider = "openrouter_grok_4_code", -- Recommend using Claude
       -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
       providers = {
         ollama = {
@@ -213,6 +213,14 @@ return {
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
           model = "anthropic/claude-3.5-sonnet",
+          max_tokens = 10240,
+          disable_tools = false,
+        },
+        openrouter_grok_4_code = {
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
+          model = "x-ai/grok-code-fast-1",
           max_tokens = 10240,
           disable_tools = false,
         },
