@@ -363,6 +363,7 @@ end
 
 -- Add any additional options here
 vim.g.autoformat = false
+vim.g.do_not_format_all = true -- Setting autoformat as false. Select and format only.
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
