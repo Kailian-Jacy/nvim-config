@@ -1,12 +1,14 @@
 return {
   {
-    "rebelot/terminal.nvim",
+    "Kailian-Jacy/terminal.nvim",
     config = function()
       vim.g.__default_terminal_layout = { open_cmd = "float", height = 1, width = 1 }
       require("terminal").setup({
         layout = vim.g.__default_terminal_layout,
         cmd = { "tmux", "new", "-As", vim.g.terminal_default_tmux_session_name or "nvim-attached" },
         autoclose = true,
+        -- Here we run all of the tasks in the tmux session, so just kill them on vim exits.
+        detach = 0,
       })
       -- globally bind customized logic.
       require("terminal").__customize = {}

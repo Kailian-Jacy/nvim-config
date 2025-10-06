@@ -1,6 +1,12 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
+
+-- Helper functions.
+vim.g.is_current_window_floating = function ()
+  return vim.api.nvim_win_get_config(0).relative ~= ""
+end
+
 -- Customized Tabs
 ---@class PinnedTab
 ---@field id integer
