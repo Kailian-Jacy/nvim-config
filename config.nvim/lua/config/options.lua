@@ -1,6 +1,12 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
+
+-- Helper functions.
+vim.g.is_current_window_floating = function ()
+  return vim.api.nvim_win_get_config(0).relative ~= ""
+end
+
 -- Customized Tabs
 ---@class PinnedTab
 ---@field id integer
@@ -21,9 +27,14 @@ end
 vim.g.tabname = function(tab_id)
   -- Naming: priority: tabname var > general dedup mark > workdir path name.
   local name = ""
-  local tabname = vim.fn.gettabvar(tab_id, "tabname")
 
-  if tabname and #tabname > 0 then
+  local tabname = vim.fn.gettabvar(tab_id, "tabname", "")
+  if tabname == vim.NIL then
+    tabname = ""
+  end
+  tabname = tostring(tabname)
+
+  if tabname ~= "" then
     name = tabname
   end
 
@@ -130,6 +141,24 @@ vim.g.terminal_width_top = 0.3
 vim.g.terminal_auto_insert = true
 vim.g.terminal_default_tmux_session_name = "nvim-attached"
 
+-- Tmux
+
+--- A helper function that returns the attached tmux client pids. It's a table since there could be multiple sessions attached.
+--- @return table<string>
+vim.g.__tmux_get_current_attached_cliend_pid = function()
+  local result = vim.fn.system(
+    "pstree -p " .. vim.fn.getpid() .. " | grep tmux | grep client | sed -E 's/.*[ |(]([0-9]+)[ |)].*/\\1/' "
+  )
+  local tmux_client_pids = {}
+  for line in result:gmatch("[^\n]+") do
+    table.insert(tmux_client_pids, line)
+  end
+  -- TODO: under linux, grep -z "^TMUX" /tmp/pidOfTmux/environ
+  -- returns a path to the tmux session socket. which can be used to control the very client.
+  -- But found no way to get the path (/private/tmp/tmux-501/default) under macos. Seems like private to each process.
+  return tmux_client_pids
+end
+
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)
@@ -146,7 +175,7 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
 -- Highlighting Source.
 vim.cmd([[ syntax off ]]) -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
-vim.g.use_treesitter_highlight = true -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
+vim.g.use_treesitter_highlight = { "c", "cpp" } -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
 
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
@@ -340,6 +369,7 @@ end
 
 -- Add any additional options here
 vim.g.autoformat = false
+vim.g.do_not_format_all = true -- Setting autoformat as false. Select and format only.
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"

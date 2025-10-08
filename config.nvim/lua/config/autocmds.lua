@@ -223,12 +223,11 @@ vim.api.nvim_create_autocmd("TabClosed", {
 vim.api.nvim_create_user_command("SetTabName", function(opt)
   opt = opt or {}
   opt.args = opt.args or { "" }
-  local tabname = opt.args[1]
-
+  local tabname = opt.args
   vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", tabname)
 end, { desc = "Set the current tabname", nargs = "?" })
 
-vim.api.nvim_create_user_command("ReetTabName", function()
+vim.api.nvim_create_user_command("ResetTabName", function()
   vim.fn.settabvar(vim.fn.tabpagenr(), "tabname", "")
 end, { desc = "Reset the current tabname." })
 
@@ -572,6 +571,18 @@ end
 --     vim.cmd([[ rshada! ]])
 --   end),
 -- })
+
+-- Highlight related.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "*" },
+  callback = function()
+    if vim.tbl_contains(vim.g.use_treesitter_highlight, vim.bo.filetype) then
+      vim.cmd([[ TSBufEnable highlight ]])
+    else
+      vim.bo.syntax = "on"
+    end
+  end,
+})
 
 -- Quickfix related.
 -- Page closing
@@ -1075,8 +1086,20 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 vim.api.nvim_create_autocmd("VimLeave", {
   callback = function()
     -- Detach from tmux shell.
-    vim.fn.system("tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
-    vim.cmd(":q!") -- Don't know why it's not existing without this.
+    -- Try to detach from the subprocess.
+    local tmux_client_pid = vim.g.__tmux_get_current_attached_cliend_pid()
+    if tmux_client_pid and #tmux_client_pid > 0 then
+      for _, pid in ipairs(tmux_client_pid) do
+        if #pid > 0 then
+          vim.cmd("!kill -s SIGHUP " .. pid)
+        end
+      end
+    else
+      vim.cmd("!tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
+    end
+    -- https://github.com/neovim/neovim/issues/21856
+    vim.cmd("!tmux detach -s " .. (vim.g.terminal_default_tmux_session_name or "nvim-attached"))
+    vim.cmd("sleep 10m")
   end,
 })
 

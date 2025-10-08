@@ -374,6 +374,12 @@ return {
             highlight = "Visual",
           },
         },
+        excluded_filetypes = {
+          "dap-float",
+          "AvanteInput",
+          "AvanteSelectedFiles",
+          "AvantePromptInput",
+        },
         handlers = {
           cursor = true,
           diagnostic = true,

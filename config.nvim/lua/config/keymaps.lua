@@ -87,7 +87,7 @@ vim.keymap.set({ "v", "n" }, "<leader>cm", function()
 end)
 
 if vim.g.modules.svn and vim.g.modules.svn.enabled then
-  vim.keymap.set("n", "<leader>sd", function ()
+  vim.keymap.set("n", "<leader>sd", function()
     local tab_debug = vim.fn.gettabvar(vim.api.nvim_tabpage_get_number(vim.api.nvim_get_current_tabpage()), "svn_debug")
     if tab_debug == true then
       vim.cmd([[SvnDiffThisClose]])
@@ -114,16 +114,46 @@ end, { noremap = true })
 -- Git related
 vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
 
--- Navigation: Cursor wandering around
-vim.keymap.set({ "n", "v", "i" }, "<C-J>", "<cmd>wincmd j<cr>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-H>", "<cmd>wincmd h<cr>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-L>", "<cmd>wincmd l<cr>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-K>", "<cmd>wincmd k<cr>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) --it won't go across tabs. useless.
-vim.keymap.set({ "t" }, "<C-L>", "<c-\\><c-n><c-w>l", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-H>", "<c-\\><c-n><c-w>h", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-J>", "<c-\\><c-n><c-w>j", { noremap = true, silent = true })
-vim.keymap.set({ "t" }, "<C-K>", "<c-\\><c-n><c-w>k", { noremap = true, silent = true })
+---@param direction "j"|"k"|"h"|"l" The direction to move the cursor
+---@param move_around function The callback to be executed after check.
+local move_around_checker = function(direction, move_around)
+  return function()
+    -- Check if it's the terminal buffer and decide available direction.
+    local available_directions = {"j", "k", "h", "l"}
+    -- If terminal that is set to be floating and full-screen.
+    if vim.g.is_current_window_floating() then
+      -- Prohibit moving. Do not allow shift.
+      available_directions = {}
+    end
+    if not vim.tbl_contains(available_directions, direction) then
+      -- ring bell.
+      io.write("\a")
+      return
+    end
+    -- Execute directions shift.
+    move_around(direction)
+  end
+end
+
+---@param direction "j"|"k"|"h"|"l" The direction to move the cursor
+local cmd_win_move = function (direction)
+  vim.cmd("wincmd " .. direction)
+end
+
+---@param direction "j"|"k"|"h"|"l" The direction to move the cursor
+local keymap_win_move_terminal = function(direction)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<c-\\><c-n><c-w>" .. direction, true, false, true), "n", false)
+end
+
+vim.keymap.set({ "n", "v", "i" }, "<C-J>", move_around_checker("j", cmd_win_move), { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-H>", move_around_checker("h", cmd_win_move), { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-L>", move_around_checker("l", cmd_win_move), { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-K>", move_around_checker("k", cmd_win_move), { noremap = true, silent = true })
+-- vim.keymap.set({ "n", "v", "i" }, "<C-BS>", "<cmd>wincmd p<cr>", { noremap = true, silent = true }) -- it won't go across tabs. useless.
+vim.keymap.set({ "t" }, "<C-L>", move_around_checker("l", keymap_win_move_terminal), { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-H>", move_around_checker("h", keymap_win_move_terminal), { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-J>", move_around_checker("j", keymap_win_move_terminal), { noremap = true, silent = true })
+vim.keymap.set({ "t" }, "<C-K>", move_around_checker("k", keymap_win_move_terminal), { noremap = true, silent = true })
 
 -- Throw buffer and reveal. Special-cased in terminal mode.
 vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", function()
@@ -246,7 +276,7 @@ vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = tr
 vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>up", function()
-  if vim.g.pinned_tab and vim.api.nvim_current_tabpage() == vim.g.pinned_tab.id then
+  if vim.g.pinned_tab and vim.api.nvim_get_current_tabpage() == vim.g.pinned_tab.id then
     -- Call on the pinned tab. Unpin it.
     vim.cmd("UnpinTab")
   else

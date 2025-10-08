@@ -26,7 +26,60 @@ M.after_options = function()
   -- vim.cmd[[ set fileencodings=ucs-bom,gb2312,utf-8,latin1,euc-cn ]]
 end
 
-M.before_plugins_load = function() end
+M.before_plugins_load = function() 
+  -- @An example to add dap configuration.
+  -- -- Add more local dap configs.
+  -- local dap = require("dap")
+  -- local core_config =
+  --   {
+  --     name = "Debug last Coredump in Trunk",
+  --     type = "codelldb",
+  --     request = "attach",
+  --     targetCreateCommands = function()
+  --     return coroutine.create(function(dap_run_co)
+  --       local items = { "scene", "world", "briefcache", "abort" }
+  --       vim.ui.select(items, { prompt = "Which directory to search for core files?" }, function(choice)
+  --         if choice == nil or choice == "abort" then
+  --           coroutine.resume(dap_run_co, dap.ABORT)
+  --           return
+  --         end
+  --
+  --         -- Search the path dir to find core files
+  --         local bin_path = "/data/home/zianxu/master/release/qsshome/" .. choice .. "/bin/"
+  --         local core_files = vim.fn.glob(bin_path .. "core.*", false, true)
+  --         if #core_files == 0 then
+  --           vim.notify("No core files found in " .. bin_path, vim.log.levels.ERROR)
+  --           coroutine.resume(dap_run_co, dap.ABORT)
+  --           return
+  --         end
+  --
+  --         -- Sort core files by modification time to get the latest one
+  --         table.sort(core_files, function(a, b)
+  --           local stat_a = vim.loop.fs_stat(a)
+  --           local stat_b = vim.loop.fs_stat(b)
+  --           return stat_a.mtime.sec > stat_b.mtime.sec
+  --         end)
+  --
+  --         -- Use the latest (most recently modified) core file
+  --         local latest_core = core_files[1]
+  --         local core_name = vim.fn.fnamemodify(latest_core, ":t")
+  --         local stat = vim.loop.fs_stat(latest_core)
+  --         local creation_time = os.date("%Y-%m-%d %H:%M:%S", stat.mtime.sec)
+  --
+  --         vim.notify("Using latest core file: " .. core_name .. " (created: " .. creation_time .. ")", vim.log.levels.INFO)
+  --
+  --         local target_cmd = "target create -c " .. latest_core
+  --         coroutine.resume(dap_run_co, { target_cmd })
+  --       end)
+  --     end)
+  --     end,
+  --     processCreateCommands = {}
+  --   }
+  -- if not dap.configurations.cpp then
+  --   dap.configurations.cpp = {}
+  -- end
+  -- dap.configurations.cpp[#dap.configurations.cpp + 1] = core_config
+end
 M.after_plugins_load = function() end
 
 M.before_autocmds = function() end
