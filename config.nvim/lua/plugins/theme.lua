@@ -57,6 +57,8 @@ return {
             DiffDelete = { bg = "#4c232d", fg = "#e8b9b8" },
             DiffChange = {},
             DiffText = { link = "DiffAdd" },
+            -- Dap
+            debugPc = { bg = "#21222C" }
           }
         end,
       })

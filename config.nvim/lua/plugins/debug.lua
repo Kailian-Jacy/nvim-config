@@ -1,5 +1,23 @@
 return {
   {
+    "igorlfs/nvim-dap-view",
+    config = function ()
+      vim.api.nvim_create_autocmd({ "FileType" }, {
+        pattern = { "dap-view", "dap-view-term", "dap-repl" }, -- dap-repl is set by `nvim-dap`
+        callback = function(args)
+            vim.keymap.set("n", "q", "<C-w>q", { buffer = args.buf })
+        end,
+      })
+      require("dap-view").setup({
+        winbar = {
+          show = false,
+          sections = { "repl", "console", "watches", "scopes", "exceptions", "breakpoints", "threads" },
+          default_section = "console"
+        }
+      })
+    end
+  },
+  {
     "theHamsta/nvim-dap-virtual-text",
     ksys = {
       {
