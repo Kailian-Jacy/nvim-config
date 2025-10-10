@@ -324,7 +324,7 @@ local debugging_keymaps = {
     desc = "Toggle breakpoint"
   },
   {
-    normalModeKey = "<leader>db",
+    normalModeKey = "<leader>dB",
     debugModeKey = "B",
     action = function()
       require("dap-view").open()
