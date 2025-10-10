@@ -478,6 +478,8 @@ local debugging_keymaps = {
     normalModeKey = "<leader><D-BS>",
     debugModeKey = "<D-BS>",
     action = function()
+      -- go back to line in the current frame.
+      -- could be adjusted with `vim.o.switchbuf`
       require("dap").focus_frame()
     end,
     desc = "Terminate session"
