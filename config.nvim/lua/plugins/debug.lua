@@ -1,6 +1,15 @@
 return {
   {
     "igorlfs/nvim-dap-view",
+    lazy = false,
+    keys = {
+      {
+        "<leader>ud",
+        "<cmd>DapViewToggle<CR>",
+        mode = "n",
+        desc = "Toggle DAP View, default to console.",
+      },
+    },
     config = function ()
       vim.api.nvim_create_autocmd({ "FileType" }, {
         pattern = { "dap-view", "dap-view-term", "dap-repl" }, -- dap-repl is set by `nvim-dap`
@@ -10,8 +19,34 @@ return {
       })
       require("dap-view").setup({
         winbar = {
-          show = false,
-          sections = { "repl", "console", "watches", "scopes", "exceptions", "breakpoints", "threads" },
+          show = true, -- For now.
+          sections = { "repl", "console", "watches", "scopes", "exceptions", "breakpoints", "threads", "sessions" },
+          base_sections = {
+            scopes = {
+              keymap = "P",
+              label = "Scopes [P]",
+              short_label = " [P]",
+              action = function()
+                require("dap-view.views").switch_to_view("scopes")
+              end,
+            },
+            threads = {
+                keymap = "F",
+                label = "Frames [F]",
+                short_label = "󰂥 [F]",
+                action = function()
+                    require("dap-view.views").switch_to_view("threads")
+                end,
+            },
+            sessions = {
+                keymap = "S", -- I ran out of mnemonics
+                label = "Sessions [S]",
+                short_label = " [S]",
+                action = function()
+                    require("dap-view.views").switch_to_view("sessions")
+                end,
+            },
+          },
           default_section = "console"
         }
       })
