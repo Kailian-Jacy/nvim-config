@@ -259,12 +259,11 @@ return {
           if vim.g.debugging_keymap then
             return true
           end
+          local session = require("dap").session()
+          if package.loaded.dap and session ~= nil and session ~= {} then
+            return true
+          end
           return false
-          -- if not package.loaded.dap then
-          --   return false
-          -- end
-          -- local session = require("dap").session()
-          -- return session ~= nil and session ~= {}
         end,
         -- Color
         -- color = { fg = "#e7c664" },
