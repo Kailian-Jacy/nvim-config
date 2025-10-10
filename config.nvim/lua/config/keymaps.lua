@@ -474,6 +474,14 @@ local debugging_keymaps = {
     end,
     desc = "Terminate session"
   },
+  {
+    normalModeKey = "<leader><D-BS>",
+    debugModeKey = "<D-BS>",
+    action = function()
+      require("dap").focus_frame()
+    end,
+    desc = "Terminate session"
+  },
 }
 
 -- Set normal mode keymaps.
