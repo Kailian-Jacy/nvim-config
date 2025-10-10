@@ -259,6 +259,7 @@ return {
           close = { "q" },
           close_from_input = { normal = "q" },
         },
+        full_view_ask = false,
       },
       hints = { enabled = false },
       windows = {
