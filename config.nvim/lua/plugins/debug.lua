@@ -69,6 +69,13 @@ return {
     config = function()
       require("nvim-dap-virtual-text").setup({
         all_references = true,
+        display_callback = function(variable)
+          local truncate_size = vim.g.debug_virtual_text_truncate_size or 20
+          if #variable.value > truncate_size then
+            return ' ' .. variable.value:sub(1, truncate_size) .. '...'
+          end
+          return ' ' .. variable.value
+        end,
       })
     end,
   },

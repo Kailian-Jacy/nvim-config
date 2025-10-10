@@ -287,6 +287,9 @@ vim.g.debugging_status = "NoDebug"
 vim.g.recording_status = false
 vim.g.debugging_keymap = false
 
+-- virtual text truncate size.
+vim.g.debug_virtual_text_truncate_size = 20
+
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true
 
