@@ -1,7 +1,12 @@
 return {
   {
     "igorlfs/nvim-dap-view",
-    lazy = false,
+    cmd = {
+      "DapViewToggle",
+      "DapViewOpen",
+      "DapViewShow",
+      "DapViewWatch",
+    },
     keys = {
       {
         "<leader>ud",
