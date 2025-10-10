@@ -370,6 +370,14 @@ local debugging_keymaps = {
     desc = "Step over"
   },
   {
+    normalModeKey = "<leader>dN",
+    debugModeKey = "N",
+    action = function()
+      vim.cmd("DapNew")
+    end,
+    desc = "Run new debug session"
+  },
+  {
     normalModeKey = "<leader>ds",
     debugModeKey = "s",
     action = function()
@@ -443,12 +451,28 @@ local debugging_keymaps = {
     -- desc = "Preview the content in separate buffer"
   },
   {
+    normalModeKey = "<leader>dR",
+    debugModeKey = "R",
+    action = function()
+      require("dap").restart()
+    end,
+    desc = "Terminate session"
+  },
+  {
     normalModeKey = "<leader>d<c-c>",
     debugModeKey = "<c-c>",
     action = function()
       require("dap").pause()
     end,
     desc = "Pause"
+  },
+  {
+    normalModeKey = "<leader>dT",
+    debugModeKey = "T",
+    action = function()
+      require("dap").terminate()
+    end,
+    desc = "Terminate session"
   },
 }
 
