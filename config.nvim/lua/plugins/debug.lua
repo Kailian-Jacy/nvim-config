@@ -156,6 +156,23 @@ return {
       --   vim.print_silent("Debug Session Launched.")
       -- end
 
+      -- Customized helper functions.
+
+      ---@return table<string, integer>
+      vim.g.debugging_session_status = function ()
+        local sessions = dap.sessions()
+        local stopped_session = 0
+        local running_session = 0
+        for _, session in pairs(sessions) do
+          if session.stopped_thread_id ~= nil then
+            stopped_session = stopped_session + 1
+          else
+            running_session = running_session + 1
+          end
+        end
+        return {stopped_session = stopped_session, running_session = running_session}
+      end
+
       -- Starting.
       dap.listeners.before["event_stopped"]["nvim-dap-noui"] = function(_, _)
         vim.g.debugging_status = "Running"

@@ -229,6 +229,52 @@ return {
           status_not = false, -- When true, invert the status search
         }
       end
+      local dap_block = {
+        function()
+          local ret = "DBG "
+          if not vim.g.debugging_session_status then
+            return ret .. '>'
+          end
+          local ss = vim.g.debugging_session_status()
+          if ss.stopped_session + ss.running_session == 1 then
+            -- Display no number when there is only one session.
+            if ss.stopped_session == 1 then
+              return ret .. " " .. ">"
+            else
+              return ret .. "󰜎 " .. ">"
+            end
+            return ret .. '>'
+          end
+          -- More than one session. Display count.
+          if ss.stopped_session > 0 then
+            ret = ret .. " ".. ss.stopped_session .. " "
+          end
+          if ss.running_session > 0 then
+            ret = ret .. "󰜎 ".. ss.running_session .. " "
+          end
+          return ret .. ">"
+        end,
+        -- icon = { "?", color = { fg = "#e7c664" } }, -- nerd icon.
+        cond = function()
+          if vim.g.debugging_keymap then
+            return true
+          end
+          return false
+          -- if not package.loaded.dap then
+          --   return false
+          -- end
+          -- local session = require("dap").session()
+          -- return session ~= nil and session ~= {}
+        end,
+        -- Color
+        -- color = { fg = "#e7c664" },
+        color = function()
+          if vim.g.debugging_keymap then
+            return { bg = "#7358D6" }
+          end
+          return { fg = nil, bg = nil }
+        end,
+      }
       require("lualine").setup({
         options = {
           theme = theme,
@@ -252,7 +298,9 @@ return {
           },
           lualine_b = {},
           lualine_c = {},
-          lualine_x = {},
+          lualine_x = {
+            dap_block
+          },
           lualine_y = {
             overseer_config_block,
           },
@@ -289,7 +337,7 @@ return {
                 end
                 local debug_keymap = function()
                   if vim.g.debugging_keymap == true then
-                    return "d"
+                    return ""
                   else
                     return ""
                   end
@@ -325,12 +373,6 @@ return {
                   return tabname
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
-              end,
-              color = function()
-                if vim.g.debugging_keymap then
-                  return { bg = "#7358D6" }
-                end
-                return { fg = nil, bg = nil }
               end,
             },
           },
