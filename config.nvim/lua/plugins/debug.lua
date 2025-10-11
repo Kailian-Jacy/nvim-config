@@ -1,6 +1,9 @@
 return {
   {
     "igorlfs/nvim-dap-view",
+    -- If it's lazy loaded, it will cause failure to mount event on dap
+    -- So keymaps won't trigger
+    lazy = false,
     cmd = {
       "DapViewToggle",
       "DapViewOpen",
@@ -52,8 +55,8 @@ return {
                 end,
             },
           },
-          default_section = "console"
-        }
+          default_section = "scopes",
+        },
       })
     end
   },
@@ -150,7 +153,7 @@ return {
       --    So problem about rust vscode compatibility seems unsolved.
 
       -- setup keymap before debug session begins.
-      dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
+      dap.listeners.after["event_initialized"]["nvim-dap-noui"] = function(_, _)
         vim.print_silent("Debug Session intialized ")
         vim.g.debugging_status = "DebugOthers"
         require("lualine").refresh()
