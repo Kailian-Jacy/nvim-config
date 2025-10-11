@@ -62,7 +62,7 @@ return {
   },
   {
     "theHamsta/nvim-dap-virtual-text",
-    ksys = {
+    keys = {
       {
         "<leader>uv",
         "<cmd>DapVirtualTextToggle<cr>",
