@@ -470,9 +470,9 @@ local debugging_keymaps = {
     normalModeKey = "<leader>dT",
     debugModeKey = "T",
     action = function()
-      require("dap").terminate()
+      vim.cmd("DapViewToggle")
     end,
-    desc = "Terminate session"
+    desc = "Toggle DapView"
   },
   {
     normalModeKey = "<leader><D-BS>",
@@ -483,6 +483,15 @@ local debugging_keymaps = {
       require("dap").focus_frame()
     end,
     desc = "Terminate session"
+  },
+  {
+    normalModeKey = "<leader>dE",
+    debugModeKey = "E",
+    action = function()
+      require("dap").disconnect()
+      require("dap").close()
+    end,
+    desc = "Stop session"
   },
 }
 

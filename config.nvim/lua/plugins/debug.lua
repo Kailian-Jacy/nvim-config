@@ -279,11 +279,13 @@ return {
         -- env = {},
         name = "debugpy",
       }
+
+      -- Lua debug neovim itself configuration
+      -- 1. Run require"osv".launch({port = 8086}) before debugging.
+      -- 2. Navigate to lua file and start debugging.
       dap.adapters.neovimlua = function(callback, config)
         callback({ type = 'server', host = config.host or "127.0.0.1", port = config.port or 8086 })
       end
-
-      -- Lua debug neovim itself configuration
       dap.configurations.lua = {
         {
           type = 'neovimlua',
