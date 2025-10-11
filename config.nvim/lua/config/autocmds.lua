@@ -1195,12 +1195,12 @@ vim.api.nvim_create_user_command("DapTerminate", function()
 end, {})
 
 -- dap repl autocomplete
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "dap-repl",
-  callback = function()
-    require('dap.ext.autocompl').attach()
-  end,
-})
+-- vim.api.nvim_create_autocmd("FileType", {
+--   pattern = "dap-repl",
+--   callback = function()
+--     require('dap.ext.autocompl').attach()
+--   end,
+-- })
 
 -- Show linters being used
 vim.api.nvim_create_user_command("LintInfo", function()
