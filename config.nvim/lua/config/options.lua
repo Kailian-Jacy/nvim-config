@@ -6,6 +6,9 @@
 vim.g.is_current_window_floating = function ()
   return vim.api.nvim_win_get_config(0).relative ~= ""
 end
+vim.g.is_plugin_loaded = function(plugin_name)
+  return vim.tbl_get(require("lazy.core.config"), "plugins", plugin_name, "_", "loaded") ~= nil
+end
 
 -- Customized Tabs
 ---@class PinnedTab

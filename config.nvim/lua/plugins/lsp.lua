@@ -300,7 +300,9 @@ return {
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
           -- Sometimes nvim-dap-virual-text does not quit after debug session ends.
-          vim.cmd[[ DapVirtualTextForceRefresh ]]
+          if vim.g.is_plugin_loaded("nvim-dap-virtual-text") then
+            vim.cmd[[ DapVirtualTextForceRefresh ]]
+          end
         end,
         mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",
