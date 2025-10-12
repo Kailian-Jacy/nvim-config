@@ -1,16 +1,25 @@
+-- Copilot: detect to choose if to use local plugin.
+
+local copilot_dir = vim.fn.stdpath("config") .. "/pack/gongfeng/start/vim"
+local copilot = {}
+if vim.fn.isdirectory(copilot_dir) == 1 then
+  copilot = {
+    "copilot.vim",
+    dir = copilot_dir,
+    enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+  }
+else 
+  copilot = {
+    "github/copilot.vim",
+    enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+  }
+end
+
 -- AI completions.
 return {
   -- tencent copilot (gongfeng).
-  {
-    "copilot.vim",
-    dir = vim.fn.stdpath("config") .. "/pack/gongfeng/start/vim",
-    enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
-  },
   -- from ai store.
-  -- {
-  --   "github/copilot.vim",
-  --   enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
-  -- },
+  copilot,
   {
     "tzachar/cmp-tabnine",
     -- there is some problem with tabnine installation. Just
@@ -259,6 +268,7 @@ return {
           close = { "q" },
           close_from_input = { normal = "q" },
         },
+        full_view_ask = false,
       },
       hints = { enabled = false },
       windows = {

@@ -1391,3 +1391,16 @@ vim.api.nvim_create_user_command("ObsOpen", function()
   -- Open from obs
   -- vim.cmd("ObsidianOpen")
 end, {})
+
+-- Avante keymaps.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "Avante" },
+  callback = function()
+    vim.keymap.set(
+      "n",
+      "<c-c>",
+      require("avante.api").stop,
+      { desc = "Stop avante generation in avante window.", silent = true, buffer = true, noremap = false }
+    )
+  end,
+})
