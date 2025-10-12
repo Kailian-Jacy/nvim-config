@@ -7,7 +7,7 @@ foo.*
 *.log
 data
 bookmarks.*
-lazy-lock.json
+# lazy-lock.json
 customized.lua
 node_modules/*
 repro.lua
