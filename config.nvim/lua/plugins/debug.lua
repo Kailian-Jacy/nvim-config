@@ -62,6 +62,9 @@ return {
   },
   {
     "theHamsta/nvim-dap-virtual-text",
+    -- NOTE: update dap version if error happens.
+    -- dap virual text and dap view is built upon certain nvim-dap versions, lacking great backward compatibility fascilities. 
+    -- so turn off lazy and update the dap plugin sometimes solves the problem.
     keys = {
       {
         "<leader>uv",
