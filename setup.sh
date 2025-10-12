@@ -167,6 +167,7 @@ echo "export PATH=\$PATH:$DEFAULT_MASON_PATH:$HOME/.local/bin" >> ${DEFAULT_ENV_
 # Start nvim and install all the dependencies
 source ${DEFAULT_ENV_FILE_PATH}
 echo "Starting neovim to install plugins, parsers and lsps. This may take some time."
+nvim --headless +":Lazy restore" +q || [ $CONTINUE_ON_ERROR ]
 nvim --headless +"lua print('Dependencies successfully installed.')" +q || [ $CONTINUE_ON_ERROR ]
 nvim --headless +"MasonToolsInstall" +q || [ $CONTINUE_ON_ERROR ]
 
