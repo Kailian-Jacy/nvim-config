@@ -2,7 +2,8 @@ return {
   {
     "Kailian-Jacy/persistent-breakpoints.nvim",
     opts = {
-      load_breakpoints_event = { "BufReadPost" }
+      load_breakpoints_event = { "BufReadPost" },
+      always_reload = true,
     }
   },
   {
