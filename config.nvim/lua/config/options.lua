@@ -304,8 +304,8 @@ vim.g.neovide_cursor_trail_size = 0.1
 
 -- appearance
 -- vim.print(string.format("%x", math.floor(255 * 0))) -- 0.88 e0; 0.9 cc; 0 0
-local alpha = function()
-  return string.format("%x", math.floor(255 * (vim.g.transparency or 0.8)))
+local alpha = function(transparency)
+  return string.format("%x", math.floor(255 * transparency))
 end
 -- Visual parts transparency.
 -- vim.g.neovide_transparency = 1 -- 0: fully transparent.
@@ -320,7 +320,7 @@ vim.g.LAST_WORKING_DIRECTORY = "~"
 -- FIXME: Setting this option to none-zero makes border disappear.
 vim.g.transparency = 0.86
 -- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
-vim.g.neovide_background_color = "#13103d" .. alpha()
+vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.8)
 
 -- padding surrounding.
 vim.g.neovide_padding_top = 10
