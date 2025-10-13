@@ -1,5 +1,11 @@
 return {
   {
+    "Kailian-Jacy/persistent-breakpoints.nvim",
+    opts = {
+      load_breakpoints_event = { "BufReadPost" }
+    }
+  },
+  {
     "igorlfs/nvim-dap-view",
     -- If it's lazy loaded, it will cause failure to mount event on dap
     -- So keymaps won't trigger
