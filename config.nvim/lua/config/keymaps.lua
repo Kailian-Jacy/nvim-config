@@ -25,7 +25,7 @@ vim.keymap.set("c", "<c-e>", "<end>", { desc = "move cursor to the end" })
 vim.keymap.set("c", "<c-a>", "<home>", { desc = "move cursor to the end" })
 
 -- Keymap for LuaPrint
-vim.keymap.set("v", "<leader>pr", "<cmd>'<,'>LuaPrint<cr>", { desc = "move cursor to the end" })
+vim.keymap.set("v", "<leader>pr", "<cmd>'<,'>LuaPrint<cr>", { desc = "Lua print" })
 
 -- Path/Line fetching keymap.
 vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
