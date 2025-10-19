@@ -31,6 +31,36 @@ return {
         mode = "n",
         desc = "n",
       },
+      {
+        "<leader>ug",
+        "<Cmd>Gitsigns toggle_current_line_blame<cr>",
+        mode = "",
+        desc = "toggle git blame",
+      },
+      {
+        "]c",
+        function()
+          if vim.wo.diff then
+            vim.cmd.normal({ ']c', bang = true })
+          else
+            require('gitsigns').nav_hunk('next')
+          end
+        end,
+        mode = "n",
+        desc = "next change",
+      },
+      {
+        "[c",
+        function()
+          if vim.wo.diff then
+            vim.cmd.normal({ '[c', bang = true })
+          else
+            require('gitsigns').nav_hunk('prev')
+          end
+        end,
+        mode = "n",
+        desc = "next change",
+      },
     },
     config = function()
       require("gitsigns").setup({
