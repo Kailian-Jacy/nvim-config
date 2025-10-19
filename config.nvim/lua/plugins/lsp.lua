@@ -88,7 +88,7 @@ return {
           -- "delve",
           "pyright",
           "debugpy", -- Installing it anyway, despite its ususally being installed from venv manager. Mason should be a fallback option.
-          "ruff", -- Used as formatter as well linter.
+          "ruff",    -- Used as formatter as well linter.
         },
         docker = {
           -- "hadolint",
@@ -176,9 +176,23 @@ return {
               ["ac"] = "@class.outer",
               ["ic"] = "@class.inner",
             },
-            iinclude_surrounding_whitespace = true,
+            include_surrounding_whitespace = true,
           },
         },
+      })
+      require('nvim-treesitter.configs').setup({
+        highlight = {
+          enable = true,
+          additional_vim_regex_highlighting = true,
+        },
+        incremental_selection = {
+          enable = true,
+          keymaps = {
+            init_selection = '<Tab>',
+            node_incremental = '<TAB>',
+            node_decremental = '<S-TAB>',
+          }
+        }
       })
     end,
   },
@@ -206,7 +220,7 @@ return {
           Lua = {
             diagnostics = {
               -- let lua interpreter recognize vim as global to disable warnings.
-              globals = { "vim" },
+              globals = { "vim", "Snacks" },
             },
           },
         },
@@ -222,6 +236,8 @@ return {
       lspconfig.dockerls.setup({})
       -- yaml
       lspconfig.yamlls.setup({})
+      -- rust
+      -- lspconfig.rust_analyzer.setup({}) -- Rust analyzer configured by rustaceanvim. If enabled, there will be two lsps.
       -- python
       lspconfig.pyright.setup({})
       -- nix
@@ -279,22 +295,21 @@ return {
   },
   {
     "stevearc/conform.nvim",
+    cmd = {
+      "ConformInfo",
+    },
     keys = {
       {
         "<leader><CR>",
         -- Refreshing.
         function()
           vim.print_silent("@conform.format")
-          -- Run conform formatting.
-          if not (vim.g.do_not_format_all and vim.fn.mode() == "n") then
-            require("conform").format()
-          end
-          -- Linter.
+          vim.cmd[[ ConformFormat ]]
           require("lint").try_lint()
           -- Try save
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
-            vim.cmd([[ :w ]]) -- triggers lsp updating.
+            vim.cmd([[ :w ]])           -- triggers lsp updating.
           end
           -- Scrollbar
           require("scrollbar").render() -- try to update the scrollbar.
@@ -308,29 +323,54 @@ return {
         desc = "[F]ormat buffer with conform.",
       },
     },
-    opts = {
-      formatters_by_ft = {
-        -- Conform will run multiple formatters sequentially
-        -- You can customize some of the format options for the filetype (:help conform.format)
-        nix = { "nixfmt", "nixpkgs-fmt" },
-        lua = { "stylua" },
-        c = { "clang-format" },
-        cmake = { "cmake-format" },
-        cpp = { "clang-format" },
-        python = { "ruff" },
-        golang = { "goimports", "gopls" },
-        rust = { "rustfmt", lsp_format = "fallback" },
-        json = { "fixjson" },
-        xml = { "xmlformatter" },
-        bash = { "shfmt" },
-        -- Conform will run the first available formatter
-      },
-      format_on_save = false,
-      -- Conform will notify you when a formatter errors
-      notify_on_error = true,
-      -- Conform will notify you when no formatters are available for the buffer
-      notify_no_formatters = true,
-    },
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          -- Conform will run multiple formatters sequentially
+          -- You can customize some of the format options for the filetype (:help conform.format)
+          nix = { "nixfmt", "nixpkgs-fmt" },
+          -- lua = { "stylua" }, -- Stylua fails to work for visual selection format.
+          c = { "clang-format" },
+          cmake = { "cmake-format" },
+          cpp = { "clang-format" },
+          python = { "ruff" },
+          golang = { "goimports", "gopls" },
+          rust = { "rustfmt", lsp_format = "fallback" },
+          json = { "fixjson" },
+          xml = { "xmlformatter" },
+          bash = { "shfmt" },
+          -- Conform will run the first available formatter
+        },
+        format_on_save = false,
+        -- Conform will notify you when a formatter errors
+        notify_on_error = true,
+        -- Conform will notify you when no formatters are available for the buffer
+        notify_no_formatters = true,
+      })
+      vim.api.nvim_create_user_command("ConformFormat", function()
+        vim.g.do_not_format_all = vim.g.do_not_format_all or "restricted"
+
+        -- Select only mode.
+        if (vim.g.do_not_format_all == "select_only" and vim.fn.mode() == "n") then
+          -- Skip format
+          return
+        end
+
+        -- Restrict mode
+        if (vim.g.do_not_format_all == "restrict" and vim.fn.mode() == "n") then
+          -- Minimal selection
+          require("nvim-treesitter.incremental_selection").init_selection()
+        end
+        require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
+          if not err then
+            local mode = vim.api.nvim_get_mode().mode
+            if vim.startswith(string.lower(mode), "v") then
+              vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+            end
+          end
+        end)
+      end, {})
+    end,
   },
   {
     "utilyre/barbecue.nvim",
@@ -391,7 +431,7 @@ return {
               -- Display symbols as <root>.<parent>.<symbol>
               show_nesting = {
                 ["_"] = false, -- This key will be the default
-                json = true, -- You can set the option for specific filetypes
+                json = true,   -- You can set the option for specific filetypes
                 yaml = true,
               },
             },
@@ -415,8 +455,9 @@ return {
         set = function(state)
           require("ibl").setup_buffer(0, { enabled = state })
         end,
-      }):map("<leader>ug")
+      }):map("<leader>ui")
       return {
+        enabled = not vim.g.indent_blankline_hide or false,
         indent = {
           char = "│",
           tab_char = "│",

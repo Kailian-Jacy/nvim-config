@@ -8,6 +8,9 @@ return {
   },
   {
     "lewis6991/gitsigns.nvim",
+    cmd = {
+      "Gitsigns change_base"
+    },
     keys = {
       {
         "<leader>hr",
@@ -30,6 +33,42 @@ return {
         "<Cmd>Gitsigns stage_hunk<CR>",
         mode = "n",
         desc = "n",
+      },
+      {
+        "<leader>hb",
+        "<Cmd>Gitsigns blame_line<cr>",
+        mode = "",
+        desc = "toggle git blame",
+      },
+      {
+        "<leader>hB",
+        "<Cmd>Gitsigns blame<cr>",
+        mode = "",
+        desc = "toggle git blame",
+      },
+      {
+        "]c",
+        function()
+          if vim.wo.diff then
+            vim.cmd.normal({ ']c', bang = true })
+          else
+            require('gitsigns').nav_hunk('next')
+          end
+        end,
+        mode = "n",
+        desc = "next change",
+      },
+      {
+        "[c",
+        function()
+          if vim.wo.diff then
+            vim.cmd.normal({ '[c', bang = true })
+          else
+            require('gitsigns').nav_hunk('prev')
+          end
+        end,
+        mode = "n",
+        desc = "next change",
       },
     },
     config = function()
@@ -79,6 +118,22 @@ return {
     -- Give diff tab to nvim.
     -- DiffviewOpen oldCommit..newCommit to perform diff. Left is old, and right is new.
     "sindrets/diffview.nvim",
+    keys = {
+      {
+        "<leader>sd",
+        function ()
+          -- Close
+          if vim.api.nvim_buf_get_name(0):match "^diffview://" then
+            vim.cmd[[ tabclose ]]
+          else
+            vim.cmd [[ DiffviewOpen ]]
+          end
+          -- Open if not
+        end,
+        mode = "n",
+        desc = "n",
+      },
+    },
     event = "VeryLazy",
   },
   --{

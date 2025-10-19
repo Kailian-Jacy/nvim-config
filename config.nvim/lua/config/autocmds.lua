@@ -587,7 +587,7 @@ vim.api.nvim_create_autocmd("FileType", {
 -- Quickfix related.
 -- Page closing
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "qf" },
+  pattern = { "qf", "gitsigns-blame" },
   callback = function()
     vim.keymap.set(
       "n",
@@ -1404,3 +1404,15 @@ vim.api.nvim_create_autocmd("FileType", {
     )
   end,
 })
+
+-- Neovide transparency control
+vim.api.nvim_create_user_command("NeovideTransparentToggle", function()
+  if vim.g._neovide_background_color then
+    vim.g.neovide_background_color = vim.g._neovide_background_color
+  else
+    vim.g._neovide_background_color = vim.g.neovide_background_color
+    if #vim.g.neovide_background_color > 7 then
+      vim.g.neovide_background_color = string.sub(vim.g.neovide_background_color, 1, 7)
+    end
+  end
+end, {})

@@ -19,7 +19,8 @@ return {
           return {
             -- Faint seletion.
             FaintSelected = {
-              link = "Underlined",
+              bg = "#E06C75",
+              fg = "#1E222A"
             },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
@@ -454,6 +455,9 @@ return {
           end
           return ret
         end
+        if vim.g.scroll_bar_hide then
+          require("scrollbar.utils").hide()
+        end
         return { { line = 0, text = "" } } -- dummy-return to prevent error
       end)
       -- FIXME: only updates when redrawing the bar. and cmd-cr Dunno why..
@@ -493,7 +497,7 @@ return {
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
           -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },
-          buf_opts = { filetype = { "noice", "qf", "dap-view" } },
+          buf_opts = { filetype = { "noice", "qf", "gitsigns-blame", "dap-view" } },
         },
       },
     },

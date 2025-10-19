@@ -10,6 +10,24 @@ vim.g.is_plugin_loaded = function(plugin_name)
   return vim.tbl_get(require("lazy.core.config"), "plugins", plugin_name, "_", "loaded") ~= nil
 end
 
+vim.g.get_full_path_of = function(debugger_exe_name)
+  local exe_path = vim.fn.trim(vim.fn.system("which " .. debugger_exe_name))
+
+  -- Check if codelldb is found
+  if exe_path == "" then
+    -- If not found, show a notification and panic
+    vim.notify(
+      debugger_exe_name .. " is not installed. Please install it to use the debugger.",
+      vim.log.levels.ERROR
+    )
+    return ""
+  else
+    -- Return the absolute path of codelldb
+    -- vim.notify(debugger_exe_name .. " loaded.")
+    return exe_path
+  end
+end
+
 -- Customized Tabs
 ---@class PinnedTab
 ---@field id integer
@@ -375,7 +393,12 @@ end
 
 -- Add any additional options here
 vim.g.autoformat = false
-vim.g.do_not_format_all = true -- Setting autoformat as false. Select and format only.
+-- restrict: Apply restricted format: in normal mode, only format the minimum text object; in visual mode, format selected region.
+-- select_only: Only format under selected mode.
+---@enum "all" | "restrict" | "select_only"
+vim.g.do_not_format_all = "restrict"
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
+vim.g.scroll_bar_hide = true -- hide scrollbar by default. [Enable] with <leader>ub
+vim.g.indent_blankline_hide = true -- hide blankline guide. Toggle with <leader>ui

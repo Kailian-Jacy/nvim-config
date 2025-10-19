@@ -25,7 +25,7 @@ vim.keymap.set("c", "<c-e>", "<end>", { desc = "move cursor to the end" })
 vim.keymap.set("c", "<c-a>", "<home>", { desc = "move cursor to the end" })
 
 -- Keymap for LuaPrint
-vim.keymap.set("v", "<leader>pr", "<cmd>'<,'>LuaPrint<cr>", { desc = "move cursor to the end" })
+vim.keymap.set("v", "<leader>pr", "<cmd>'<,'>LuaPrint<cr>", { desc = "Lua print" })
 
 -- Path/Line fetching keymap.
 vim.keymap.set({ "v", "n", "x" }, "<leader>yp", "<cmd>CopyFilePath full<cr>", { desc = "Copy full path" })
@@ -288,6 +288,9 @@ vim.keymap.set("n", "<leader>up", function()
   end
 end, { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>uP", ":PinTab ", { noremap = true, silent = true })
+
+-- Neovide transparency control
+vim.keymap.set("n", "<leader>uT", "<cmd>NeovideTransparentToggle<cr>", { noremap = true, silent = true })
 
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
