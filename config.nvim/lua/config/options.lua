@@ -387,7 +387,7 @@ end
 
 -- Add any additional options here
 vim.g.autoformat = false
-vim.g.do_not_format_all = true -- Setting autoformat as false. Select and format only.
+vim.g.do_not_format_all = true -- Apply restricted format: in normal mode, only format the minimum text object; in visual mode, format selected region.
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"

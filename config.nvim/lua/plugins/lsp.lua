@@ -304,16 +304,18 @@ return {
         -- conform formatting
         function()
           vim.print_silent("@conform.format")
-          if not (vim.g.do_not_format_all and vim.fn.mode() == "n") then
-            require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
-              if not err then
-                local mode = vim.api.nvim_get_mode().mode
-                if vim.startswith(string.lower(mode), "v") then
-                  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-                end
-              end
-            end)
+          if (vim.g.do_not_format_all and vim.fn.mode() == "n") then
+            -- Minimal selection
+            require("nvim-treesitter.incremental_selection").init_selection()
           end
+          require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
+            if not err then
+              local mode = vim.api.nvim_get_mode().mode
+              if vim.startswith(string.lower(mode), "v") then
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+              end
+            end
+          end)
           require("lint").try_lint()
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
