@@ -390,7 +390,9 @@ vim.g.autoformat = false
 -- restrict: Apply restricted format: in normal mode, only format the minimum text object; in visual mode, format selected region.
 -- select_only: Only format under selected mode.
 ---@enum "all" | "restrict" | "select_only"
-vim.g.do_not_format_all = "restrict" 
+vim.g.do_not_format_all = "restrict"
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
+vim.g.scroll_bar_hide = true -- hide scrollbar by default. [Enable] with <leader>ub
+vim.g.indent_blankline_hide = true -- hide blankline guide. Toggle with <leader>ui

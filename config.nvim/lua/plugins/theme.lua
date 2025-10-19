@@ -412,6 +412,9 @@ return {
           end
           return ret
         end
+        if vim.g.scroll_bar_hide then
+          require("scrollbar.utils").hide()
+        end
         return { { line = 0, text = "" } } -- dummy-return to prevent error
       end)
       -- FIXME: only updates when redrawing the bar. and cmd-cr Dunno why..

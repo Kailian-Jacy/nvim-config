@@ -220,7 +220,7 @@ return {
           Lua = {
             diagnostics = {
               -- let lua interpreter recognize vim as global to disable warnings.
-              globals = { "vim" },
+              globals = { "vim", "Snacks" },
             },
           },
         },
@@ -451,6 +451,7 @@ return {
         end,
       }):map("<leader>ui")
       return {
+        enabled = not vim.g.indent_blankline_hide or false,
         indent = {
           char = "│",
           tab_char = "│",

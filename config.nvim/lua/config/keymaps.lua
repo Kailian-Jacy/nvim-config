@@ -289,6 +289,9 @@ vim.keymap.set("n", "<leader>up", function()
 end, { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>uP", ":PinTab ", { noremap = true, silent = true })
 
+-- Neovide transparency control
+vim.keymap.set("n", "<leader>uT", "<cmd>NeovideTransparentToggle<cr>", { noremap = true, silent = true })
+
 -- context display
 vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
   vim.print_silent(require("nvim-navic").get_location() or "N.A.")
