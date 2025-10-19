@@ -222,6 +222,8 @@ return {
       lspconfig.dockerls.setup({})
       -- yaml
       lspconfig.yamlls.setup({})
+      -- rust
+      -- lspconfig.rust_analyzer.setup({}) -- Rust analyzer configured by rustaceanvim. If enabled, there will be two lsps.
       -- python
       lspconfig.pyright.setup({})
       -- nix

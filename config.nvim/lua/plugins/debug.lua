@@ -136,32 +136,16 @@ return {
       -- dap.listeners.before['event_terminated']['nvim-dap-noui'] = dap.listeners.before['event_stopped']['nvim-dap-noui']
       -- Setup windows location and side when debugging with terminal:
 
-      local function get_full_path_of(debugger_exe_name)
-        local exe_path = vim.fn.trim(vim.fn.system("which " .. debugger_exe_name))
-
-        -- Check if codelldb is found
-        if exe_path == "" then
-          -- If not found, show a notification and panic
-          vim.notify(
-            debugger_exe_name .. " is not installed. Please install it to use the debugger.",
-            vim.log.levels.ERROR
-          )
-        else
-          -- Return the absolute path of codelldb
-          -- vim.notify(debugger_exe_name .. " loaded.")
-          return exe_path
-        end
-      end
-
       ---@param name string
       ---@param exe_name? string
       local function dap_register_if_executable(name, exe_name)
         exe_name = exe_name or name
-        if vim.fn.executable(exe_name) then
+        local path = vim.g.get_full_path_of(exe_name)
+        if path ~= "" then
           dap.adapters[name] = {
             id = name,
             type = "executable",
-            command = get_full_path_of(exe_name),
+            command = path,
           }
         end
       end

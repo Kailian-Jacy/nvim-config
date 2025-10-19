@@ -7,6 +7,24 @@ vim.g.is_current_window_floating = function ()
   return vim.api.nvim_win_get_config(0).relative ~= ""
 end
 
+vim.g.get_full_path_of = function(debugger_exe_name)
+  local exe_path = vim.fn.trim(vim.fn.system("which " .. debugger_exe_name))
+
+  -- Check if codelldb is found
+  if exe_path == "" then
+    -- If not found, show a notification and panic
+    vim.notify(
+      debugger_exe_name .. " is not installed. Please install it to use the debugger.",
+      vim.log.levels.ERROR
+    )
+    return ""
+  else
+    -- Return the absolute path of codelldb
+    -- vim.notify(debugger_exe_name .. " loaded.")
+    return exe_path
+  end
+end
+
 -- Customized Tabs
 ---@class PinnedTab
 ---@field id integer
