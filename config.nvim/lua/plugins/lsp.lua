@@ -88,7 +88,7 @@ return {
           -- "delve",
           "pyright",
           "debugpy", -- Installing it anyway, despite its ususally being installed from venv manager. Mason should be a fallback option.
-          "ruff", -- Used as formatter as well linter.
+          "ruff",    -- Used as formatter as well linter.
         },
         docker = {
           -- "hadolint",
@@ -176,9 +176,23 @@ return {
               ["ac"] = "@class.outer",
               ["ic"] = "@class.inner",
             },
-            iinclude_surrounding_whitespace = true,
+            include_surrounding_whitespace = true,
           },
         },
+      })
+      require('nvim-treesitter.configs').setup({
+        highlight = {
+          enable = true,
+          additional_vim_regex_highlighting = true,
+        },
+        incremental_selection = {
+          enable = true,
+          keymaps = {
+            init_selection = '<Tab>',
+            node_incremental = '<TAB>',
+            node_decremental = '<S-TAB>',
+          }
+        }
       })
     end,
   },
@@ -303,7 +317,7 @@ return {
           require("lint").try_lint()
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
-            vim.cmd([[ :w ]]) -- triggers lsp updating.
+            vim.cmd([[ :w ]])           -- triggers lsp updating.
           end
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
@@ -397,7 +411,7 @@ return {
               -- Display symbols as <root>.<parent>.<symbol>
               show_nesting = {
                 ["_"] = false, -- This key will be the default
-                json = true, -- You can set the option for specific filetypes
+                json = true,   -- You can set the option for specific filetypes
                 yaml = true,
               },
             },
