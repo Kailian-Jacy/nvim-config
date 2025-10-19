@@ -279,6 +279,9 @@ return {
   },
   {
     "stevearc/conform.nvim",
+    cmd = {
+      "ConformInfo",
+    },
     keys = {
       {
         "<leader><CR>",
@@ -286,7 +289,14 @@ return {
         function()
           vim.print_silent("@conform.format")
           if not (vim.g.do_not_format_all and vim.fn.mode() == "n") then
-            require("conform").format()
+            require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
+              if not err then
+                local mode = vim.api.nvim_get_mode().mode
+                if vim.startswith(string.lower(mode), "v") then
+                  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+                end
+              end
+            end)
           end
           require("lint").try_lint()
           if not vim.api.nvim_buf_get_name(0) == "" then
@@ -300,29 +310,31 @@ return {
         desc = "[F]ormat buffer with conform.",
       },
     },
-    opts = {
-      formatters_by_ft = {
-        -- Conform will run multiple formatters sequentially
-        -- You can customize some of the format options for the filetype (:help conform.format)
-        nix = { "nixfmt", "nixpkgs-fmt" },
-        lua = { "stylua" },
-        c = { "clang-format" },
-        cmake = { "cmake-format" },
-        cpp = { "clang-format" },
-        python = { "ruff" },
-        golang = { "goimports", "gopls" },
-        rust = { "rustfmt", lsp_format = "fallback" },
-        json = { "fixjson" },
-        xml = { "xmlformatter" },
-        bash = { "shfmt" },
-        -- Conform will run the first available formatter
-      },
-      format_on_save = false,
-      -- Conform will notify you when a formatter errors
-      notify_on_error = true,
-      -- Conform will notify you when no formatters are available for the buffer
-      notify_no_formatters = true,
-    },
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          -- Conform will run multiple formatters sequentially
+          -- You can customize some of the format options for the filetype (:help conform.format)
+          nix = { "nixfmt", "nixpkgs-fmt" },
+          -- lua = { "stylua" }, -- Stylua fails to work for visual selection format.
+          c = { "clang-format" },
+          cmake = { "cmake-format" },
+          cpp = { "clang-format" },
+          python = { "ruff" },
+          golang = { "goimports", "gopls" },
+          rust = { "rustfmt", lsp_format = "fallback" },
+          json = { "fixjson" },
+          xml = { "xmlformatter" },
+          bash = { "shfmt" },
+          -- Conform will run the first available formatter
+        },
+        format_on_save = false,
+        -- Conform will notify you when a formatter errors
+        notify_on_error = true,
+        -- Conform will notify you when no formatters are available for the buffer
+        notify_no_formatters = true,
+      })
+    end,
   },
   {
     "utilyre/barbecue.nvim",

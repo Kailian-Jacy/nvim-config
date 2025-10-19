@@ -19,7 +19,8 @@ return {
           return {
             -- Faint seletion.
             FaintSelected = {
-              link = "Underlined",
+              bg = "#E06C75",
+              fg = "#1E222A"
             },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.

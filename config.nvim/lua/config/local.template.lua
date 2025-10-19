@@ -26,7 +26,7 @@ M.after_options = function()
   -- vim.cmd[[ set fileencodings=ucs-bom,gb2312,utf-8,latin1,euc-cn ]]
 end
 
-M.before_plugins_load = function() 
+M.before_plugins_load = function()
   -- @An example to add dap configuration.
   -- -- Add more local dap configs.
   -- local dap = require("dap")
@@ -80,7 +80,14 @@ M.before_plugins_load = function()
   -- end
   -- dap.configurations.cpp[#dap.configurations.cpp + 1] = core_config
 end
-M.after_plugins_load = function() end
+M.after_plugins_load = function()
+  -- Formatter example. More: https://github.com/stevearc/conform.nvim?tab=readme-ov-file
+  -- require("conform").formatters.shfmt = {
+  --   append_args = { "-i", "2" },
+  --   -- The base args are { "-filename", "$FILENAME" } so the final args will be
+  --   -- { "-filename", "$FILENAME", "-i", "2" }
+  -- }
+end
 
 M.before_autocmds = function() end
 M.after_autocmds = function() end
