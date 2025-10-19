@@ -8,6 +8,9 @@ return {
   },
   {
     "lewis6991/gitsigns.nvim",
+    cmd = {
+      "Gitsigns change_base"
+    },
     keys = {
       {
         "<leader>hr",
@@ -32,8 +35,14 @@ return {
         desc = "n",
       },
       {
-        "<leader>ug",
-        "<Cmd>Gitsigns toggle_current_line_blame<cr>",
+        "<leader>hb",
+        "<Cmd>Gitsigns blame_line<cr>",
+        mode = "",
+        desc = "toggle git blame",
+      },
+      {
+        "<leader>hB",
+        "<Cmd>Gitsigns blame<cr>",
         mode = "",
         desc = "toggle git blame",
       },

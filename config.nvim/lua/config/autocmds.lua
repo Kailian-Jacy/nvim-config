@@ -587,7 +587,7 @@ vim.api.nvim_create_autocmd("FileType", {
 -- Quickfix related.
 -- Page closing
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "qf" },
+  pattern = { "qf", "gitsigns-blame" },
   callback = function()
     vim.keymap.set(
       "n",
