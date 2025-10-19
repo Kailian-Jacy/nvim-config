@@ -304,18 +304,7 @@ return {
         -- conform formatting
         function()
           vim.print_silent("@conform.format")
-          if (vim.g.do_not_format_all and vim.fn.mode() == "n") then
-            -- Minimal selection
-            require("nvim-treesitter.incremental_selection").init_selection()
-          end
-          require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
-            if not err then
-              local mode = vim.api.nvim_get_mode().mode
-              if vim.startswith(string.lower(mode), "v") then
-                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-              end
-            end
-          end)
+          vim.cmd[[ ConformFormat ]]
           require("lint").try_lint()
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
@@ -352,6 +341,29 @@ return {
         -- Conform will notify you when no formatters are available for the buffer
         notify_no_formatters = true,
       })
+      vim.api.nvim_create_user_command("ConformFormat", function()
+        vim.g.do_not_format_all = vim.g.do_not_format_all or "restricted"
+
+        -- Select only mode.
+        if (vim.g.do_not_format_all == "select_only" and vim.fn.mode() == "n") then
+          -- Skip format
+          return
+        end
+
+        -- Restrict mode
+        if (vim.g.do_not_format_all == "restrict" and vim.fn.mode() == "n") then
+          -- Minimal selection
+          require("nvim-treesitter.incremental_selection").init_selection()
+        end
+        require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
+          if not err then
+            local mode = vim.api.nvim_get_mode().mode
+            if vim.startswith(string.lower(mode), "v") then
+              vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+            end
+          end
+        end)
+      end, {})
     end,
   },
   {
