@@ -79,6 +79,22 @@ return {
     -- Give diff tab to nvim.
     -- DiffviewOpen oldCommit..newCommit to perform diff. Left is old, and right is new.
     "sindrets/diffview.nvim",
+    keys = {
+      {
+        "<leader>sd",
+        function ()
+          -- Close
+          if vim.api.nvim_buf_get_name(0):match "^diffview://" then
+            vim.cmd[[ tabclose ]]
+          else
+            vim.cmd [[ DiffviewOpen ]]
+          end
+          -- Open if not
+        end,
+        mode = "n",
+        desc = "n",
+      },
+    },
     event = "VeryLazy",
   },
   --{
