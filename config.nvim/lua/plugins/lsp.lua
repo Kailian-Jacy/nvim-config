@@ -301,17 +301,23 @@ return {
     keys = {
       {
         "<leader><CR>",
-        -- conform formatting
+        -- Refreshing.
         function()
           vim.print_silent("@conform.format")
           vim.cmd [[ ConformFormat ]]
           require("lint").try_lint()
+          -- Try save
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
             vim.cmd([[ :w ]]) -- triggers lsp updating.
           end
+          -- Scrollbar
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
+          -- Sometimes nvim-dap-virual-text does not quit after debug session ends.
+          if vim.g.is_plugin_loaded("nvim-dap-virtual-text") then
+            vim.cmd[[ DapVirtualTextForceRefresh ]]
+          end
         end,
         mode = { "n", "v" }, -- under visual mode, selected range will be formatted.
         desc = "[F]ormat buffer with conform.",

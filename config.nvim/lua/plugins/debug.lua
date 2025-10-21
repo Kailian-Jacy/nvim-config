@@ -1,5 +1,98 @@
 return {
   {
+    "Kailian-Jacy/persistent-breakpoints.nvim",
+    opts = {
+      load_breakpoints_event = { "BufReadPost" },
+      always_reload = true,
+    }
+  },
+  {
+    "igorlfs/nvim-dap-view",
+    -- If it's lazy loaded, it will cause failure to mount event on dap
+    -- So keymaps won't trigger
+    lazy = false,
+    cmd = {
+      "DapViewToggle",
+      "DapViewOpen",
+      "DapViewShow",
+      "DapViewWatch",
+    },
+    keys = {
+      {
+        "<leader>ud",
+        "<cmd>DapViewToggle<CR>",
+        mode = "n",
+        desc = "Toggle DAP View, default to console.",
+      },
+    },
+    config = function ()
+      vim.api.nvim_create_autocmd({ "FileType" }, {
+        pattern = { "dap-view", "dap-view-term", "dap-repl" }, -- dap-repl is set by `nvim-dap`
+        callback = function(args)
+            vim.keymap.set("n", "q", "<C-w>q", { buffer = args.buf })
+        end,
+      })
+      require("dap-view").setup({
+        winbar = {
+          show = true, -- For now.
+          sections = { "repl", "console", "watches", "scopes", "exceptions", "breakpoints", "threads", "sessions" },
+          base_sections = {
+            scopes = {
+              keymap = "P",
+              label = "Scopes [P]",
+              short_label = " [P]",
+              action = function()
+                require("dap-view.views").switch_to_view("scopes")
+              end,
+            },
+            threads = {
+                keymap = "F",
+                label = "Frames [F]",
+                short_label = "󰂥 [F]",
+                action = function()
+                    require("dap-view.views").switch_to_view("threads")
+                end,
+            },
+            sessions = {
+                keymap = "S", -- I ran out of mnemonics
+                label = "Sessions [S]",
+                short_label = " [S]",
+                action = function()
+                    require("dap-view.views").switch_to_view("sessions")
+                end,
+            },
+          },
+          default_section = "scopes",
+        },
+      })
+    end
+  },
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    -- NOTE: update dap version if error happens.
+    -- dap virual text and dap view is built upon certain nvim-dap versions, lacking great backward compatibility fascilities. 
+    -- so turn off lazy and update the dap plugin sometimes solves the problem.
+    keys = {
+      {
+        "<leader>uv",
+        "<cmd>DapVirtualTextToggle<cr>",
+        desc = "Toggle DAP Virtual Text",
+      },
+    },
+    config = function()
+      require("nvim-dap-virtual-text").setup({
+        all_references = true,
+        display_callback = function(variable)
+          local truncate_size = vim.g.debug_virtual_text_truncate_size or 20
+          if #variable.value > truncate_size then
+            return ' ' .. variable.value:sub(1, truncate_size) .. '...'
+          end
+          return ' ' .. variable.value
+        end,
+      })
+    end,
+  },
+  {
     "mfussenegger/nvim-dap",
     dependencies = {
       "jbyuki/one-small-step-for-vimkind",
@@ -70,7 +163,7 @@ return {
       --    So problem about rust vscode compatibility seems unsolved.
 
       -- setup keymap before debug session begins.
-      dap.listeners.before["event_initialized"]["nvim-dap-noui"] = function(_, _)
+      dap.listeners.after["event_initialized"]["nvim-dap-noui"] = function(_, _)
         vim.print_silent("Debug Session intialized ")
         vim.g.debugging_status = "DebugOthers"
         require("lualine").refresh()
@@ -82,6 +175,23 @@ return {
       -- dap.listeners.after.launch["nvim-dap-noui"] = function (_, _)
       --   vim.print_silent("Debug Session Launched.")
       -- end
+
+      -- Customized helper functions.
+
+      ---@return table<string, integer>
+      vim.g.debugging_session_status = function ()
+        local sessions = dap.sessions()
+        local stopped_session = 0
+        local running_session = 0
+        for _, session in pairs(sessions) do
+          if session.stopped_thread_id ~= nil then
+            stopped_session = stopped_session + 1
+          else
+            running_session = running_session + 1
+          end
+        end
+        return {stopped_session = stopped_session, running_session = running_session}
+      end
 
       -- Starting.
       dap.listeners.before["event_stopped"]["nvim-dap-noui"] = function(_, _)
@@ -166,11 +276,13 @@ return {
         -- env = {},
         name = "debugpy",
       }
+
+      -- Lua debug neovim itself configuration
+      -- 1. Run require"osv".launch({port = 8086}) before debugging.
+      -- 2. Navigate to lua file and start debugging.
       dap.adapters.neovimlua = function(callback, config)
         callback({ type = 'server', host = config.host or "127.0.0.1", port = config.port or 8086 })
       end
-
-      -- Lua debug neovim itself configuration
       dap.configurations.lua = {
         {
           type = 'neovimlua',

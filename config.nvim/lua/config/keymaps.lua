@@ -307,6 +307,211 @@ function rhs_options:map_cr(cmd_string)
   return self
 end
 
+-- Debugging related keymaps.
+---@class DebuggingKeymapItem
+---@field normalModeKey string
+---@field debugModeKey string
+---@field action string | function
+---@field desc string
+---@field visual_model boolean | nil @default false
+
+---@alias DebuggingKeymaps DebuggingKeymapItem[]
+
+---@type DebuggingKeymaps
+local debugging_keymaps = {
+  -- ['r'] = { f = require('go.dap').run, desc = 'run' },
+  -- ["<D-b>"] = { f = widgets.centered_float(widgets.break), desc = "Widget: Variable in Scopes" },
+  -- ["<D-r>"] = { f = require("dap").repl.toggle, desc = "repl toggle" },
+  {
+    normalModeKey = "<leader>db",
+    debugModeKey = "b",
+    action = function()
+      require("dap").toggle_breakpoint()
+    end,
+    desc = "Toggle breakpoint"
+  },
+  {
+    normalModeKey = "<leader>dB",
+    debugModeKey = "B",
+    action = function()
+      require("dap-view").open()
+      require("dap-view").jump_to_view("breakpoints")
+    end,
+    desc = "Show list of breakpoint"
+  },
+  {
+    normalModeKey = "<leader>dc",
+    debugModeKey = "c",
+    action = function()
+      require("dap").continue()
+    end,
+    desc = "Continue"
+  },
+  {
+    normalModeKey = "<leader>dC",
+    debugModeKey = "C",
+    action = function()
+      require("dap").run_to_cursor()
+    end,
+    desc = "Run to cursor"
+  },
+  {
+    normalModeKey = "<leader>dW",
+    debugModeKey = "W",
+    action = function()
+      local placeholder = vim.fn.expand("<cword>")
+      if vim.fn.mode() == "v" then
+        placeholder = vim.g.function_get_selected_content()
+      end
+      vim.api.nvim_feedkeys(":DapViewWatch " .. placeholder, "n", false) -- No CR to allow further edition.
+    end,
+    desc = "Add watch point",
+    visual_model = true
+  },
+  {
+    normalModeKey = "<leader>dn",
+    debugModeKey = "n",
+    action = function()
+      require("dap").step_over()
+    end,
+    desc = "Step over"
+  },
+  {
+    normalModeKey = "<leader>dN",
+    debugModeKey = "N",
+    action = function()
+      vim.cmd("DapNew")
+    end,
+    desc = "Run new debug session"
+  },
+  {
+    normalModeKey = "<leader>ds",
+    debugModeKey = "s",
+    action = function()
+      require("dap").step_into()
+    end,
+    desc = "Step into"
+  },
+  {
+    normalModeKey = "<leader>dS",
+    debugModeKey = "S",
+    action = function()
+      require("dap-view").open()
+      require("dap-view").jump_to_view("sessions")
+    end,
+    desc = "Show Sessions"
+  },
+  {
+    normalModeKey = "<leader>do",
+    debugModeKey = "o",
+    action = function()
+      require("dap").step_out()
+    end,
+    desc = "Step out"
+  },
+  {
+    normalModeKey = "<leader>du",
+    debugModeKey = "u",
+    action = function()
+      require("dap").up()
+    end,
+    desc = "Up"
+  },
+  {
+    normalModeKey = "<leader>dd",
+    debugModeKey = "d",
+    action = function()
+      require("dap").down()
+    end,
+    desc = "Down"
+  },
+  {
+    normalModeKey = "<leader>dF",
+    debugModeKey = "F",
+    action = function()
+      -- local widgets = require("dap.ui.widgets")
+      -- widgets.centered_float(widgets.frames)
+      require("dap-view").open()
+      require("dap-view").jump_to_view("threads")
+    end,
+    desc = "Show frames"
+  },
+  {
+    normalModeKey = "<leader>dp",
+    debugModeKey = "p",
+    action = function()
+      require("dap.ui.widgets").hover()
+    end,
+    desc = "Hover"
+  },
+  {
+    normalModeKey = "<leader>dP",
+    debugModeKey = "P",
+    action = function()
+      require("dap-view").open()
+      require("dap-view").jump_to_view("scopes")
+    end,
+    desc = "Preview the content in separate buffer"
+    -- action = function()
+    --   require("dap.ui.widgets").preview()
+    -- end,
+    -- desc = "Preview the content in separate buffer"
+  },
+  {
+    normalModeKey = "<leader>dR",
+    debugModeKey = "R",
+    action = function()
+      require("dap").restart()
+    end,
+    desc = "Terminate session"
+  },
+  {
+    normalModeKey = "<leader>d<c-c>",
+    debugModeKey = "<c-c>",
+    action = function()
+      require("dap").pause()
+    end,
+    desc = "Pause"
+  },
+  {
+    normalModeKey = "<leader>dT",
+    debugModeKey = "T",
+    action = function()
+      vim.cmd("DapViewToggle")
+    end,
+    desc = "Toggle DapView"
+  },
+  {
+    normalModeKey = "<leader><D-BS>",
+    debugModeKey = "<D-BS>",
+    action = function()
+      -- go back to line in the current frame.
+      -- could be adjusted with `vim.o.switchbuf`
+      require("dap").focus_frame()
+    end,
+    desc = "Terminate session"
+  },
+  {
+    normalModeKey = "<leader>dE",
+    debugModeKey = "E",
+    action = function()
+      require("dap").disconnect()
+      require("dap").close()
+    end,
+    desc = "Stop session"
+  },
+}
+
+-- Set normal mode keymaps.
+for _, item in ipairs(debugging_keymaps) do
+  ---@type string | string[]
+  local mode = "n"
+  if item.visual_model then
+    mode = { "n", "v" }
+  end
+  vim.keymap.set(mode, item.normalModeKey, item.action, { noremap = true, silent = true })
+end
+
 vim.g.nvim_dap_keymap = function()
   -- Prevent keymapping set during keymap.
   if vim.g.nvim_dap_noui_backup_keymap ~= nil then
@@ -315,65 +520,20 @@ vim.g.nvim_dap_keymap = function()
   end
 
   vim.g.nvim_dap_noui_backup_keymap = vim.api.nvim_get_keymap("n")
-  local widgets = require("dap.ui.widgets")
-  vim.g.nvim_dap_noui_keymap_list = {
-    -- DAP --
-    -- run
-    -- ['r'] = { f = require('go.dap').run, desc = 'run' },
-    ["c"] = { f = require("dap").continue, desc = "continue" },
-    ["n"] = { f = require("dap").step_over, desc = "step_over" },
-    ["s"] = { f = require("dap").step_into, desc = "step_into" },
-    ["o"] = { f = require("dap").step_out, desc = "step_out" },
-    ["u"] = { f = require("dap").up, desc = "up" },
-    ["d"] = { f = require("dap").down, desc = "down" },
 
-    -- Widgets for resources.
-    ["<D-f>"] = {
-      f = function()
-        widgets.centered_float(widgets.frames)
-      end,
-      desc = "Widget: Frames",
-    },
-    ["<D-s>"] = {
-      f = function()
-        widgets.centered_float(widgets.sessions)
-      end,
-      desc = "Widget: Session",
-    },
-    ["<D-p>"] = {
-      f = function()
-        widgets.centered_float(widgets.scopes)
-      end,
-      desc = "Widget: Variable in Scopes",
-    },
-    -- TODO:  Breakpoints & conditional breakpoints waits to be finished
-    --
-    -- ["<D-b>"] = { f = widgets.centered_float(widgets.break), desc = "Widget: Variable in Scopes" },
-    ["<D-r>"] = { f = require("dap").repl.toggle, desc = "repl toggle" },
-
-    ["C"] = { f = require("dap").run_to_cursor, desc = "run_to_cursor" },
-    ["b"] = { f = require("dap").toggle_breakpoint, desc = "toggle_breakpoint" },
-
-    ["S"] = { f = require("dap").terminate, desc = "stop debug session" },
-    ["<c-c>"] = { f = require("dap").pause, desc = "pause" },
-
-    ["P"] = { f = require("dap.ui.widgets").preview, m = { "n", "v" }, desc = "preview the content" },
-    ["p"] = { f = require("dap.ui.widgets").hover, m = { "n", "v" }, desc = "hover" },
-  }
-
-  for key, value in pairs(vim.g.nvim_dap_noui_keymap_list) do
-    local mode, keymap = key:match("([^|]*)|?(.*)")
-    if type(value) == "string" then
-      value = rhs_options.map_cr(value):with_noremap():with_silent()
+  for _, item in ipairs(debugging_keymaps) do
+    ---@type string | string[]
+    local mode = "n"
+    if item.visual_model then
+      mode = { "n", "v" }
     end
-    if type(value) == "table" and value.f then
-      local m = value.m or "n"
-      vim.keymap.set(m, key, value.f)
-    end
-    if type(value) == "table" and value.cmd then
-      local rhs = value.cmd
-      local options = value.options
-      vim.api.nvim_set_keymap(mode, keymap, rhs, options)
+    -- local mode, keymap = key:match("([^|]*)|?(.*)")
+    local keymap = item.debugModeKey
+    -- if type(item) == "string" then
+    --   item = rhs_options.map_cr(item):with_noremap():with_silent()
+    -- end
+    if type(item) == "table" and item.action then
+      vim.keymap.set(mode, keymap, item.action)
     end
   end
 end
@@ -384,14 +544,14 @@ vim.g.nvim_dap_upmap = function()
     return
   end
 
-  for value, _ in pairs(vim.g.nvim_dap_noui_keymap_list) do
-    local cmd = "silent! unmap " .. value
-    vim.cmd(cmd)
+  for _, item in ipairs(debugging_keymaps) do
+    vim.cmd("silent! unmap " .. item.debugModeKey)
   end
 
   vim.cmd([[silent! vunmap p]])
 
-  for k, _ in pairs(vim.g.nvim_dap_noui_keymap_list) do
+  for _, item in ipairs(debugging_keymaps) do
+    local k = item.debugModeKey
     for _, v in pairs(vim.g.nvim_dap_noui_backup_keymap or {}) do
       if v.lhs == k then
         local nr = (v.noremap == 1)

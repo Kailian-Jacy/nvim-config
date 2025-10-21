@@ -19,8 +19,7 @@ return {
           return {
             -- Faint seletion.
             FaintSelected = {
-              bg = "#E06C75",
-              fg = "#1E222A"
+              link = "Underlined"
             },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
@@ -54,10 +53,12 @@ return {
             -- LSP.
             LspInlayHint = { fg = "#969696" },
             -- Diff
-            DiffAdd = { bg = "#1e4839", fg = "#b9e0d3" },
-            DiffDelete = { bg = "#4c232d", fg = "#e8b9b8" },
+            DiffAdd = { bg = "#103d13" },
+            DiffDelete = { bg = "#3d1310" },
             DiffChange = {},
             DiffText = { link = "DiffAdd" },
+            -- Dap
+            debugPc = { bg = "#21222C" }
           }
         end,
       })
@@ -228,6 +229,51 @@ return {
           status_not = false, -- When true, invert the status search
         }
       end
+      local dap_block = {
+        function()
+          local ret = "DBG "
+          if not vim.g.debugging_session_status then
+            return ret .. '>'
+          end
+          local ss = vim.g.debugging_session_status()
+          if ss.stopped_session + ss.running_session == 1 then
+            -- Display no number when there is only one session.
+            if ss.stopped_session == 1 then
+              return ret .. " " .. ">"
+            else
+              return ret .. "󰜎 " .. ">"
+            end
+            return ret .. '>'
+          end
+          -- More than one session. Display count.
+          if ss.stopped_session > 0 then
+            ret = ret .. " ".. ss.stopped_session .. " "
+          end
+          if ss.running_session > 0 then
+            ret = ret .. "󰜎 ".. ss.running_session .. " "
+          end
+          return ret .. ">"
+        end,
+        -- icon = { "?", color = { fg = "#e7c664" } }, -- nerd icon.
+        cond = function()
+          if vim.g.debugging_keymap then
+            return true
+          end
+          local session = require("dap").session()
+          if package.loaded.dap and session ~= nil and session ~= {} then
+            return true
+          end
+          return false
+        end,
+        -- Color
+        -- color = { fg = "#e7c664" },
+        color = function()
+          if vim.g.debugging_keymap then
+            return { bg = "#7358D6" }
+          end
+          return { fg = nil, bg = nil }
+        end,
+      }
       require("lualine").setup({
         options = {
           theme = theme,
@@ -251,7 +297,9 @@ return {
           },
           lualine_b = {},
           lualine_c = {},
-          lualine_x = {},
+          lualine_x = {
+            dap_block
+          },
           lualine_y = {
             overseer_config_block,
           },
@@ -288,7 +336,7 @@ return {
                 end
                 local debug_keymap = function()
                   if vim.g.debugging_keymap == true then
-                    return "d"
+                    return ""
                   else
                     return ""
                   end
@@ -324,12 +372,6 @@ return {
                   return tabname
                 end
                 return status_sign() .. "{" .. cwd() .. "} | " .. sys_sign() .. ""
-              end,
-              color = function()
-                if vim.g.debugging_keymap then
-                  return { bg = "#7358D6" }
-                end
-                return { fg = nil, bg = nil }
               end,
             },
           },
@@ -454,7 +496,7 @@ return {
           },
           -- Still problematic. AvanteSidebarWinHorizontalSeparator will be hidden.
           -- buf_opts = { filetype = { "Avante", "AvanteSelectedFiles" } },
-          buf_opts = { filetype = { "noice", "qf", "gitsigns-blame" } },
+          buf_opts = { filetype = { "noice", "qf", "gitsigns-blame", "dap-view" } },
         },
       },
     },

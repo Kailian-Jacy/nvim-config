@@ -3,8 +3,11 @@
 
 
 -- Helper functions.
-vim.g.is_current_window_floating = function ()
+vim.g.is_current_window_floating = function()
   return vim.api.nvim_win_get_config(0).relative ~= ""
+end
+vim.g.is_plugin_loaded = function(plugin_name)
+  return vim.tbl_get(require("lazy.core.config"), "plugins", plugin_name, "_", "loaded") ~= nil
 end
 
 vim.g.get_full_path_of = function(debugger_exe_name)
@@ -184,7 +187,7 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
 -- UI related.
-vim.cmd([[ set laststatus=3 ]]) -- Global lualine across each windows.
+vim.cmd([[ set laststatus=3 ]])     -- Global lualine across each windows.
 vim.cmd([[ set signcolumn=yes:1 ]]) -- Constant status column indentation.
 vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
@@ -192,7 +195,7 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 -- vim.o.guifont = 'MonoLisa Nerd Font Light:h14'
 
 -- Highlighting Source.
-vim.cmd([[ syntax off ]]) -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
+vim.cmd([[ syntax off ]])                       -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
 vim.g.use_treesitter_highlight = { "c", "cpp" } -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
 
 -- Undo history even when the file is closed.
@@ -240,7 +243,7 @@ function TablineString(tab_descriptions)
     if tab_id == vim.fn.tabpagenr() then
       tabline = tabline .. "%#TabLineSel#" -- Highlight selected tab
     else
-      tabline = tabline .. "%#TabLine#" -- Highlight inactive tabs
+      tabline = tabline .. "%#TabLine#"    -- Highlight inactive tabs
     end
 
     -- Set tab page number for mouse clicks
@@ -282,6 +285,7 @@ function Tabline()
   -- Return tabline string.
   return TablineString(tabs)
 end
+
 vim.go.tabline = "%!v:lua.Tabline()"
 
 vim.g.function_get_selected_content = function()
@@ -305,6 +309,15 @@ vim.g.debugging_status = "NoDebug"
 vim.g.recording_status = false
 vim.g.debugging_keymap = false
 
+-- virtual text truncate size.
+vim.g.debug_virtual_text_truncate_size = 20
+
+-- Current transparency:
+-- 1. There is no way to directly set transparency for floating window. The working way is to set make "Normal" transparent and add a background color outside of neovim, which is the current way I'm using. I tried to clear the background color of Normal, it left black shadow.
+-- 2. vim.g.neovide_background_color is causing the border to disappear, which could not be amended by any other options.
+-- 3. vim.g.neovide_opacity can only be retained near 1 to keep selection sharp.
+-- So there is no better way than the current situation.
+
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true
 
@@ -316,12 +329,12 @@ vim.g.neovide_cursor_trail_size = 0.1
 
 -- appearance
 -- vim.print(string.format("%x", math.floor(255 * 0))) -- 0.88 e0; 0.9 cc; 0 0
-local alpha = function()
-  return string.format("%x", math.floor(255 * (vim.g.transparency or 0.8)))
+local alpha = function(transparency)
+  return string.format("%x", math.floor(255 * transparency))
 end
 -- Visual parts transparency.
 -- vim.g.neovide_transparency = 1 -- 0: fully transparent.
-vim.g.neovide_opacity = 1 -- 0: fully transparent. # neovide 0.15: upgraded from neovide_transparency.
+vim.g.neovide_opacity = 0.99 -- 0: fully transparent. # neovide 0.15: upgraded from neovide_transparency. Leaving it as 1 would disable blur.
 -- Normal Background transparency.
 vim.g.neovide_normal_opacity = 0.3
 
@@ -330,9 +343,8 @@ vim.g.LAST_WORKING_DIRECTORY = "~"
 
 -- Background color transparency. 0 fully transparent.
 -- FIXME: Setting this option to none-zero makes border disappear.
-vim.g.transparency = 0.86
 -- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
-vim.g.neovide_background_color = "#13103d" .. alpha()
+vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.86)
 
 -- padding surrounding.
 vim.g.neovide_padding_top = 10
@@ -341,7 +353,7 @@ vim.g.neovide_padding_bottom = 10
 
 -- Unconfigurable blurr amount.
 -- Not to bother around blurring. Neovide is just setting blur to a fixed value.
-vim.g.neovide_window_blurred = false
+vim.g.neovide_window_blurred = true
 
 -- Setting floating blur amount.
 vim.g.neovide_floating_blur_amount_x = 5
@@ -379,7 +391,7 @@ vim.g.user_vscode_snippets_path = {
 }
 if vim.g._env_os_type == "MACOS" then
   vim.g.user_vscode_snippets_path[#vim.g.user_vscode_snippets_path + 1] =
-    vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
+      vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
 end
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
@@ -395,5 +407,5 @@ vim.g.max_silent_format_line_cnt = 10    -- Set it to be -1 to allow any silent 
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
-vim.g.scroll_bar_hide = true -- hide scrollbar by default. [Enable] with <leader>ub
+vim.g.scroll_bar_hide = true       -- hide scrollbar by default. [Enable] with <leader>ub
 vim.g.indent_blankline_hide = true -- hide blankline guide. Toggle with <leader>ui
