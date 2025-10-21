@@ -391,6 +391,7 @@ vim.g.autoformat = false
 -- select_only: Only format under selected mode.
 ---@enum "all" | "restrict" | "select_only"
 vim.g.do_not_format_all = "restrict"
+vim.g.max_silent_format_line_cnt = 10    -- Set it to be -1 to allow any silent format.
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"

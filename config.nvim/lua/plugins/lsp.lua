@@ -304,11 +304,11 @@ return {
         -- conform formatting
         function()
           vim.print_silent("@conform.format")
-          vim.cmd[[ ConformFormat ]]
+          vim.cmd [[ ConformFormat ]]
           require("lint").try_lint()
           if not vim.api.nvim_buf_get_name(0) == "" then
             -- Do not save if new buffer.
-            vim.cmd([[ :w ]])           -- triggers lsp updating.
+            vim.cmd([[ :w ]]) -- triggers lsp updating.
           end
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
@@ -341,6 +341,11 @@ return {
         -- Conform will notify you when no formatters are available for the buffer
         notify_no_formatters = true,
       })
+      local possible_options = { "select_only", "restrict", "all" }
+      if vim.g.do_not_format_all and not vim.tbl_contains(possible_options, vim.g.do_not_format_all) then
+        vim.notify("ConformFormat: do_not_format_all is not valid", vim.log.levels.ERROR)
+      end
+
       vim.api.nvim_create_user_command("ConformFormat", function()
         vim.g.do_not_format_all = vim.g.do_not_format_all or "restricted"
 
@@ -350,10 +355,33 @@ return {
           return
         end
 
-        -- Restrict mode
+        local get_select_line_cnt = function ()
+          local ts_utils = require "nvim-treesitter.ts_utils"
+          local parsers = require "nvim-treesitter.parsers"
+
+          parsers.get_parser():parse { vim.fn.line "w0" - 1, vim.fn.line "w$" }
+          local node = ts_utils.get_node_at_cursor()
+
+          if node == nil then
+            vim.print("node is nil")
+            return 0
+          end
+
+          local start = node:start()
+          local ends = node:end_()
+
+          return node, ends - start + 1
+        end
+
+        -- Restrict mode selection size.
         if (vim.g.do_not_format_all == "restrict" and vim.fn.mode() == "n") then
+          local node, line_cnt = get_select_line_cnt()
+          -- Restrict selection. If it's more than certain number of lines, skip formatting.
+          if vim.g.max_silent_format_line_cnt and vim.g.max_silent_format_line_cnt < line_cnt then
+            return
+          end
           -- Minimal selection
-          require("nvim-treesitter.incremental_selection").init_selection()
+          require("nvim-treesitter.ts_utils").update_selection(vim.api.nvim_get_current_buf(), node, "linewise")
         end
         require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
           if not err then
