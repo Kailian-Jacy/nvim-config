@@ -327,7 +327,7 @@ local alpha = function(transparency)
 end
 -- Visual parts transparency.
 -- vim.g.neovide_transparency = 1 -- 0: fully transparent.
-vim.g.neovide_opacity = 1 -- 0: fully transparent. # neovide 0.15: upgraded from neovide_transparency.
+vim.g.neovide_opacity = 0.99 -- 0: fully transparent. # neovide 0.15: upgraded from neovide_transparency. Leaving it as 1 would disable blur.
 -- Normal Background transparency.
 vim.g.neovide_normal_opacity = 0.3
 
@@ -347,7 +347,7 @@ vim.g.neovide_padding_bottom = 10
 
 -- Unconfigurable blurr amount.
 -- Not to bother around blurring. Neovide is just setting blur to a fixed value.
-vim.g.neovide_window_blurred = false
+vim.g.neovide_window_blurred = true
 
 -- Setting floating blur amount.
 vim.g.neovide_floating_blur_amount_x = 5
