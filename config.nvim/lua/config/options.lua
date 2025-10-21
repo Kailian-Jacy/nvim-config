@@ -3,7 +3,7 @@
 
 
 -- Helper functions.
-vim.g.is_current_window_floating = function ()
+vim.g.is_current_window_floating = function()
   return vim.api.nvim_win_get_config(0).relative ~= ""
 end
 vim.g.is_plugin_loaded = function(plugin_name)
@@ -187,7 +187,7 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
 -- UI related.
-vim.cmd([[ set laststatus=3 ]]) -- Global lualine across each windows.
+vim.cmd([[ set laststatus=3 ]])     -- Global lualine across each windows.
 vim.cmd([[ set signcolumn=yes:1 ]]) -- Constant status column indentation.
 vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
@@ -195,7 +195,7 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 -- vim.o.guifont = 'MonoLisa Nerd Font Light:h14'
 
 -- Highlighting Source.
-vim.cmd([[ syntax off ]]) -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
+vim.cmd([[ syntax off ]])                       -- we won't need syntax anytime. It seems to conflict with pickers. Use treesitter at least.
 vim.g.use_treesitter_highlight = { "c", "cpp" } -- Some LSP provides poor semantic highlights. Currently treesitter based solution is a beneficial compliment.
 
 -- Undo history even when the file is closed.
@@ -243,7 +243,7 @@ function TablineString(tab_descriptions)
     if tab_id == vim.fn.tabpagenr() then
       tabline = tabline .. "%#TabLineSel#" -- Highlight selected tab
     else
-      tabline = tabline .. "%#TabLine#" -- Highlight inactive tabs
+      tabline = tabline .. "%#TabLine#"    -- Highlight inactive tabs
     end
 
     -- Set tab page number for mouse clicks
@@ -285,6 +285,7 @@ function Tabline()
   -- Return tabline string.
   return TablineString(tabs)
 end
+
 vim.go.tabline = "%!v:lua.Tabline()"
 
 vim.g.function_get_selected_content = function()
@@ -311,6 +312,12 @@ vim.g.debugging_keymap = false
 -- virtual text truncate size.
 vim.g.debug_virtual_text_truncate_size = 20
 
+-- Current transparency:
+-- 1. There is no way to directly set transparency for floating window. The working way is to set make "Normal" transparent and add a background color outside of neovim, which is the current way I'm using. I tried to clear the background color of Normal, it left black shadow.
+-- 2. vim.g.neovide_background_color is causing the border to disappear, which could not be amended by any other options.
+-- 3. vim.g.neovide_opacity can only be retained near 1 to keep selection sharp.
+-- So there is no better way than the current situation.
+
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true
 
@@ -336,9 +343,8 @@ vim.g.LAST_WORKING_DIRECTORY = "~"
 
 -- Background color transparency. 0 fully transparent.
 -- FIXME: Setting this option to none-zero makes border disappear.
-vim.g.transparency = 0.86
 -- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
-vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.8)
+vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.86)
 
 -- padding surrounding.
 vim.g.neovide_padding_top = 10
@@ -385,7 +391,7 @@ vim.g.user_vscode_snippets_path = {
 }
 if vim.g._env_os_type == "MACOS" then
   vim.g.user_vscode_snippets_path[#vim.g.user_vscode_snippets_path + 1] =
-    vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
+      vim.fn.expand("$HOME/Library/Application Support/Code/User/snippets/") -- Default Vscode snippet path under MacOS.
 end
 
 -- vim.g.user_vscode_snippets_path = "/Users/kailianjacy/Library/Application Support/Code/User/snippets/" -- How to get: https://arc.net/l/quote/fjclcvra
@@ -400,5 +406,5 @@ vim.g.do_not_format_all = "restrict"
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
-vim.g.scroll_bar_hide = true -- hide scrollbar by default. [Enable] with <leader>ub
+vim.g.scroll_bar_hide = true       -- hide scrollbar by default. [Enable] with <leader>ub
 vim.g.indent_blankline_hide = true -- hide blankline guide. Toggle with <leader>ui
