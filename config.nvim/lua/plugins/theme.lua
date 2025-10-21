@@ -19,8 +19,7 @@ return {
           return {
             -- Faint seletion.
             FaintSelected = {
-              bg = "#E06C75",
-              fg = "#1E222A"
+              link = "Underlined"
             },
             -- Set cursorline to be empty rather than using :set cursorline.
             -- If wanting to use any cursorline linked to this, need manually setting.
@@ -54,8 +53,8 @@ return {
             -- LSP.
             LspInlayHint = { fg = "#969696" },
             -- Diff
-            DiffAdd = { bg = "#1e4839", fg = "#b9e0d3" },
-            DiffDelete = { bg = "#4c232d", fg = "#e8b9b8" },
+            DiffAdd = { bg = "#103d13" },
+            DiffDelete = { bg = "#3d1310" },
             DiffChange = {},
             DiffText = { link = "DiffAdd" },
             -- Dap
