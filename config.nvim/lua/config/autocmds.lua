@@ -30,6 +30,12 @@ vim.api.nvim_create_user_command("OverseerRestartLast", function()
   end
 end, {})
 
+-- Neovim debugging server
+vim.api.nvim_create_user_command("DebugServe", function(opt)
+  local port = tonumber(opt.args or "8086")
+  require("osv").launch({ port = port })
+end, { nargs = "?" })
+
 -- Mason
 vim.api.nvim_create_user_command("MasonInstallAll", function(opts)
   local ensure_installed = require("mason").ensure_installed
