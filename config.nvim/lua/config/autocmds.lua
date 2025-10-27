@@ -215,6 +215,15 @@ vim.api.nvim_create_autocmd("TabClosed", {
   end,
 })
 
+-- Autoload files that has been changed. Triggers ":h autoread"
+vim.api.nvim_create_autocmd("FocusGained", {
+  pattern = "*",
+  callback = function ()
+    vim.cmd [[ checktime ]]
+  end,
+})
+
+
 -- vim.api.nvim_create_autocmd("TabEnter", {
 --   pattern = "*",
 --   callback = function()

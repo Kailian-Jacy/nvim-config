@@ -318,6 +318,8 @@ vim.g.debug_virtual_text_truncate_size = 20
 -- 3. vim.g.neovide_opacity can only be retained near 1 to keep selection sharp.
 -- So there is no better way than the current situation.
 
+-- Auto read configuration files.
+vim.o.autoread = true
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true
 
