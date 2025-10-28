@@ -2,13 +2,12 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Trigger auto test when entering neovim.
-vim.api.nvim_create_autocmd("VimEnter", {
-  pattern = "*",
-  callback = function()
-    vim.cmd[[ RunTest ]]
-  end
-})
+-- TODO: git worktree automation.
+-- TEST=script_runner; git worktree add ../neovim_test_$TEST
+-- TEST=script_runner; ln -s $(pwd)/neovim_test_$TEST/config.nvim ~/.config/neovim_test_$TEST
+--
+-- Run tests:
+-- TEST=script_runner; NVIM_APPNAME=neovim_test_$TEST nvim +"cd ~/.config/neovim_test_$TEST" +"RunTest"
 
 -- Test runner
 vim.api.nvim_create_user_command("RunTest", function()
@@ -174,7 +173,7 @@ vim.api.nvim_create_user_command("RunScript", function()
     local func = loadstring(template_literal) or function()
       vim.notify("neovim lua: failed to parse lua code block.", vim.log.levels.ERROR)
     end
-    -- TODO: no timeout function for now.
+    -- TODO: no timeout function for built-in types now.
     func()
   else
     vim.print(template_literal)
@@ -252,6 +251,28 @@ vim.api.nvim_create_user_command("RunScript", function()
   end
 
 end, { desc = "Run current script. Use vim.bo.[filetype].runner to customize buffer local runner." })
+
+vim.api.nvim_create_user_command("SetBufRunner",
+  function(opts)
+    local filetype = vim.bo.filetype
+    local template = vim.trim(opts.args):gsub("^\"(.-)\"$", "%1")
+
+    if not filetype or #filetype == 0 then
+      vim.notify("invalid filetype", vim.log.levels.ERROR)
+      return
+    end
+    if not template or #template == 0 then
+      vim.notify("empty template", vim.log.levels.ERROR)
+      return
+    end
+    vim.b.runner = vim.tbl_deep_extend("force", vim.b.runner or {}, {
+      [filetype] = {
+        runner = "",
+        template = template,
+      }
+    })
+  end,
+  { desc = "buffer runner. e.g: SetBufRunner echo -e | /usr/bin/python3 <<EOF\n${text}\nEOF\n", nargs = 1 })
 
 -- Tasks: Overseer
 vim.api.nvim_create_user_command("OverseerRestartLast", function()
