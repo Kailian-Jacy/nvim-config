@@ -31,7 +31,227 @@ vim.api.nvim_create_user_command("RunTest", function()
   end
 end, { desc = "run *_vimtest.lua" })
 
+-- Script runner.
+-- Possibly turn it into a standalone plugin later.
+vim.api.nvim_create_user_command("RunScript", function()
+    local uv = vim.uv or vim.loop
+    ---@class runner_definition
+    ---@field runner (fun(): string) | string | nil
+    ---@field template fun(runner: string, text: string) | string
+    ---@field timeout number? single command timeout in sec
+
+    ---@type table<string, runner_definition>
+    local filetype_runner = {
+      ["python"] = {
+        runner = function()
+          -- Use python: selected > python3 > python.
+          local candidates = {
+            require('venv-selector').get_active_path() or "",
+            "python3",
+            "python"
+          }
+          local found = false
+          local python_intepreter = ""
+          for _, candidate in ipairs(candidates) do
+            if vim.fn.executable(candidate) ~= 0 then
+              python_intepreter = candidate
+              found = true
+              break
+            end
+          end
+          if not found or #python_intepreter == 0 then
+            vim.notify("no usable python intepreter.", vim.log.levels.ERROR)
+            return ""
+          end
+          return python_intepreter
+        end,
+
+        -- Content in template:
+        -- 1. \r\n will be used as actual meaning (not escaped).
+        -- 2. ${runner} and ${text} will be replaced.
+        -- 3. Execute in current neovim shell cmd like ${shell} -c ${cmd}.
+        template = "echo -e | ${runner} <<EOF\n${text}\nEOF",
+        timeout = 3,
+      },
+      ["nu"] = {
+        runner = "nu",
+        template = "COMMANDS=$(cat<<EOF\n${text}\nEOF\n);${runner} --commands $COMMANDS --no-newline",
+        timeout = 5,
+      },
+      -- For lua, just run in the neovim instance. To run lua outside of the neovim, set runner as other lua interpreter.
+      ["lua"] = {
+        runner = "this_neovim",
+        template = "${text}",
+      },
+      ["sh"] = {
+        runner = "zsh",
+        template = "${text}",
+      }
+    }
+
+    local bufid = vim.api.nvim_get_current_buf()
+    local winid = vim.api.nvim_get_current_win()
+
+    -- Choose runner: buff local > predefined.
+    -- TODO: Example runner oneliner: lua vim.b.runner = {  }
+    local all_runners = vim.b["runner"] or {}
+    if #vim.bo.filetype == 0 then
+      vim.notify("No filetype detected.", vim.log.levels.ERROR)
+      return
+    end
+
+    local runner = all_runners[vim.bo.filetype] or filetype_runner[vim.bo.filetype]
+    if not runner then
+      vim.notify("No runner found for filetype: " .. vim.bo.filetype, vim.log.levels.ERROR)
+      return
+    end
+
+    -- Get text: selected > full text.
+    local text_literal = ""
+    if vim.g.is_in_visual_mode() then
+      text_literal = vim.g.function_get_selected_content()
+    else
+      text_literal = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
+    end
+
+  -- Register Runner.
+  local runner_literal = ""
+  if not runner.runner then
+    -- possibly using runner hardcoded in template.
+  elseif type(runner.runner) == "string" then
+    runner_literal = runner.runner
+  elseif type(runner.runner) == "function" then
+    runner_literal = runner.runner()
+    -- false or nil
+    if not runner_literal then
+      vim.notify("runner function returned abortion.", vim.log.level.INFO)
+      return
+    end
+  else
+    vim.notify("Runner template is not qualified", vim.log.levels.ERROR)
+    return
   end
+  assert(type(runner_literal) == "string")
+
+  -- Register template.
+  local template_literal = ""
+  if type(runner.template) == "string" then
+    template_literal = runner.template
+  elseif type(runner.template) == "function" then
+    template_literal = runner.template(runner_literal, text_literal)
+    -- false or nil
+    if not template_literal then
+      vim.notify("template function returned abortion.", vim.log.level.INFO)
+      return
+    end
+  else
+    vim.notify("Runner template is not qualified", vim.log.levels.ERROR)
+    return
+  end
+  assert(type(template_literal) == "string")
+
+  -- Assemble command
+  template_literal = string.gsub(template_literal, "${runner}", runner_literal)
+  template_literal = string.gsub(template_literal, "${text}", text_literal)
+
+  -- Register timeout. Default to be 3s.
+  local timeout = 0
+  local timeout_cancidates = {
+    vim.g._runner_global_timeout or 0,
+    runner.timeout or 0,
+    filetype_runner[vim.bo.filetype].timeout or 0,
+    3000
+  }
+  for _, candidate in ipairs(timeout_cancidates) do
+    if candidate and type(candidate) == "number" or candidate > 0 then
+      timeout = candidate
+    end
+  end
+
+  -- As the runner is designed to be transient, we are just using global runner here.
+  -- You can always use ctrl-C to stop it.
+  if vim.bo.filetype == "lua" and runner_literal == "this_neovim" then
+    local func = loadstring(template_literal) or function()
+      vim.notify("neovim lua: failed to parse lua code block.", vim.log.levels.ERROR)
+    end
+    -- TODO: no timeout function for now.
+    func()
+  else
+    vim.print(template_literal)
+    local ok, job_or_err = pcall(
+    -- vim.g._current_runner = vim.fn.jobstart(
+      vim.system,
+      {
+        vim.o.shell,
+        "-c",
+        template_literal
+      },
+      {
+        text = true,
+      },
+      -- Report result to cursor position or end of the document when runner ends.
+      vim.schedule_wrap(function(obj)
+        -- Replace the last command.
+        -- If the last command is running, just kill it and remove.
+        if vim.g._current_runner then
+          uv.kill(vim.g._current_runner, 9)
+          vim.notify("stopped another running script.", vim.log.levels.INFO)
+        end
+        vim.g._current_runner = nil
+        vim.print(vim.inspect(obj))
+
+        if obj.signal == 9 then
+          return
+        end
+
+        local return_text = "\n"
+
+        if #obj.stdout > 0 then
+          return_text = return_text .. obj.stdout .. "\n"
+        end
+
+        if #obj.stderr > 0 then
+          return_text = return_text .. obj.stderr .. "\n"
+        end
+
+        if #return_text == 0 then
+          vim.notify("script_runner ends with nothing: " .. string(obj.code))
+          return
+        end
+        return_text = string.gsub(return_text, "\n+$", "") .. "\n"
+
+        -- Set the undo checkpoint for quick undo.
+        -- reference: https://vi.stackexchange.com/questions/27185/break-the-undo-sequence-in-normal-mode
+        vim.cmd [[ let &ul=&ul ]]
+
+        -- Insert at the cursor position.
+        local pos = {}
+        if vim.api.nvim_get_current_buf() ~= bufid then
+          vim.notify("script_runner finished in another buf.", vim.log.levels.INFO)
+          pos = vim.api.nvim_buf_get_mark(bufid, '"')
+        else
+          pos = vim.api.nvim_win_get_cursor(winid)
+        end
+        vim.api.nvim_buf_set_lines(bufid, pos[1], pos[1], false, vim.split(return_text, "\n"))
+      end)
+    )
+
+    if not ok then
+      vim.notify(string.format("runner function returned error: %s", job_or_err), vim.log.level.INFO)
+      return
+    end
+
+    vim.g._current_runner = job_or_err.pid
+
+    -- Should kill on timeout.
+    vim.defer_fn(function()
+      if uv.kill(job_or_err.pid, 9) == 0 then
+        vim.notify(string.format("previous script_runner timeout. current timeout: %d ms", timeout), vim.log.levels.INFO)
+      end
+    end, timeout)
+  end
+
+end, { desc = "Run current script. Use vim.bo.[filetype].runner to customize buffer local runner." })
 
 -- Tasks: Overseer
 vim.api.nvim_create_user_command("OverseerRestartLast", function()
