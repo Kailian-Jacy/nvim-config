@@ -11,7 +11,34 @@ vim.g.find_launch_json = function(start_dir)
 
     if vim.fn.filereadable(launch_json) == 1 then
       return launch_json, vscode_dir
+-- Trigger auto test when entering neovim.
+vim.api.nvim_create_autocmd("VimEnter", {
+  pattern = "*",
+  callback = function()
+    vim.cmd[[ RunTest ]]
+  end
+})
+
+-- Test runner
+vim.api.nvim_create_user_command("RunTest", function()
+  local cwd = vim.fn.getcwd()
+  local test_files = vim.fn.globpath(cwd, "*_vimtest.lua", true, true)
+  if #test_files == 0 then
+    return
+  end
+
+  for _, file in ipairs(test_files) do
+    vim.notify("---Testing file " .. file .. " ---", vim.log.levels.INFO)
+    local success, result = pcall(dofile, file)
+    if not success then
+      vim.notify("---Error executing test file " .. file .. ": " .. result, vim.log.levels.ERROR)
+    else
+      if result ~= nil then
+        vim.notify("---Test result: " .. tostring(result), vim.log.levels.INFO)
+      end
     end
+  end
+end, { desc = "run *_vimtest.lua" })
 
     -- Move up one directory
     current_dir = vim.fn.fnamemodify(current_dir, ":h")
