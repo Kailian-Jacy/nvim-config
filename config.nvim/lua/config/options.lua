@@ -3,6 +3,22 @@
 
 
 -- Helper functions.
+vim.g.find_launch_json = function(start_dir)
+  local current_dir = start_dir
+  while current_dir ~= "/" and current_dir ~= "" do
+    local vscode_dir = current_dir .. "/.vscode"
+    local launch_json = vscode_dir .. "/launch.json"
+
+    if vim.fn.filereadable(launch_json) == 1 then
+      return launch_json, vscode_dir
+    end
+
+    -- Move up one directory
+    current_dir = vim.fn.fnamemodify(current_dir, ":h")
+  end
+  return nil, nil
+end
+
 vim.g.is_current_window_floating = function()
   return vim.api.nvim_win_get_config(0).relative ~= ""
 end
@@ -294,6 +310,11 @@ vim.g.function_get_selected_content = function()
   local vstart = vim.fn.getpos("'<")
   local vend = vim.fn.getpos("'>")
   return table.concat(vim.fn.getregion(vstart, vend), "\n")
+end
+
+vim.g.is_in_visual_mode = function ()
+  local current_mode = vim.fn.mode()
+  return current_mode == 'v' or current_mode == 'V' or current_mode == '\22'
 end
 
 vim.g.get_word_under_cursor = function()

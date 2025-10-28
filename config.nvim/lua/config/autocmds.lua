@@ -2,15 +2,6 @@
 -- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 -- Add any additional autocmds here
 
--- Tool functions.
-vim.g.find_launch_json = function(start_dir)
-  local current_dir = start_dir
-  while current_dir ~= "/" and current_dir ~= "" do
-    local vscode_dir = current_dir .. "/.vscode"
-    local launch_json = vscode_dir .. "/launch.json"
-
-    if vim.fn.filereadable(launch_json) == 1 then
-      return launch_json, vscode_dir
 -- Trigger auto test when entering neovim.
 vim.api.nvim_create_autocmd("VimEnter", {
   pattern = "*",
@@ -40,11 +31,7 @@ vim.api.nvim_create_user_command("RunTest", function()
   end
 end, { desc = "run *_vimtest.lua" })
 
-    -- Move up one directory
-    current_dir = vim.fn.fnamemodify(current_dir, ":h")
   end
-  return nil, nil
-end
 
 -- Tasks: Overseer
 vim.api.nvim_create_user_command("OverseerRestartLast", function()
