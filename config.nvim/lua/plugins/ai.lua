@@ -8,7 +8,7 @@ if vim.fn.isdirectory(copilot_dir) == 1 then
     dir = copilot_dir,
     enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
   }
-else 
+else
   copilot = {
     "github/copilot.vim",
     enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
@@ -21,6 +21,81 @@ return {
   -- from ai store.
   copilot,
   {
+    "robitx/gp.nvim",
+    lazy = false,
+    keys = {
+      {
+        "<leader>ae",
+        "V:'<,'>Rewrite<CR>",
+        mode = { "n" },
+        desc = "Rewrite unfinished code.",
+      },
+      {
+        "<leader>ae",
+        ":'<,'>Rewrite<CR>",
+        mode = { "v" },
+        desc = "Rewrite unfinished code.",
+      },
+    },
+    opts = {
+      cmd_prefix = "",
+      providers = {
+        openrouter = {
+          disable = false,
+          endpoint = "https://openrouter.ai/api/v1/chat/completions",
+          secret = os.getenv("OPENROUTER_API_KEY")
+          -- secret = (function()
+          --   local api_key = os.getenv("OPENROUTER_API_KEY")
+          --   if not api_key then
+          --     vim.notify("no openrouter api key found.", vim.log.levels.INFO)
+          --     return ""
+          --   end
+          --   return api_key
+          -- end)(),
+        }
+      },
+      agents = {
+        {
+          provider = "openrouter",
+          name = "inline",
+          chat = false,
+          system_prompt =
+          "You are a professional programmer. You are going to fix the code snippet provided, possibly following the requirements in comment, pseudocode (those_function_with_long_descriptive_names are usually mocked to express logic, which should be replaced with actual code.) or obviously unfinished code part. You should ALWAYS provide and ONLY provide code that could be replaced AS-IS of the selected part. \nDo not add ANY other wasted text except code, including explanation, warning or any other requests. If there are possible error or anything fatal to the task you want to indicate, please put them in the comment.",
+          model = {
+            model = "mistralai/codestral-2508",
+          }
+        }
+      },
+      whisper = {
+        disable = true,
+      },
+      image = {
+        disable = true,
+      },
+      hooks = {
+        -- GpImplement rewrites the provided selection/range based on comments in it
+        Rewrite = function(gp, params)
+          local template = "Having following from {{filename}}:\n\n"
+              .. "```{{filetype}}\n{{selection}}\n```\n\n"
+              .. "Please rewrite this according to the contained instructions."
+              .. "\n\nRespond exclusively with the snippet that should replace the selection above."
+
+          local agent = gp.get_command_agent("inline")
+          gp.logger.info("Implementing selection with agent: " .. agent.name)
+
+          gp.Prompt(
+            params,
+            gp.Target.rewrite,
+            agent,
+            template,
+            nil, -- command will run directly without any prompting for user input
+            nil -- no predefined instructions (e.g. speech-to-text from Whisper)
+          )
+        end,
+      }
+    }
+  },
+  {
     "tzachar/cmp-tabnine",
     -- there is some problem with tabnine installation. Just
     -- go to the tabnine path and run the install.sh
@@ -29,6 +104,7 @@ return {
   },
   {
     "ravitemer/mcphub.nvim",
+    enabled = false, -- Complains about version.
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
@@ -133,8 +209,9 @@ return {
   {
     "yetone/avante.nvim",
     event = "VeryLazy",
-    lazy = false,
+    lazy = false, -- lazy loading avante does not work...
     -- commit = "e98fa46", -- set this if you want to always pull the latest change
+    enabled = false,
     keys = {
       {
         "<leader>aa",
