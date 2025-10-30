@@ -295,9 +295,6 @@ return {
               -- History moving
               ["<d-s-j>"] = {"history_forward", mode = { "n", "i" }},
               ["<d-s-k>"] = {"history_back", mode = { "n", "i" }},
-
-              -- Additional actions.
-              ["<c-e>"] = {"picker_print", mode={"n", "i"}}
             }
           },
           list = {
@@ -398,7 +395,21 @@ return {
         actions = {
           explore_here = function (_, item)
             if item.dir and item.file then
-              Snacks.picker.explorer({ cwd = item.file })
+              local path  = (
+                function()
+                  local candidates = { item._path or "", item.file or "" }
+                  for _, c in ipairs(candidates) do
+                    if #c > 0 then
+                      return c
+                    end
+                  end
+                  return ""
+                end
+              )()
+              if #path == 0 then
+                return
+              end
+              Snacks.picker.explorer({ cwd = path })
             else
               vim.print_silent("no directory related")
             end
@@ -425,6 +436,7 @@ return {
             vim.cmd[[ tabnew ]]
             if item.dir then
               Snacks.picker.actions.tcd(_, item)
+              vim.cmd('silent !zoxide add "' .. item._path .. '"')
               vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
             else
               vim.cmd("e " .. item._path)
