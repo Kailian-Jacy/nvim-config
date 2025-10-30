@@ -277,6 +277,10 @@ return {
               ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
               ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
 
+              -- Directory view from the item path.
+              ["<c-e>"] = { "explore_here", mode = { "n", "i" } },
+              ["<d-e>"] = { "explore_here", mode = { "n", "i" } },
+
               -- Maximize.
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
@@ -285,6 +289,8 @@ return {
               -- Inspecting.
               ["<c-p>"] = "inspect",
               ["<d-p>"] = "inspect",
+              ["<c-P>"] = { "picker_print", mode = { "n", "i" } },
+              ["<d-P>"] = { "picker_print", mode = { "n", "i" } },
 
               -- History moving
               ["<d-s-j>"] = {"history_forward", mode = { "n", "i" }},
@@ -328,6 +334,11 @@ return {
               ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
               ["o"] = "toggle_maximize",
+
+              -- Directory view from the item path.
+              ["<c-e>"] = { "explore_here", mode = { "n", "i" } },
+              ["<d-e>"] = { "explore_here", mode = { "n", "i" } },
+              ["<e>"] = { "explore_here", mode = { "n" } },
 
               -- Inspecting.
               ["<c-p>"] = "inspect",
@@ -385,6 +396,13 @@ return {
           }
         },
         actions = {
+          explore_here = function (_, item)
+            if item.dir and item.file then
+              Snacks.picker.explorer({ cwd = item.file })
+            else
+              vim.print_silent("no directory related")
+            end
+          end,
           picker_print = function(picker, _)
             vim.print(picker)
           end,
