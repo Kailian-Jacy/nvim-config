@@ -170,11 +170,13 @@ vim.api.nvim_create_user_command("RunScript", function()
   -- As the runner is designed to be transient, we are just using global runner here.
   -- You can always use ctrl-C to stop it.
   if vim.bo.filetype == "lua" and runner_literal == "this_neovim" then
-    local func = loadstring(template_literal) or function()
-      vim.notify("neovim lua: failed to parse lua code block.", vim.log.levels.ERROR)
+    local func, errmsg = loadstring(template_literal)
+    if not func then
+      vim.notify("neovim lua: failed to parse lua code block: \n" .. errmsg, vim.log.levels.ERROR)
+    else
+      assert(type(func) == "function")
+      func()
     end
-    -- TODO: no timeout function for built-in types now.
-    func()
   else
     vim.print(template_literal)
     local ok, job_or_err = pcall(
