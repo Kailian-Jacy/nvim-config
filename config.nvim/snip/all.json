@@ -58,6 +58,29 @@
 		],
 		"description": "Create a Neovim keymap using vim.keymap.set"
 	},
+	"debug.launch_json.cpp": {
+		"prefix": "cpplaunchjsonconfig",
+		"body": [
+		{
+			"version": "0.2.0",
+			"configurations": [
+				{
+					"name": "(lldb) Debug",
+					"type": "codelldb",
+					"request": "launch",
+					"program": "${workspaceFolder}/main.out",
+					"args": [],
+					"stopAtEntry": false,
+					"cwd": "${fileDirname}",
+					"environment": [],
+					"externalConsole": false,
+					"MIMode": "lldb"
+				}
+			]
+		}
+		],
+		"description": "example config.json rust for cpp programs."
+	},
 	"debug.launch_json.rust": {
 		"prefix": "rustlaunchjsonconfig",
 		"body": [

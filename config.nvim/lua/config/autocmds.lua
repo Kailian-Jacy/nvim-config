@@ -287,7 +287,11 @@ end, {})
 
 -- Neovim debugging server
 vim.api.nvim_create_user_command("DebugServe", function(opt)
-  local port = tonumber(opt.args or "8086")
+  if opt.args == "stop" then
+    require("osv").stop()
+    return
+  end
+  local port = tonumber(opt.args) or 8086
   require("osv").launch({ port = port })
 end, { nargs = "?" })
 

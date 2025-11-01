@@ -58,7 +58,8 @@ return {
             DiffChange = {},
             DiffText = { link = "DiffAdd" },
             -- Dap
-            debugPc = { bg = "#21222C" }
+            debugPc = { bg = "#21222C" },
+            HighlightedNormal = { bg = "#373461" }
           }
         end,
       })
