@@ -29,6 +29,7 @@ return {
   },
   {
     "ravitemer/mcphub.nvim",
+    enabled = false,
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
@@ -143,12 +144,12 @@ return {
         -- mode = { "n", "i" }, -- it could not be insert mode. It's causing space being very slow.
         desc = "Start avante Chat",
       },
-      {
-        "<leader>ae",
-        "V<cmd>AvanteEdit<CR>",
-        mode = { "n" },
-        desc = "Start code completion.",
-      },
+      -- { -- Now migerate inline completion to another plugin.
+      --   "<leader>ae",
+      --   "V<cmd>AvanteEdit<CR>",
+      --   mode = { "n" },
+      --   desc = "Start code completion.",
+      -- },
       {
         "<leader>ah",
         "<cmd>AvanteHistory<CR>",
@@ -168,14 +169,23 @@ return {
       -- system_prompt as function ensures LLM always has latest MCP server state
       -- This is evaluated for every message, even in existing chats
       system_prompt = function()
-        local hub = require("mcphub").get_hub_instance()
+        local success, module = pcall(require, "mcphub")
+        if not success then
+          return ""
+        end
+        local hub = module.get_hub_instance()
         return hub and hub:get_active_servers_prompt() or ""
       end,
       -- Using function prevents requiring mcphub before it's loaded
       custom_tools = function()
-        return {
-          require("mcphub.extensions.avante").mcp_tool(),
-        }
+        local ret = {}
+        local success, module = pcall(require, "mcphub.extensions.avante")
+        if success then
+          vim.tbl_extend("error", ret, {
+            module.mcp_tool(),
+          })
+        end
+        return ret
       end,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "openrouter_code_completer", -- Recommend using Claude
@@ -183,7 +193,7 @@ return {
       providers = {
         ollama = {
           -- works well but way too slow...
-          model = "devstral:latest",
+          model = "openrouter_claude_haiku",
         },
         -- Weak support for local llms like ollama. But it's unnecessary for now.
         -- They are just too weak to do anything.
@@ -192,37 +202,22 @@ return {
           api_key_name = "OPENAI_API_KEY",
           model = "gpt-4o-mini",
         },
-        openrouter_gemini_pro = {
+        openrouter_claude_haiku = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          model = "google/gemini-2.5-pro-preview",
-          max_tokens = 102400,
-          disable_tools = true,
-        },
-        openrouter_gemini_flash = {
-          __inherited_from = "openai",
-          endpoint = "https://openrouter.ai/api/v1",
-          api_key_name = "OPENROUTER_API_KEY",
-          model = "google/gemini-2.5-flash-preview-05-20",
-          max_tokens = 10240,
-          disable_tools = true,
-        },
-        openrouter_claude_4 = {
-          __inherited_from = "openai",
-          endpoint = "https://openrouter.ai/api/v1",
-          api_key_name = "OPENROUTER_API_KEY",
-          model = "anthropic/claude-sonnet-4",
+          model = "anthropic/claude-haiku-4.5",
           max_tokens = 10240,
           timeout = 30000,
           disable_tools = false,
         },
-        openrouter_claude_3_5 = {
+        openrouter_claude_sonnet = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          model = "anthropic/claude-3.5-sonnet",
+          model = "anthropic/claude-sonnet-4.5",
           max_tokens = 10240,
+          timeout = 30000,
           disable_tools = false,
         },
         openrouter_code_completer = {
