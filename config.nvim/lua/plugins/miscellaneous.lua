@@ -8,6 +8,41 @@
 -- * add extra plugins
 -- * disable/enabled LazyVim plugins
 -- * override the configuration of LazyVim plugins
+
+-- Snacks helper actions
+---@param picker snacks.Picker
+---@param item snacks.picker.Item
+local search_from_selected = function(picker, item)
+  -- If any files selected, search from the files.
+  local multi_selection = picker:selected { fallback = false }
+
+  -- If non selected, and there is a directory under the cursor, search in the directory.
+  if not multi_selection or #multi_selection == 0 then
+    multi_selection = {}
+    if not item.dir then
+      vim.print_silent("not directory. Could not search here.")
+      return
+    end
+    multi_selection = { item.file or item._path }
+  else
+    local files = {}
+    for _, item in ipairs(multi_selection) do
+      table.insert(files, item.file)
+    end
+    multi_selection = files
+  end
+  vim.schedule(function()
+    picker:close()
+    Snacks.picker.grep({
+      dirs = multi_selection,
+      certain_files = true,
+      toggles = {
+        certain_files = "f" .. #(multi_selection)
+      }
+    })
+  end)
+end
+
 return {
   -- Disable some of the builtin plugins.
   -- {
@@ -274,8 +309,8 @@ return {
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
 
               -- Searching from all the current files or selected files.
-              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
-              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<C-/>"] = {"search_from_selected", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
 
               -- Directory view from the item path.
               ["<c-e>"] = { "explore_here", mode = { "n", "i" } },
@@ -312,8 +347,8 @@ return {
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["t"] = {"new_tab_here", mode={"n", "i"}},
 
-              ["<C-/>"] = {"search_from_file", mode={"n", "i"}},
-              ["<D-/>"] = {"search_from_file", mode={"n", "i"}},
+              ["<C-/>"] = {"search_from_selected", mode={"n", "i"}},
+              ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
 
               -- Window switching
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
@@ -479,49 +514,7 @@ return {
             Snacks.picker.actions.lcd(_, item)
             vim.print_silent("Win pwd: " .. vim.fn.getcwd())
           end,
-          search_here = function(picker, item)
-            item.dir = item.dir or false
-            if not item.dir then
-              vim.print_silent("not directory. Could not search here.")
-              return
-            end
-            vim.schedule(function()
-              picker:close()
-              Snacks.picker.grep({
-                cwd = item._path
-              })
-            end)
-          end,
-          search_from_file = function (picker, _)
-            -- If any files selected, search from the files.
-            local multi_selection = picker:selected { fallback = false }
-
-            -- If non selected, search from all in the list.
-            if not multi_selection or #multi_selection == 0 then
-              multi_selection = {}
-              for item, _ in picker:iter() do
-                if item.file and not vim.tbl_contains(multi_selection, item.file) then
-                  table.insert(multi_selection, item.file)
-                end
-              end
-            else
-              local files = {}
-              for _, item in ipairs(multi_selection) do
-                table.insert(files, item.file)
-              end
-              multi_selection = files
-            end
-            vim.schedule(function()
-              picker:close()
-              Snacks.picker.grep({
-                dirs = multi_selection,
-                certain_files = true,
-                toggles = {
-                  certain_files = "f" .. #(multi_selection)
-                }
-              })
-            end)
-          end
+          search_from_selected = search_from_selected,
         },
         -- As neovim has no window-local keymap.
         -- Display view that uses opened buffer will not oevrride keymaps. 
@@ -711,8 +704,8 @@ return {
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
 
                   -- Search from the directory
-                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
-                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
 
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
@@ -728,8 +721,8 @@ return {
                   ["<d-cr>"] = {"tcd_to_item", mode = {"n", "i"}},
 
                   -- Search from the directory
-                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
-                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
 
                   ["<d-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
                   ["<c-z>"] = {"add_to_zoxide", mode = {"n", "i"}},
@@ -788,8 +781,8 @@ return {
                   ["<d-cr>"] = {"zoxide_tcd", mode={"n", "i"}},
 
                   -- Search from the directory
-                  ["<c-/>"] = {"search_here", mode={"n", "i"}},
-                  ["<D-/>"] = {"search_here", mode={"n", "i"}},
+                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
 
                   ["<d-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
                   ["<c-bs>"] = {"remove_from_zoxide", mode={"n", "i"}},
