@@ -20,6 +20,7 @@ INSTALL_DEPENDENCIES+="fzf ripgrep fd " # buildin searchs.
 INSTALL_DEPENDENCIES+="npm node " # required by copilot.
 INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks "
 INSTALL_DEPENDENCIES+="sqlite " # required by bookmarks.nvim
+INSTALL_DEPENDENCIES+="gh " # required by Snacks.nvim/gh
 INSTALL_FONT_PATH=""
 CONTINUE_ON_ERROR=true
 INSTALL_NVIM_FROM_SOURCE=0

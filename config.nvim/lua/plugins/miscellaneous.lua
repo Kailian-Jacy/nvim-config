@@ -221,6 +221,9 @@ return {
       explorer = {
         enabled = true
       },
+      gh = {
+        enabled = true,
+      },
       styles = {
         lazygit = {
           height = 0,
@@ -520,6 +523,8 @@ return {
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          gh_issue = {},
+          gh_pr = {},
           grep = {
             actions = {
               ---@param picker snacks.Picker
