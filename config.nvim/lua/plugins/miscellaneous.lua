@@ -2,14 +2,22 @@
 -- stylua: ignore
 -- if true then return {} end
 
--- every spec file under the "plugins" directory will be loaded automatically by lazy.nvim
---
--- In your plugin files, you can:
--- * add extra plugins
--- * disable/enabled LazyVim plugins
--- * override the configuration of LazyVim plugins
+-- ************************ Snacks helper functions ************************ --
+---@class snacks.Picker
+---@field [string] unknown
+---@class snacks.picker.Config
+---@field [string] unknown
 
--- Snacks helper actions
+local list_extend = function(where, what)
+  return vim.list_extend(vim.deepcopy(where), what)
+end
+
+local list_filter = function(where, what)
+  -- stylua: ignore
+  return vim.iter(where):filter(function(val) return not vim.list_contains(what, val) end):totable()
+end
+
+-- ************************  Snacks helper actions  ************************ --
 ---@param picker snacks.Picker
 ---@param item snacks.picker.Item
 local search_from_selected = function(picker, item)
@@ -295,12 +303,12 @@ return {
             keys = {
               -- navigation.
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
-              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
+              -- ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
-              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
 
               -- Windows switching.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
@@ -357,12 +365,12 @@ return {
 
               -- Window switching
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
-              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
+              -- ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
-              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
               ["x"] = "edit_split",
               ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",
@@ -405,11 +413,11 @@ return {
 
               ["<c-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<c-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
-              ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
-              ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
+              -- ["<c-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<c-v>"] = {"edit_vsplit", mode = { "n", "i" }},
               ["<d-x>"] = {"edit_split", mode = {"n", "i"}},
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
-              ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
+              -- ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
               ["x"] = "edit_split",
               ["X"] = "edit_vsplit",
               ["v"] = "edit_vsplit",
@@ -582,7 +590,24 @@ return {
           gh_issue = {},
           gh_pr = {},
           grep = {
+            case_sens = false, -- New! Define custom variable
+            toggles = {
+              case_sens = 's',
+            },
+            finder = function(opts, ctx)
+              local args_extend = { '--case-sensitive' }
+              opts.args = list_filter(opts.args or {}, args_extend)
+              if opts.case_sens then
+                opts.args = list_extend(opts.args, args_extend)
+              end
+              -- vim.print(opts.args) -- Debug
+              return require('snacks.picker.source.grep').grep(opts, ctx)
+            end,
             actions = {
+              toggle_live_case_sens = function(picker) -- [[Override]]
+                picker.opts.case_sens = not picker.opts.case_sens
+                picker:find()
+              end,
               ---@param picker snacks.Picker
               ---@param item? snacks.picker.Item
               remove_file_from_list = function (picker, item)
@@ -603,6 +628,8 @@ return {
                 keys = {
                   ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
                   ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ['<c-s>'] = { 'toggle_live_case_sens', mode = { 'i', 'n' } },
+                  ['<d-s>'] = { 'toggle_live_case_sens', mode = { 'i', 'n' } },
 
                   ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
                   ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
@@ -612,6 +639,8 @@ return {
                 keys = {
                   ["<c-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
                   ["<d-i>"] = {"remove_file_from_list", mode = {"n", "i"}},
+                  ['<c-s>'] = { 'toggle_live_case_sens', mode = { 'i', 'n' } },
+                  ['<d-s>'] = { 'toggle_live_case_sens', mode = { 'i', 'n' } },
 
                   ["<c-h>"] = {"toggle_hidden", mode = {"n", "i"}},
                   ["<d-h>"] = {"toggle_hidden", mode = {"n", "i"}},
