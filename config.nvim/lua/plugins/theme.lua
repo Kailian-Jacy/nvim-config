@@ -394,6 +394,8 @@ return {
     },
     config = function()
       require("scrollbar").setup({
+        show = not vim.g.scroll_bar_hide,
+        show_
         handle = {
           color = "#2D4263",
           hide_if_all_visible = true,
@@ -455,7 +457,8 @@ return {
           end
           return ret
         end
-        if vim.g.scroll_bar_hide then
+        local config = require("scrollbar.config").get()
+        if config and config.show == false then
           require("scrollbar.utils").hide()
         end
         return { { line = 0, text = "" } } -- dummy-return to prevent error

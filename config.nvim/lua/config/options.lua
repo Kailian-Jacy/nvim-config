@@ -430,5 +430,5 @@ vim.g.max_silent_format_line_cnt = 10    -- Set it to be -1 to allow any silent 
 
 -- Theme setting
 -- vim.opt.statuscolumn = "%=%{v:relnum?v:relnum:v:lnum} %s"
-vim.g.scroll_bar_hide = true       -- hide scrollbar by default. [Enable] with <leader>ub
+vim.g.scroll_bar_hide = true       -- hide active page scrollbar by default. [Enable] with <leader>ub
 vim.g.indent_blankline_hide = true -- hide blankline guide. Toggle with <leader>ui
