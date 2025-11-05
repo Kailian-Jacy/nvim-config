@@ -142,27 +142,27 @@ vim.g.read_binary_with_xxd = false
 ---@type table<ModuleConfig>
 local default_modules_config = {
   rust = {
-    enabled = vim.fn.executable("rustc"),
+    enabled = vim.fn.executable("rustc") == 1,
   },
   go = {
-    enabled = vim.fn.executable("go"),
+    enabled = vim.fn.executable("go") == 1,
   },
   python = {
-    enabled = vim.fn.executable("python") or vim.fn.executable("python3"),
+    enabled = vim.fn.executable("python") == 1 or vim.fn.executable("python3") == 1,
   },
   cpp = {
-    enabled = vim.fn.executable("gcc"),
+    enabled = vim.fn.executable("gcc") == 1,
   },
   --- Plugin feature support. Detect dependencies and enable feature. ---
 
   copilot = {
-    enabled = vim.fn.executable("node"),
+    enabled = vim.fn.executable("node") == 1,
   },
   bookmarks = {
     enabled = vim.g._resource_executable_sqlite,
   },
   svn = {
-    enabled = vim.fn.executable("svn"),
+    enabled = vim.fn.executable("svn") == 1,
   },
 }
 
