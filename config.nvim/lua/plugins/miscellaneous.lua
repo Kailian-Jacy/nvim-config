@@ -283,6 +283,8 @@ return {
       notifier = { enabled = false },
       quickfile = { enabled = false },
       scope = { enabled = false },
+      -- BUGREPORT: existing issue jitting neovide scrolling when opening buf in multiple window: https://github.com/neovide/neovide/issues/3094
+      -- caused by nvim upstream. Enabling smooth scroll would workaround this use, but cause slow cursor move.
       scroll = { enabled = false },
       -- statuscolumn = { enabled = false },
       words = { enabled = false },

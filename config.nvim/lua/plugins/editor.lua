@@ -310,6 +310,7 @@ return {
       signs = false,
       keywords = {
         CHECK = { color = "warning" },
+        BUGREPORT = { color = "warning" }
       },
     },
   },

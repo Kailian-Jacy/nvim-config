@@ -365,8 +365,8 @@ vim.g.neovide_normal_opacity = 0.3
 vim.g.LAST_WORKING_DIRECTORY = "~"
 
 -- Background color transparency. 0 fully transparent.
--- FIXME: Setting this option to none-zero makes border disappear.
--- FIXME: It reports this option is currently suppressed. But not using this feature disables floating window transparency.
+-- BUGREPORT: Setting this option to none-zero makes border disappear.
+-- It reports this option is currently suppressed. But not using this feature disables floating window transparency.
 vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.86)
 
 -- padding surrounding.
