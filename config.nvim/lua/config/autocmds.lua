@@ -177,6 +177,8 @@ vim.api.nvim_create_user_command("RunScript", function()
       assert(type(func) == "function")
       func()
     end
+    -- TODO: no timeout function for built-in types now.
+    vim.print_silent(func() or "lua executed.")
   else
     vim.print(template_literal)
     local ok, job_or_err = pcall(
