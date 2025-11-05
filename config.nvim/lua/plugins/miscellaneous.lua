@@ -322,9 +322,9 @@ return {
               ["<d-e>"] = { "explore_here", mode = { "n", "i" } },
 
               -- Maximize.
-              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize", -- Input shall not have new line.
+              ["<D-o>"] = {"maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"maximize", mode = { "n", "i" }},
+              ["o"] = "maximize", -- Input shall not have new line.
 
               -- Inspecting.
               ["<c-p>"] = "inspect",
@@ -368,9 +368,9 @@ return {
               ["v"] = "edit_vsplit",
 
               -- Maximize.
-              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize",
+              ["<D-o>"] = {"maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"maximize", mode = { "n", "i" }},
+              ["o"] = "maximize",
 
               -- Directory view from the item path.
               ["<c-e>"] = { "explore_here", mode = { "n", "i" } },
@@ -415,9 +415,9 @@ return {
               ["v"] = "edit_vsplit",
 
               -- Maximize.
-              ["<D-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["<C-o>"] = {"toggle_maximize", mode = { "n", "i" }},
-              ["o"] = "toggle_maximize",
+              ["<D-o>"] = {"maximize", mode = { "n", "i" }},
+              ["<C-o>"] = {"maximize", mode = { "n", "i" }},
+              ["o"] = "maximize",
 
               -- Print.
               ["<c-p>"] = "inspect",
@@ -433,6 +433,60 @@ return {
           }
         },
         actions = {
+          ---@param picker snacks.Picker
+          ---@param item? snacks.picker.Item
+          maximize = function(picker, _)
+            local layout_config = vim.deepcopy(picker.resolved_layout)
+            if layout_config.preview == 'main' or not picker.preview.win:valid() then
+              return
+            end
+
+            -- Toggle maximizing the whole floating window.
+            layout_config.fullscreen = not layout_config.fullscreen
+
+            -- 1. find preview window and get height
+            local function find_preview(root) ---@param root snacks.layout.Box|snacks.layout.Win
+              if root.win == 'preview' then
+                return root
+              end
+              if #root then
+                for _, w in ipairs(root) do
+                  local preview = find_preview(w)
+                  if preview then
+                    return preview
+                  end
+                end
+              end
+              return nil
+            end
+            local preview = find_preview(layout_config.layout)
+            if not preview then
+              return
+            end
+            local eval = function(s)
+              return type(s) == 'function' and s(preview.win) or s
+            end
+            --- @type number?
+            local height = eval(preview.height)
+            if not height then
+              return
+            end
+
+            -- 2. calculate height
+            if picker.orig_height then ---@diagnostic disable-line: inject-field
+              -- reset to original height
+              height = picker.orig_height
+              picker.orig_height = nil ---@diagnostic disable-line: inject-field
+            else
+              -- set to larger height
+              picker.orig_height = height ---@diagnostic disable-line: inject-field
+              height = 0.8
+            end
+
+            -- 3. set the height
+            preview['height'] = height
+            picker:set_layout(layout_config)
+          end,
           explore_here = function (_, item)
             if item.dir and item.file then
               local path  = (
