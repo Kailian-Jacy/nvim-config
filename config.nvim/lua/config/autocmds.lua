@@ -175,7 +175,7 @@ vim.api.nvim_create_user_command("RunScript", function()
       vim.notify("neovim lua: failed to parse lua code block: \n" .. errmsg, vim.log.levels.ERROR)
     else
       assert(type(func) == "function")
-      func()
+      vim.print_silent(func() or "lua executed.")
     end
     -- TODO: no timeout function for built-in types now.
     vim.print_silent(func() or "lua executed.")
