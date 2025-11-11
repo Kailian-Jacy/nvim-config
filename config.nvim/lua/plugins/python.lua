@@ -20,11 +20,16 @@ return {
     config = function()
       require("venv-selector").setup({
         stay_on_this_version = true,
-        anaconda_base_path = "/opt/homebrew/Caskroom/miniconda/base",
-        -- anaconda_envs_path = "/home/cado/.conda/envs",
-        pipenv_path = "~/.venv",
+        search = {
+          anaconda_base = { comamnd = "/opt/homebrew/Caskroom/miniconda/base", type = "anaconda" },
+          -- anaconda_envs_path = "/home/cado/.conda/envs",
+          -- pipenv_path = "~/.venv",
+        },
+        -- options see: https://github.com/linux-cultist/venv-selector.nvim?tab=readme-ov-file#global-options-to-the-plugin
+        options = {
+          cached_venv_automatic_activation = true
+        }
       })
-      require("venv-selector").retrieve_from_cache()
     end,
   },
   {
