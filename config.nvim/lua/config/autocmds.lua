@@ -45,7 +45,7 @@ vim.api.nvim_create_user_command("RunScript", function()
         runner = function()
           -- Use python: selected > python3 > python.
           local candidates = {
-            require('venv-selector').get_active_path() or "",
+          require('venv-selector').python() or "",
             "python3",
             "python"
           }
