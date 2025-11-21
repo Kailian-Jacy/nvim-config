@@ -58,6 +58,7 @@ return {
       -- Setup
       -- It's following the link of `python`. So we use VenvSelect to modify.
       require("dap-python").setup("python")
+      require("dap-python").resolve_python = require("venv-selector").python -- Use the python provided by venv-selector.
       table.insert(require("dap").configurations.python, {
         type = "debugpy",
         request = "launch",

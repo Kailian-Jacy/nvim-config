@@ -333,7 +333,7 @@ return {
           c = { "clang-format" },
           cmake = { "cmake-format" },
           cpp = { "clang-format" },
-          python = { "ruff" },
+          python = { "black" },
           golang = { "goimports", "gopls" },
           rust = { "rustfmt", lsp_format = "fallback" },
           json = { "fixjson" },
