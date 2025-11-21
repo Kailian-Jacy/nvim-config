@@ -114,6 +114,22 @@
 		],
 		"description": "Example remote debug config for connecting to gdbserver (experimental)."
 	},
+	"debug.launch_json.remote_debugpy": {
+		"prefix": "remotedebugpylaunchjsonconfig",
+		"body": [
+			"{",
+			"  \"name\": \"Python Debugger: Remote Attach\",",
+			"  \"type\": \"debugpy\",",
+			"  \"request\": \"attach\",",
+			"  \"connect\": {",
+			"    \"host\": \"127.0.0.1\",",
+			"    \"port\": 5678",
+			"  },",
+			"  \"description\": \"CLI: dp-dev-001% DEV_FILTER_GRPC_SERVER_ADDR=127.0.0.1:20002 debugpy --listen 5678 -m uvicorn deepsuite_backend.main:app --port 10025\"",
+			"}"
+		],
+		"description": "Example remote debug config for connecting to lldb-server."
+	},
 	"debug.launch_json.remote_lldb": {
 		"prefix": "remotelldblaunchjsonconfig",
 		"body": [
