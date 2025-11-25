@@ -30,6 +30,8 @@ vim.api.nvim_create_user_command("RunTest", function()
   end
 end, { desc = "run *_vimtest.lua" })
 
+vim.api.nvim_create_user_command("Copen", "botright copen", { desc = "Open quick fix list full wide" })
+
 -- Script runner.
 -- Possibly turn it into a standalone plugin later.
 vim.api.nvim_create_user_command("RunScript", function()
