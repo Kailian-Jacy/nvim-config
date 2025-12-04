@@ -61,23 +61,23 @@
 	"debug.launch_json.cpp": {
 		"prefix": "cpplaunchjsonconfig",
 		"body": [
-		{
-			"version": "0.2.0",
-			"configurations": [
-				{
-					"name": "(lldb) Debug",
-					"type": "codelldb",
-					"request": "launch",
-					"program": "${workspaceFolder}/main.out",
-					"args": [],
-					"stopAtEntry": false,
-					"cwd": "${fileDirname}",
-					"environment": [],
-					"externalConsole": false,
-					"MIMode": "lldb"
-				}
-			]
-		}
+			"{",
+			"  \"version\": \"0.2.0\",",
+			"  \"configurations\": [",
+			"    {",
+			"      \"name\": \"(lldb) Debug\",",
+			"      \"type\": \"codelldb\",",
+			"      \"request\": \"launch\",",
+			"      \"program\": \"\\${workspaceFolder}/main.out\",",
+			"      \"args\": [],",
+			"      \"stopAtEntry\": false,",
+			"      \"cwd\": \"\\${fileDirname}\",",
+			"      \"environment\": [],",
+			"      \"externalConsole\": false,",
+			"      \"MIMode\": \"lldb\"",
+			"    }",
+			"  ]",
+			"}"
 		],
 		"description": "example config.json rust for cpp programs."
 	},
@@ -175,5 +175,12 @@
 			"@ai: generate test case for this."
 		],
 		"desc": "Instruct ai to generate test case for this function."
-	}
+	},
+  "path.lsp.config.default": {
+    "prefix" :"lspdefault",
+    "body": [
+      "URL: https://github.com/neovim/nvim-lspconfig/blob/master/lsp/rust_analyzer.lua",
+      "Overriding :exe 'edit' stdpath('config') .. '/lsp/rust.lua'"
+    ]
+  }
 }

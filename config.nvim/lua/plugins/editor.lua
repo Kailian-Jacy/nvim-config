@@ -207,15 +207,22 @@ return {
     version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
     -- install jsregexp (optional!).
     build = "make install_jsregexp",
-    dependencies = { "rafamadriz/friendly-snippets" },
+    dependencies = {
+      "rafamadriz/friendly-snippets",
+    },
     config = function()
       -- keymaps are all configured at nvim-cmp.
-      require("luasnip.loaders.from_vscode").lazy_load()
-      if vim.g.import_user_snippets then
-        require("luasnip.loaders.from_vscode").load({
-          paths = vim.g.user_vscode_snippets_path,
-        })
-      end
+      require("luasnip.loaders.from_vscode").lazy_load((
+        function ()
+          if vim.g.import_user_snippets then
+            return {
+              paths = vim.g.user_vscode_snippets_path,
+            }
+          else
+            return {}
+          end
+        end
+      )())
     end,
   },
   {

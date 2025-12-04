@@ -521,7 +521,7 @@ vim.api.nvim_create_user_command("SnipEdit", function()
     vim.notify("Failed to open luasnippet file. ", vim.log.levels.ERROR)
     return
   end
-  vim.print_silent("Editing lua script. Call :LuaSnippetsLoad on accomplishment.")
+  vim.print_silent("Editing lua script. Call :SnipLoad on accomplishment.")
 end, { desc = "Open the lua snippet buffer. By default, open the all.json under vim config dir." })
 
 vim.api.nvim_create_user_command("SnipLoad", function()
