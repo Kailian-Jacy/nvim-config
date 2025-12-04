@@ -389,9 +389,6 @@ vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 0
 vim.opt.expandtab = true
 
--- copilot endpoint
--- vim.g.copilot_auth_provider_url = "https://copilot.aizahuo.com"
-
 -- [ These are the Options needs to be set when migration to new machine. ]
 
 -- Some would load env from someplace out of bash or zshrc. If non specified, just leave nil.

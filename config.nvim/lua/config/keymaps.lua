@@ -92,8 +92,8 @@ vim.keymap.set({ "i", "n" }, "<C-c>", function()
   vim.api.nvim_feedkeys("<C-c>", "t", false)
 end, { desc = "interrup running scripts" })
 
-vim.keymap.set({ "i", "n", "v" }, "<c-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
-vim.keymap.set({ "i", "n", "v" }, "<d-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
+vim.keymap.set({ "n", "v" }, "<c-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
+vim.keymap.set({ "n", "v" }, "<d-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
 
 -- Commenting keymaps
 vim.keymap.set({ "v", "n" }, "<leader>cm", function()
@@ -825,6 +825,7 @@ local cmd_mappings = {
     cmdKeymap = "<D-CR>",
     leaderKeymap = "<leader><CR>",
     modes = { "n", "v" },
+    no_insert_mode = true,
     description = "@Conform.format()",
     back_to_insert = true,
   },

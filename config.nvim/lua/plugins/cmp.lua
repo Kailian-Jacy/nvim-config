@@ -82,19 +82,7 @@ return {
             elseif luasnip.locally_jumpable(1) then
               luasnip.jump(1)
             else
-              vim.api.nvim_feedkeys(
-                vim.fn["copilot#Accept"](function()
-                  fallback()
-                  -- As we are using auto-indent, \t don't need to be fed.
-                  if vim.g._auto_indent_used == true then
-                    return ""
-                  else
-                    return vim.api.nvim_replace_termcodes("\t", true, true, true) -- should be "n" mode to break infinite loop.
-                  end
-                end),
-                "n",
-                true
-              )
+              fallback()
             end
           end,
           ["<S-Tab>"] = cmp.mapping(function(fallback)

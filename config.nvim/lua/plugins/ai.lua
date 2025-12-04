@@ -6,20 +6,49 @@ return {
     -- Tencent Gongfeng > Github copilot.
     function()
       -- Copilot: detect to choose if to use local plugin.
-      local copilot_dir = vim.fn.stdpath("config") .. "/pack/gongfeng/start/vim"
+
+      -- Use tencent gongfeng.
+      -- local gongfeng_dir = vim.fn.stdpath("config") .. "/pack/gongfeng/start/vim"
+      -- Use AI store: to config: https://docs.cp.acce.dev/ides/vim.html
+      local aistore_dir = vim.fn.stdpath("config") .. "/pack/aistore/start/copilot.vim"
+
       local copilot = {}
-      if vim.fn.isdirectory(copilot_dir) == 1 then
+      if vim.fn.isdirectory(aistore_dir) == 1 then
         copilot = {
           "copilot.vim",
-          dir = copilot_dir,
-          enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+          dir = aistore_dir,
+          config = function()
+            vim.g.copilot_auth_provider_url = "https://cp.acce.dev"
+          end
         }
       else
         copilot = {
           "github/copilot.vim",
-          enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
         }
       end
+      -- Merge with default settings.
+      local default = {
+        enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+        lazy = false,
+        keys = {
+          {
+            "<D-CR>",
+            function()
+              vim.api.nvim_feedkeys(
+                vim.fn["copilot#Accept"](function()
+                  return vim.api.nvim_replace_termcodes("<D-CR>", true, true, true) -- should be "n" mode to break infinite loop.
+                end),
+                "n",
+                true
+              )
+            end,
+            mode = { "i" },
+            desc = "Accept complete copilot suggestion",
+          }
+        }
+      }
+
+      copilot = vim.tbl_deep_extend("keep", copilot, default)
       return copilot
     end
   )(),
