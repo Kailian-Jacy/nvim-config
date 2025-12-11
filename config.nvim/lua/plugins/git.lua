@@ -7,6 +7,21 @@ return {
     end,
   },
   {
+    "linrongbin16/gitlinker.nvim",
+    config = function ()
+      require("gitlinker").setup({
+        router = {
+          browse = {
+            ["^gitlab%.deepseek%.com"] = require('gitlinker.routers').gitlab_browse,
+          },
+          blame = {
+            ["^gitlab%.deepseek%.com"] = require('gitlinker.routers').gitlab_blame,
+          },
+        }
+      })
+    end
+  },
+  {
     "lewis6991/gitsigns.nvim",
     cmd = {
       -- Refer to doc for more details:
