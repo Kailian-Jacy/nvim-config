@@ -1,6 +1,8 @@
 return {
   {
     "Kailian-Jacy/terminal.nvim",
+    -- a quick hint to call neovim outside:
+    --os: '[ -z "$NVIM" ] && (nvim -- {{filename}}) || (nvim --server "$NVIM" --remote-send "q" && nvim --server "$NVIM" --remote {{filename}})'
     config = function()
       vim.g.__default_terminal_layout = { open_cmd = "float", height = 1, width = 1 }
       require("terminal").setup({
