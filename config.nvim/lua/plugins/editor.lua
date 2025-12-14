@@ -44,10 +44,12 @@ return {
         lazygit.cwd = args.args and vim.fn.expand(args.args)
         lazygit:toggle(nil, true)
       end, { nargs = "?" })
-      -- make gf safe in terminal buffer.
       vim.api.nvim_create_autocmd({ "TermOpen" }, {
         callback = function(args)
           if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
+            -- Shall not be focused if last page.
+            vim.bo.buflisted = false
+            -- make gf safe in terminal buffer.
             vim.keymap.set("n", "gf", function()
               local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
               if f == "" then
