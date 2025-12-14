@@ -57,18 +57,18 @@ return {
         "<leader>sd",
         function()
           -- Close the tabpage if it is already open.
-          local orig_tabid = vim.api.nvim_get_current_tabpage() 
-          local name = vim.fn.gettabvar(orig_tabid, "tabname")
-          if name == "GSDiff" then
+          local orig_tabnr = vim.fn.tabpagenr()
+          local name = vim.fn.gettabvar(orig_tabnr, "tabname")
+          if name == "GitDiff" then
             vim.cmd("tabclose")
             return
           end
           -- Open new one for diffing
           local bufid = vim.api.nvim_get_current_buf()
           vim.cmd("tabnew")
-          local tabid = vim.api.nvim_get_current_tabpage()
+          local tabnr = vim.fn.tabpagenr()
           vim.api.nvim_set_current_buf(bufid)
-          vim.fn.settabvar(tabid, "tabname", "GSDiff")
+          vim.fn.settabvar(tabnr, "tabname", "GitDiff")
           require("gitsigns").diffthis()
         end,
         mode = "n",
