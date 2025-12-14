@@ -17,6 +17,15 @@ local list_filter = function(where, what)
   return vim.iter(where):filter(function(val) return not vim.list_contains(what, val) end):totable()
 end
 
+local is_git_item = function(item, git_nodes)
+  return vim.iter(git_nodes):any(function(node)
+    if node.dir_status then
+      return vim.fs.relpath(node.path, item.file) ~= nil
+    end
+    return vim.fs.relpath(item.file, node.path) ~= nil
+  end)
+end
+
 -- ************************  Snacks helper actions  ************************ --
 ---@param picker snacks.Picker
 ---@param item snacks.picker.Item
@@ -310,6 +319,11 @@ return {
               ["<d-s-x>"] = {"edit_vsplit", mode = {"n", "i"}},
               -- ["<d-s>"] = {"edit_split", mode = {"n", "i"}},
 
+              -- Toggling hidden
+              ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["<d-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["H"] = { "toggle_hidden", mode = { "n" } },
+
               -- Windows switching.
               ["<C-Tab>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
@@ -354,6 +368,11 @@ return {
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
               ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
+              -- Toggle hidden.
+              ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["<d-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["H"] = { "toggle_hidden", mode = { "n" } },
 
               -- Tab open.
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
@@ -769,6 +788,27 @@ return {
             diagnostics_open = true,
             focus = "input",
             auto_close = true,
+            only_git = false,
+            toggles = {
+              only_git = "S",
+            },
+            finder = function(opts, ctx)
+              local Tree = require("snacks.explorer.tree")
+              local git_nodes = {}
+              Tree:walk(Tree:find(ctx.picker:cwd()), function(node)
+                if node.status then
+                  table.insert(git_nodes, node)
+                end
+              end)
+              ctx.picker.git_nodes = git_nodes
+              return require("snacks.picker.source.explorer").explorer(opts, ctx)
+            end,
+            -- Config
+            transform = function(item, ctx)
+              if ctx.picker.opts.only_git then
+                return is_git_item(item, ctx.picker.git_nodes)
+              end
+            end,
             actions = {
               -- TODO: if it's a file, open without unfold it.
               tcd_to_item = function (picker, item)
@@ -798,14 +838,19 @@ return {
                 else
                   picker.up_stack = {}
                   vim.api.nvim_set_current_dir(picker:dir())
-            end
-          end,
+                end
+              end,
             },
             win = {
               input = {
                 keys = {
                   ["<d-bs>"]= { "explorer_up", mode = { "n", "i" } },
                   ["<d-s-bs>"]= { "explorer_down", mode = { "n", "i" } },
+
+                  -- Toggle git only
+                  ["S"] = { "toggle_only_git", mode = { "n" } },
+                  ["<C-S>"] = { "toggle_only_git", mode = { "n", "i" } },
+                  ["<D-S>"] = { "toggle_only_git", mode = { "n", "i" } },
 
                   ["<c-p>"] = {"inspect", mode = { "n", "i" }},
                   ["<d-p>"] = {"inspect", mode = { "n", "i" }},
@@ -824,6 +869,11 @@ return {
               },
               list = {
                 keys = {
+                  -- toggle git only
+                  ["S"] = { "toggle_only_git", mode = { "n" } },
+                  ["<C-S>"] = { "toggle_only_git", mode = { "n", "i" } },
+                  ["<D-S>"] = { "toggle_only_git", mode = { "n", "i" } },
+
                   ["<c-p>"] = {"inspect", mode = { "n", "i" }},
                   ["<d-p>"] = {"inspect", mode = { "n", "i" }},
                   ["p"] = "inspect",
