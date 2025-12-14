@@ -781,11 +781,31 @@ return {
                 vim.cmd('silent !zoxide add "' .. item._path .. '"')
                 vim.notify("Path " .. item._path .. " added to zoxide path.", vim.log.levels.INFO)
               end,
+              explorer_up = function(picker) --[[Override]]
+                picker.up_stack = picker.up_stack or {}
+                local cwd = picker:cwd()
+                local parent = vim.fs.dirname(cwd)
+                if cwd == parent then -- root
+                  return
+                end
+                table.insert(picker.up_stack, cwd)
+                -- TIP: Same as `picker:set_cwd` & `picker:find`
+                vim.api.nvim_set_current_dir(parent)
+              end,
+              explorer_down = function(picker, item)
+                if not item.parent and not vim.tbl_isempty(picker.up_stack or {}) then
+                  vim.api.nvim_set_current_dir(table.remove(picker.up_stack))
+                else
+                  picker.up_stack = {}
+                  vim.api.nvim_set_current_dir(picker:dir())
+            end
+          end,
             },
             win = {
               input = {
                 keys = {
                   ["<d-bs>"]= { "explorer_up", mode = { "n", "i" } },
+                  ["<d-s-bs>"]= { "explorer_down", mode = { "n", "i" } },
 
                   ["<c-p>"] = {"inspect", mode = { "n", "i" }},
                   ["<d-p>"] = {"inspect", mode = { "n", "i" }},
