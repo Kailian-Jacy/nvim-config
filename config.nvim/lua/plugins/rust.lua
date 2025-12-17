@@ -3,6 +3,20 @@ return {
     "mrcjkb/rustaceanvim",
     version = "^6", -- Recommended
     lazy = false, -- This plugin is already lazy
+    keys = {
+      {
+        "<leader>ge",
+        "<cmd>RustLsp relatedDiagnostics<CR>",
+        mode = "n",
+        desc = "Rust: Show related diagnostics"
+      },
+      {
+        "J",
+        "<cmd>RustLsp joinLines<CR>",
+        mode = "n",
+        desc = "Rust: Join lines"
+      }
+    },
     config = function()
       vim.api.nvim_create_autocmd("FileType", {
         pattern = { "rust" },

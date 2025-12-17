@@ -437,13 +437,13 @@ return {
     "stevearc/aerial.nvim",
     keys = {
       {
-        "J",
+        "gj",
         "<cmd>AerialNext<CR>",
         mode = { "n" },
         desc = "Move up to last function call.",
       },
       {
-        "K",
+        "gk",
         "<cmd>AerialPrev<CR>",
         mode = { "n" },
         desc = "Move up to next function call.",
