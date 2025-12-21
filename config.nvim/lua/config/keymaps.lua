@@ -17,7 +17,7 @@ vim.api.nvim_set_keymap("t", "<D-v>", '<C-\\><C-o>"+p', { noremap = true, silent
 vim.api.nvim_set_keymap("c", "<D-v>", "<C-r>+", { noremap = true, silent = true })
 
 -- Local workaround for osc52 copy from remote.
-vim.keymap.set({ "n", "v" }, "D", '"*d')
+-- vim.keymap.set({ "n", "v" }, "D", '"*d') -- Deprecated to enable "D": delete until the end of line.
 vim.keymap.set({ "n", "v" }, "Y", '"*y')
 
 -- Command mode keymaps:
@@ -308,6 +308,13 @@ vim.keymap.set({ "n", "v", "i" }, "<c-s-k>", function()
     vim.cmd("m -" .. 1 + count)
   end
 end, { noremap = true, silent = true })
+
+-- Visual till brackets.
+local till_signs = { "[", "]", "{", "}", "(", ")", ",", "?" }
+for _, sign in ipairs(till_signs) do
+  vim.keymap.set({ "n", "v" }, sign, "t" .. sign, { noremap = true })
+  vim.keymap.set({ "n" }, "d" .. sign, "dt" .. sign, { noremap = true })
+end
 
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
