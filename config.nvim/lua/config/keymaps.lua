@@ -287,14 +287,36 @@ vim.keymap.set("n", "<leader>bd", function()
   close_buf_but_leave_window()
 end, { noremap = true, silent = false })
 
+-- Line shift.
+vim.keymap.set({ "n", "v", "i" }, "<c-s-j>", function()
+  local count = vim.fn.max({ vim.v.count, 1 })
+  if vim.g.is_in_visual_mode() then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "x", false)
+    vim.cmd("'<,'>" .. "m '>+" .. count)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gv", true, false, true), "x", false)
+  else
+    vim.cmd("m +" .. count)
+  end
+end, { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<c-s-k>", function()
+  local count = vim.fn.max({ vim.v.count, 1 })
+  if vim.g.is_in_visual_mode() then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "x", false)
+    vim.cmd("'<,'>" .. "m '<-" .. 1 + count)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gv", true, false, true), "x", false)
+  else
+    vim.cmd("m -" .. 1 + count)
+  end
+end, { noremap = true, silent = true })
+
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<tab>", "<cmd>FlipPinnedTab<cr>", { noremap = true, silent = true })
 vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 
 -- Migrate to normal-tabbing switching.
-vim.keymap.set("n", "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i" }, "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>up", function()
   if vim.g.pinned_tab and vim.api.nvim_get_current_tabpage() == vim.g.pinned_tab.id then
     -- Call on the pinned tab. Unpin it.
