@@ -329,8 +329,10 @@ return {
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
               ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
-              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
+              -- History moving
+              ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-k>"] = { "history_back", mode = { "n", "i" } },
 
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
@@ -353,10 +355,6 @@ return {
               ["<d-p>"] = "inspect",
               ["<c-P>"] = { "picker_print", mode = { "n", "i" } },
               ["<d-P>"] = { "picker_print", mode = { "n", "i" } },
-
-              -- History moving
-              ["<d-s-j>"] = {"history_forward", mode = { "n", "i" }},
-              ["<d-s-k>"] = {"history_back", mode = { "n", "i" }},
             }
           },
           list = {
@@ -366,8 +364,10 @@ return {
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
               ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
-              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
+              -- History moving
+              ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Toggle hidden.
               ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
@@ -422,8 +422,10 @@ return {
               ["<C-S-Tab>"] = {"reverse_cycle_win", mode = {"n", "i"}},
               ["<C-k>"] = {"cycle_win", mode = {"n", "i"}},
               ["<C-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
-              ["<D-k>"] = {"cycle_win", mode = {"n", "i"}},
-              ["<D-j>"] = {"reverse_cycle_win", mode = {"n", "i"}},
+
+              -- History moving
+              ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Tab Opening.
               ["t"] = {"new_tab_here", mode={"n", "i"}},
