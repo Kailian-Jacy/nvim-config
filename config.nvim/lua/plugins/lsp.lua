@@ -348,15 +348,27 @@ return {
         notify_no_formatters = true,
       })
       local possible_options = { "select_only", "restrict", "all" }
-      if vim.g.do_not_format_all and not vim.tbl_contains(possible_options, vim.g.do_not_format_all) then
-        vim.notify("ConformFormat: do_not_format_all is not valid", vim.log.levels.ERROR)
+      if vim.g.format_behavior and (
+          -- no default set
+            not vim.g.format_behavior.default or
+            -- or default invalid.
+            vim.g.format_behavior.default and not vim.tbl_contains(possible_options, vim.g.format_behavior.default)
+          )
+      then
+        vim.notify("ConformFormat: format_behavior is not valid", vim.log.levels.ERROR)
       end
 
       vim.api.nvim_create_user_command("ConformFormat", function()
-        vim.g.do_not_format_all = vim.g.do_not_format_all or "restricted"
+        vim.g.format_behavior = vim.g.format_behavior or { default = "restricted" }
+
+        local filetype = vim.bo.filetype
+        local behavior = vim.g.format_behavior.default
+        if vim.g.format_behavior[filetype] then
+          behavior = vim.g.format_behavior[filetype]
+        end
 
         -- Select only mode.
-        if (vim.g.do_not_format_all == "select_only" and vim.fn.mode() == "n") then
+        if (behavior == "select_only" and vim.fn.mode() == "n") then
           -- Skip format
           return
         end
@@ -380,7 +392,7 @@ return {
         end
 
         -- Restrict mode selection size.
-        if (vim.g.do_not_format_all == "restrict" and vim.fn.mode() == "n") then
+        if (behavior == "restrict" and vim.fn.mode() == "n") then
           local node, line_cnt = get_select_line_cnt()
           -- Restrict selection. If it's more than certain number of lines, skip formatting.
           if vim.g.max_silent_format_line_cnt and vim.g.max_silent_format_line_cnt < line_cnt then
