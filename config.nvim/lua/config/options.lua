@@ -419,10 +419,16 @@ end
 
 -- Add any additional options here
 vim.g.autoformat = false
--- restrict: Apply restricted format: in normal mode, only format the minimum text object; in visual mode, format selected region.
--- select_only: Only format under selected mode.
----@enum "all" | "restrict" | "select_only"
-vim.g.do_not_format_all = "restrict"
+
+-- Format behavior settings for different filetypes.
+-- "all": Format the entire buffer.
+-- "restrict": Apply restricted format: in normal mode, only format the minimum text object; in visual mode, format selected region.
+-- "select_only": Only format under selected mode.
+---@type table<string, "all" | "restrict" | "select_only">
+vim.g.format_behavior = {
+  default = "restrict",
+  rust = "all"
+}
 vim.g.max_silent_format_line_cnt = 10    -- Set it to be -1 to allow any silent format.
 
 -- Theme setting
