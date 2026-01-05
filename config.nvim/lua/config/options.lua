@@ -343,6 +343,7 @@ vim.g.debug_virtual_text_truncate_size = 20
 vim.o.autoread = true
 -- neovide settings. Always ready to be connected from remote neovide.
 vim.g.neovide_show_border = true
+vim.g.neovide_input_macos_option_key_is_meta = 'only_left'
 
 vim.g.neovide_scroll_animation_length = 0.13
 vim.g.neovide_position_animation_length = 0.08
