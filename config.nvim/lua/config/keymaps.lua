@@ -288,7 +288,7 @@ vim.keymap.set("n", "<leader>bd", function()
 end, { noremap = true, silent = false })
 
 -- Line shift.
-vim.keymap.set({ "n", "v", "i" }, "<c-s-j>", function()
+vim.keymap.set({ "n", "v", "i" }, "<M-j>", function()
   local count = vim.fn.max({ vim.v.count, 1 })
   if vim.g.is_in_visual_mode() then
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "x", false)
@@ -298,7 +298,7 @@ vim.keymap.set({ "n", "v", "i" }, "<c-s-j>", function()
     vim.cmd("m +" .. count)
   end
 end, { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<c-s-k>", function()
+vim.keymap.set({ "n", "v", "i" }, "<M-k>", function()
   local count = vim.fn.max({ vim.v.count, 1 })
   if vim.g.is_in_visual_mode() then
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "x", false)
