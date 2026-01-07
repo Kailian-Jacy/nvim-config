@@ -8,22 +8,25 @@ return {
         "<leader>ge",
         "<cmd>RustLsp relatedDiagnostics<CR>",
         mode = "n",
+        ft = "rust",
         desc = "Rust: Show related diagnostics"
       },
       {
         "J",
         "<cmd>RustLsp joinLines<CR>",
         mode = "n",
+        ft = "rust",
+        desc = "Rust: Join lines"
+      },
+      {
+        "gD",
+        "<cmd>RustLsp openDocs<cr>",
+        mode = "n",
+        ft = "rust",
         desc = "Rust: Join lines"
       }
     },
     config = function()
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "rust" },
-        callback = function ()
-          vim.api.nvim_buf_set_keymap(0, "n", "gD", "<cmd>RustLsp openDocs<cr>", { noremap = true, silent = false })
-        end
-      })
       vim.g.rustaceanvim = function()
         local cfg = require('rustaceanvim.config')
         -- Check if installed by mason.

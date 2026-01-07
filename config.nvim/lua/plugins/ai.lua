@@ -54,7 +54,7 @@ return {
   )(),
   {
     "robitx/gp.nvim",
-    lazy = false,
+    lazy = true,
     keys = {
       {
         "<leader>ae",
@@ -137,6 +137,7 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
     "tzachar/cmp-tabnine",
     -- there is some problem with tabnine installation. Just
     -- go to the tabnine path and run the install.sh
+    enabled = false,
     build = "./install.sh",
     dependencies = "hrsh7th/nvim-cmp",
   },

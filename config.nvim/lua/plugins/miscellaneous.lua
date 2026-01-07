@@ -333,6 +333,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
@@ -368,6 +370,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Toggle hidden.
               ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
@@ -426,6 +430,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Tab Opening.
               ["t"] = {"new_tab_here", mode={"n", "i"}},
