@@ -310,11 +310,17 @@ vim.keymap.set({ "n", "v", "i" }, "<M-k>", function()
 end, { noremap = true, silent = true })
 
 -- Visual till brackets.
-local till_signs = { "[", "]", "{", "}", "(", ")", ",", "?" }
-for _, sign in ipairs(till_signs) do
-  vim.keymap.set({ "n", "v" }, sign, "t" .. sign, { noremap = true })
-  vim.keymap.set({ "n" }, "d" .. sign, "dt" .. sign, { noremap = true })
-end
+-- TODO: conflict with auto-surrounding in visual mode.
+-- { -> next  } -> prev.
+-- should be usable in visual mode.
+-- Temporarily disable this.
+--
+-- local till_signs = { "[", "]", "{", "}", "(", ")", ",", "<", ">", "?" }
+-- for _, sign in ipairs(till_signs) do
+--   vim.keymap.set({ "n" }, sign, "t" .. sign, { noremap = true })
+--   -- vim.keymap.set({ "n", "v" }, sign, "t" .. sign, { noremap = true })
+--   vim.keymap.set({ "n" }, "d" .. sign, "dt" .. sign, { noremap = true })
+-- end
 
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
