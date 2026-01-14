@@ -24,7 +24,28 @@ return {
         mode = "n",
         ft = "rust",
         desc = "Rust: Join lines"
-      }
+      },
+      {
+        "gE",
+        "<cmd>RustLsp renderDiagnostic<cr>",
+        mode = "n",
+        ft = "rust",
+        desc = "Render diagnostic"
+      },
+      {
+        "gn",
+        "<cmd>RustLsp relatedDiagnostics<cr>",
+        mode = "n",
+        ft = "rust",
+        desc = "Rust: Show related diagnostics"
+      },
+      {
+        "gP",
+        "<cmd>RustLsp expandMacro<cr>",
+        mode = "n",
+        ft = "rust",
+        desc = "Rust: Expand macro"
+      },
     },
     config = function()
       vim.g.rustaceanvim = function()
