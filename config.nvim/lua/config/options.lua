@@ -222,6 +222,13 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.cursorline = true
 
+-- Copilot
+vim.g.copilot_filetypes = {
+  markdown = false,
+  yaml = false,
+  toml = false,
+}
+
 -- Making neovim comaptible with possible gbk encodings.
 -- According to neovim doc, set encoding= option is deprecated.
 -- Just list possible encodings in the fileencodings, and neovim will decide.
