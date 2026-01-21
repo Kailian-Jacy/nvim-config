@@ -72,10 +72,10 @@ return {
     opts = {
       cmd_prefix = "",
       providers = {
-        openrouter = {
+        deepseek_internal = {
           disable = false,
-          endpoint = "https://openrouter.ai/api/v1/chat/completions",
-          secret = os.getenv("OPENROUTER_API_KEY")
+          endpoint = os.getenv("DEEPSEEK_INTERNAL_ENDPOINT"),
+          secret = os.getenv("DEEPSEEK_INTERNAL_API_KEY")
           -- secret = (function()
           --   local api_key = os.getenv("OPENROUTER_API_KEY")
           --   if not api_key then
@@ -88,7 +88,7 @@ return {
       },
       agents = {
         {
-          provider = "openrouter",
+          provider = "deepseek_internal",
           name = "inline",
           chat = false,
           system_prompt = [[
@@ -100,7 +100,7 @@ Under any condition, You should ALWAYS provide and ONLY provide code that could 
 Under any condition, You should NOT give ANY wasted text except code. If anything vital related to the code to suggest, leave them very briefly in comment.
           ]],
           model = {
-            model = "mistralai/codestral-2508",
+            model = "cloudsway-claude-opus-4.5",
           }
         }
       },
@@ -250,7 +250,7 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
     event = "VeryLazy",
     lazy = false, -- lazy loading avante does not work...
     -- commit = "e98fa46", -- set this if you want to always pull the latest change
-    enabled = false,
+    enabled = true,
     keys = {
       {
         "<leader>aa",
@@ -303,8 +303,8 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
         return ret
       end,
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
-      provider = "openrouter_code_completer", -- Recommend using Claude
-      -- auto_suggestions_provider = "4o", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
+      provider = "deepseek_internal_claude_opus", -- Recommend using Claude
+      auto_suggestions_provider = "deepseek_internal_claude_haiku", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
       providers = {
         ollama = {
           -- works well but way too slow...
@@ -317,20 +317,29 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
           api_key_name = "OPENAI_API_KEY",
           model = "gpt-4o-mini",
         },
-        openrouter_claude_haiku = {
+        deepseek_internal_claude_haiku = {
           __inherited_from = "openai",
-          endpoint = "https://openrouter.ai/api/v1",
-          api_key_name = "OPENROUTER_API_KEY",
-          model = "anthropic/claude-haiku-4.5",
+          endpoint = "https://proxy.high-five-ai.xyz:8443/v1",
+          api_key_name = "DEEPSEEK_INTERNAL_API_KEY",
+          model = "cloudsway-claude-haiku-4.5-cache",
           max_tokens = 10240,
           timeout = 30000,
-          disable_tools = false,
+          disable_tools = true,
         },
-        openrouter_claude_sonnet = {
+        deepseek_internal_claude_opus = {
+          __inherited_from = "openai",
+          endpoint = "https://proxy.high-five-ai.xyz:8443/v1",
+          api_key_name = "DEEPSEEK_INTERNAL_API_KEY",
+          model = "cloudsway-claude-opus-4.5",
+          max_tokens = 10240,
+          timeout = 30000,
+          disable_tools = true,
+        },
+        openrouter_claude_opus = {
           __inherited_from = "openai",
           endpoint = "https://openrouter.ai/api/v1",
           api_key_name = "OPENROUTER_API_KEY",
-          model = "anthropic/claude-sonnet-4.5",
+          model = "anthropic/claude-opus-4.5",
           max_tokens = 10240,
           timeout = 30000,
           disable_tools = false,
