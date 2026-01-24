@@ -832,15 +832,20 @@ return {
                 end
                 table.insert(picker.up_stack, cwd)
                 -- TIP: Same as `picker:set_cwd` & `picker:find`
-                vim.api.nvim_set_current_dir(parent)
+                -- vim.api.nvim_set_current_dir(parent)
+                picker:set_cwd(parent)
+                picker:find()
               end,
               explorer_down = function(picker, item)
                 if not item.parent and not vim.tbl_isempty(picker.up_stack or {}) then
-                  vim.api.nvim_set_current_dir(table.remove(picker.up_stack))
+                  -- vim.api.nvim_set_current_dir(table.remove(picker.up_stack))
+                  picker:set_cwd(table.remove(picker.up_stack))
                 else
                   picker.up_stack = {}
-                  vim.api.nvim_set_current_dir(picker:dir())
+                  -- vim.api.nvim_set_current_dir(picker:dir())
+                  picker:set_cwd(picker:dir())
                 end
+                picker:find()
               end,
             },
             win = {
