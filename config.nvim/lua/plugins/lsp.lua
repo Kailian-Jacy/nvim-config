@@ -377,7 +377,16 @@ return {
           local ts_utils = require "nvim-treesitter.ts_utils"
           local parsers = require "nvim-treesitter.parsers"
 
-          parsers.get_parser():parse { vim.fn.line "w0" - 1, vim.fn.line "w$" }
+          local parser = parsers.get_parser()
+          if parser then
+            parser:parse {
+              vim.fn.line "w0" - 1, vim.fn.line "w$"
+            }
+          else
+            vim.notify("LSP: No parser available for current buffer", vim.log.levels.WARN)
+            return
+          end
+
           local node = ts_utils.get_node_at_cursor()
 
           if node == nil then
