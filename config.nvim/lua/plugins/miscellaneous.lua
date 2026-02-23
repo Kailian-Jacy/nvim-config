@@ -177,6 +177,7 @@ return {
       { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" },
       { "<leader>fE", function() Snacks.picker.explorer({cwd = vim.fn.expand("%:p:h")}) end, desc = "File Explorer of the current opened file" },
       { "<leader>fe", function() Snacks.explorer({ pattern = vim.g.function_get_selected_content() }) end, desc = "File Explorer", mode = "v" },
+      { "<leader>fa", function() Snacks.picker.dscc() end, desc = "dscc directory", mode = "n" },
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
@@ -562,14 +563,10 @@ return {
             vim.api.nvim_set_current_win(picker.input.win.win)
           end,
           new_tab_here = function(_, item)
-            vim.cmd[[ tabnew ]]
-            if item.dir then
-              Snacks.picker.actions.tcd(_, item)
-              vim.cmd('silent !zoxide add "' .. item._path .. '"')
-              vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
-            else
-              vim.cmd("e " .. item._path)
+            if not item or not item._path then
+              return
             end
+            vim.g.new_tab_at(item._path, true, true)
           end,
           -- cycle with some order. TODO: Not tested. Rethink if we do really need it.
           reverse_cycle_win = function (picker)
@@ -614,6 +611,104 @@ return {
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          dscc = {
+            supports_live = false,
+            layout = { preset = "vscode", preview = false },
+            title = "claude code task",
+            finder = function ()
+              local cwd = vim.fn.getcwd()
+              local project_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true, path = cwd })[1])
+              local dscc_dir = vim.fs.joinpath(project_dir, ".dscc")
+              local tbl = {}
+              -- iterate through all directories
+              for _, task_dir in ipairs(vim.fn.glob(dscc_dir .. "/*", false, true)) do
+                local task_name = vim.fs.basename(task_dir)
+                table.insert(tbl, { name = task_name, text = task_name, _path = task_dir, file = task_dir, dir = true })
+              end
+              return tbl
+            end,
+            actions = {
+              new_tab_worktree = function (_, item)
+                if not item.dir or not item._path then
+                  return
+                end
+                local worktree_path = vim.fs.joinpath(item._path, "worktree")
+                local tabnr = vim.g.new_tab_at(worktree_path, true, true)
+                vim.fn.settabvar(tabnr, "tabname", item.name)
+              end,
+              connect_to_claude_code = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --claude")
+              end,
+              connect_to_shell = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --shell")
+              end,
+              inspect_log = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+              inspect_status = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+              force_remove = function(_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+            },
+            win = {
+              input = {
+                keys = {
+                  -- New tab at the worktree.
+                  ["<c-t>"] = {"new_tab_worktree", mode={"n", "i"}},
+                  ["<d-t>"] = {"new_tab_worktree", mode={"n", "i"}},
+                  ["t"] = {"new_tab_worktree", mode={"n"}},
+
+                  -- Connect to claude code
+                  ["<c-c>"] = {"connect_to_shell", mode={"n", "i"}},
+                  ["<d-c>"] = {"connect_to_shell", mode={"n", "i"}},
+                  ["c"] = {"connect_to_shell", mode={"n"}},
+
+                  -- Connect to claude code terminal.
+                  ["<c-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
+                  ["<d-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
+                  ["s"] = {"connect_to_claude_code", mode={"n"}},
+
+                  -- Inspect the status
+                  ["<c-p>"] = {"inspect_status", mode={"n", "i"}},
+                  ["<d-p>"] = {"inspect_status", mode={"n", "i"}},
+                  ["p"] = {"inspect_status", mode={"n"}},
+
+                  -- Inspect log
+                  ["<c-s-p>"] = {"inspect_log", mode={"n", "i"}},
+                  ["<d-s-p>"] = {"inspect_log", mode={"n", "i"}},
+                  ["P"] = {"inspect_log", mode={"n"}},
+
+                  -- Force remove
+                  ["<c-d>"] = { "force_remove", mode = { "n", "i" } },
+                  ["<d-d>"] = {"force_remove", mode={"n", "i"}},
+                  ["d"] = {"force_remove", mode={"n"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
+                }
+              }
+            }
+          },
           git_grep = {
             supports_live = false,
             format = function(item, picker)

@@ -19,6 +19,28 @@ vim.g.find_launch_json = function(start_dir)
   return nil, nil
 end
 
+---@param path string
+---@param echo_name boolean
+---@param record_zoxide boolean
+---@return integer tabnr 
+vim.g.new_tab_at = function(path, echo_name, record_zoxide)
+  vim.cmd [[ tabnew ]]
+  path = vim.fn.fnamemodify(path, ':p')
+  if vim.fn.isdirectory(path) == 1 then
+    vim.cmd.tcd(path)
+    if record_zoxide then
+      vim.cmd('silent !zoxide add "' .. path .. '"')
+    end
+    if echo_name then
+      vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
+    end
+  else
+    vim.cmd("e " .. path)
+  end
+  return vim.fn.tabpagenr()
+end
+
+
 vim.g.is_current_window_floating = function()
   return vim.api.nvim_win_get_config(0).relative ~= ""
 end
