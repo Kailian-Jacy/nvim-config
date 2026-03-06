@@ -52,17 +52,15 @@ INSTALL_DEPENDENCIES+="node " # required by copilot (npm comes with node).
 INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks "
 INSTALL_DEPENDENCIES+="sqlite " # required by bookmarks.nvim
 INSTALL_DEPENDENCIES+="gh " # required by Snacks.nvim/gh
-INSTALL_FONT_PATH=""
+INSTALL_FONT_PATH="" # Unused, fonts installed manually
 CONTINUE_ON_ERROR=true
 INSTALL_NVIM_FROM_SOURCE=0
 DEFAULT_MASON_PATH="$HOME/.local/share/nvim/mason/bin"
 SNIPPET_LINK="" # Set to a path if you want snippets linked, e.g. ~/.config/nvim/snip
 
 if [[ "$OS" == "MacOS" ]]; then
-  INSTALL_FONT_PATH="/Library/Fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES pngpaste"
 else
-  INSTALL_FONT_PATH="$HOME/.local/share/fonts/"
   INSTALL_DEPENDENCIES="$INSTALL_DEPENDENCIES xsel"
 fi
 
@@ -220,33 +218,7 @@ if [ -n "$SNIPPET_LINK" ]; then
   backup_and_link "$CURRENT_BASEDIR/config.nvim/snip" "${SNIPPET_LINK}"
 fi
 
-###############################################
-#   Fonts
-###############################################
-
-if [ -n "$INSTALL_FONT_PATH" ]; then
-  echo "Installing fonts to $INSTALL_FONT_PATH..."
-  mkdir -p "$INSTALL_FONT_PATH" # Ensure the directory exists
-
-  # Use find to robustly copy font files
-  if [ -d "$CURRENT_BASEDIR/monolisa-nerd-font" ]; then
-    find "$CURRENT_BASEDIR/monolisa-nerd-font" -type f \( -name '*Nerd*' -o -name '*NerdFont*' \) -print0 | while IFS= read -r -d $'\0' font_file; do
-      echo "Copying font: $(basename "$font_file") to $INSTALL_FONT_PATH"
-      cp "$font_file" "$INSTALL_FONT_PATH/"
-    done
-  else
-    echo "Warning: monolisa-nerd-font directory not found. Skipping font copy."
-  fi
-
-  # Update font cache on Linux
-  if [[ "$OS" == "Linux" ]] && check_installed fc-cache; then
-    echo "Updating font cache..."
-    fc-cache -fv
-  fi
-  echo "Font installation complete."
-else
-  echo "INSTALL_FONT_PATH not set. Skipping font installation."
-fi
+# Fonts: install manually if needed. See monolisa-nerd-font/ directory.
 
 ###############################################
 #   Environment Variables
