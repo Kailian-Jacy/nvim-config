@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# IDE / Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+neovim-source/
+monolisa-nerd-font/
+
+# Docker
+dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Docs
+README.md
+LICENSE
+*.md
