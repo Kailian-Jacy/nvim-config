@@ -1,1 +1,6 @@
 config.nvim/lua/config/local.lua
+CONTEXT.md
+reports/
+tests/harness.lua
+tests/results_*.txt
+tests/test_*.lua
