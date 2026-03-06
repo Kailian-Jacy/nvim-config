@@ -177,6 +177,7 @@ return {
       { "<leader>fe", function() Snacks.explorer() end, desc = "File Explorer" },
       { "<leader>fE", function() Snacks.picker.explorer({cwd = vim.fn.expand("%:p:h")}) end, desc = "File Explorer of the current opened file" },
       { "<leader>fe", function() Snacks.explorer({ pattern = vim.g.function_get_selected_content() }) end, desc = "File Explorer", mode = "v" },
+      { "<leader>fa", function() Snacks.picker.dscc() end, desc = "dscc directory", mode = "n" },
       { "<leader>ff", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
       { "<leader>ff", function() Snacks.picker.smart({ pattern = vim.g.function_get_selected_content() }) end, desc = "Smart Find Files", mode = "v" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
@@ -333,6 +334,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               ["<c-t>"] = {"new_tab_here", mode={"n", "i"}},
               ["<d-t>"] = {"new_tab_here", mode={"n", "i"}}, -- no terminal response when floating window is opened.
@@ -368,6 +371,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Toggle hidden.
               ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
@@ -426,6 +431,8 @@ return {
               -- History moving
               ["<d-j>"] = { "history_forward", mode = { "n", "i" } },
               ["<d-k>"] = { "history_back", mode = { "n", "i" } },
+              ["<d-s-j>"] = { "history_forward", mode = { "n", "i" } },
+              ["<d-s-k>"] = { "history_back", mode = { "n", "i" } },
 
               -- Tab Opening.
               ["t"] = {"new_tab_here", mode={"n", "i"}},
@@ -556,14 +563,10 @@ return {
             vim.api.nvim_set_current_win(picker.input.win.win)
           end,
           new_tab_here = function(_, item)
-            vim.cmd[[ tabnew ]]
-            if item.dir then
-              Snacks.picker.actions.tcd(_, item)
-              vim.cmd('silent !zoxide add "' .. item._path .. '"')
-              vim.print_silent("Tab pwd: " .. vim.fn.getcwd())
-            else
-              vim.cmd("e " .. item._path)
+            if not item or not item._path then
+              return
             end
+            vim.g.new_tab_at(item._path, true, true)
           end,
           -- cycle with some order. TODO: Not tested. Rethink if we do really need it.
           reverse_cycle_win = function (picker)
@@ -608,6 +611,171 @@ return {
         -- Display view that uses opened buffer will not oevrride keymaps. 
         -- Confirmed by author.
         sources = {
+          dscc = {
+            supports_live = false,
+            layout = { preset = "vscode", preview = false },
+            title = "claude code task",
+            finder = function ()
+              local cwd = vim.fn.getcwd()
+              local project_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true, path = cwd })[1])
+              local dscc_dir = vim.fs.joinpath(project_dir, ".dscc")
+              local tbl = {}
+              -- iterate through all directories
+              for _, task_dir in ipairs(vim.fn.glob(dscc_dir .. "/*", false, true)) do
+                local task_name = vim.fs.basename(task_dir)
+                table.insert(tbl, { name = task_name, text = task_name, _path = task_dir, file = task_dir, dir = true })
+              end
+              return tbl
+            end,
+            actions = {
+              new_tab_worktree = function (_, item)
+                if not item.dir or not item._path then
+                  return
+                end
+                local worktree_path = vim.fs.joinpath(item._path, "worktree")
+                local tabnr = vim.g.new_tab_at(worktree_path, true, true)
+                vim.fn.settabvar(tabnr, "tabname", item.name)
+              end,
+              connect_to_claude_code = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --claude")
+              end,
+              connect_to_shell = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --shell")
+              end,
+              inspect_log = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+              inspect_status = function (_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+              force_remove = function(_, item)
+                if not item.text then
+                  return
+                end
+                vim.print("not implemented yet.")
+              end,
+            },
+            win = {
+              input = {
+                keys = {
+                  -- New tab at the worktree.
+                  ["<c-t>"] = {"new_tab_worktree", mode={"n", "i"}},
+                  ["<d-t>"] = {"new_tab_worktree", mode={"n", "i"}},
+                  ["t"] = {"new_tab_worktree", mode={"n"}},
+
+                  -- Connect to claude code
+                  ["<c-c>"] = {"connect_to_shell", mode={"n", "i"}},
+                  ["<d-c>"] = {"connect_to_shell", mode={"n", "i"}},
+                  ["c"] = {"connect_to_shell", mode={"n"}},
+
+                  -- Connect to claude code terminal.
+                  ["<c-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
+                  ["<d-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
+                  ["s"] = {"connect_to_claude_code", mode={"n"}},
+
+                  -- Inspect the status
+                  ["<c-p>"] = {"inspect_status", mode={"n", "i"}},
+                  ["<d-p>"] = {"inspect_status", mode={"n", "i"}},
+                  ["p"] = {"inspect_status", mode={"n"}},
+
+                  -- Inspect log
+                  ["<c-s-p>"] = {"inspect_log", mode={"n", "i"}},
+                  ["<d-s-p>"] = {"inspect_log", mode={"n", "i"}},
+                  ["P"] = {"inspect_log", mode={"n"}},
+
+                  -- Force remove
+                  ["<c-d>"] = { "force_remove", mode = { "n", "i" } },
+                  ["<d-d>"] = {"force_remove", mode={"n", "i"}},
+                  ["d"] = {"force_remove", mode={"n"}},
+
+                  -- Search from the directory
+                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
+                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
+                }
+              }
+            }
+          },
+          git_grep = {
+            supports_live = false,
+            format = function(item, picker)
+              local file_format = Snacks.picker.format.file(item, picker)
+              vim.api.nvim_set_hl(0, 'SnacksPickerGitGrepLineNew', { link = 'Added' })
+              vim.api.nvim_set_hl(0, 'SnacksPickerGitGrepLineOld', { link = 'Removed' })
+              if item.sign == '+' then
+                file_format[#file_format - 1][2] = 'SnacksPickerGitGrepLineNew'
+              else
+                file_format[#file_format - 1][2] = 'SnacksPickerGitGrepLineOld'
+              end
+              return file_format
+            end,
+            finder = function(_, ctx)
+              local hcount = 0
+              local header = {
+                file = '',
+                old = { start = 0, count = 0 },
+                new = { start = 0, count = 0 },
+              }
+              local sign_count = 0
+              return require('snacks.picker.source.proc').proc(
+                ctx:opts {
+                  cmd = 'git',
+                  args = { 'diff', '--unified=0' },
+                  transform = function(item) ---@param item snacks.picker.finder.Item
+                    local line = item.text
+                    -- [[Header]]
+                    if line:match '^diff' then
+                      hcount = 3
+                    elseif hcount > 0 then
+                      if hcount == 1 then
+                        header.file = line:sub(7)
+                      end
+                      hcount = hcount - 1
+                    elseif line:match '^@@' then
+                      local parts = vim.split(line:match '@@ ([^@]+) @@', ' ')
+                      local old_start, old_count = parts[1]:match '-(%d+),?(%d*)'
+                      local new_start, new_count = parts[2]:match '+(%d+),?(%d*)'
+                      header.old.start, header.old.count = tonumber(old_start), tonumber(old_count) or 1
+                      header.new.start, header.new.count = tonumber(new_start), tonumber(new_count) or 1
+                      sign_count = 0
+                      -- [[Body]]
+                    elseif not line:match '^[+-]' then
+                      sign_count = 0
+                    elseif line:match '^[+-]%s*$' then
+                      sign_count = sign_count + 1
+                    else
+                      item.sign = line:sub(1, 1)
+                      item.file = header.file
+                      item.line = line:sub(2)
+                      if item.sign == '+' then
+                        item.pos = { header.new.start + sign_count, 0 }
+                        sign_count = sign_count + 1
+                      else
+                        item.pos = { header.new.start, 0 }
+                        sign_count = 0
+                      end
+                      return true
+                    end
+                    return false
+                  end,
+                },
+                ctx
+              )
+            end,
+          },
           gh_issue = {},
           gh_pr = {},
           grep = {

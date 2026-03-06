@@ -10,7 +10,13 @@
 	"Todos": {
 		"prefix": "todo",
 		"body": [
-			"- [ ] "
+			"// TODO: @zianxu"
+		]
+	},
+	"AtAI": {
+		"prefix": "aido",
+		"body": [
+			"# @AI:"
 		]
 	},
 	"LazyVimKeymap": {

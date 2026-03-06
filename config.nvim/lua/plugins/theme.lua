@@ -382,6 +382,18 @@ return {
   },
   {
     "petertriho/nvim-scrollbar",
+    dependencies = {
+      {
+        "kevinhwang91/nvim-hlslens",
+        dependencies = { "petertriho/nvim-scrollbar" },
+        config = function()
+          -- require('hlslens').setup() is not required
+          require("scrollbar.handlers.search").setup({
+            override_lens = function() end,
+          })
+        end,
+      }
+    },
     keys = {
       {
         "<leader>ub",
@@ -392,6 +404,7 @@ return {
         desc = "Toggle scrollbar",
       },
     },
+    lazy = "VeryLazy",
     config = function()
       require("scrollbar").setup({
         show = not vim.g.scroll_bar_hide,
@@ -474,16 +487,6 @@ return {
       --     end
       --   end,
       -- })
-    end,
-  },
-  {
-    "kevinhwang91/nvim-hlslens",
-    dependencies = { "petertriho/nvim-scrollbar" },
-    config = function()
-      -- require('hlslens').setup() is not required
-      require("scrollbar.handlers.search").setup({
-        override_lens = function() end,
-      })
     end,
   },
   {
