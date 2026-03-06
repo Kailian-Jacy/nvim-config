@@ -79,21 +79,17 @@ end)
 -- vim.keymap.set("n", "<C-/>", lazyterm, { desc = "Terminal (root dir)" })
 -- vim.keymap.set("t", "<C-/>", "<cmd>close<cr>", { desc = "Hide Terminal" })
 
--- Interrupt code runner 
+-- Interrupt code runner (uses nvim-runner plugin)
 vim.keymap.set({ "i", "n" }, "<C-c>", function()
-  local uv = vim.uv or vim.loop
-  if vim.g._current_runner then
-    uv.kill(vim.g._current_runner, 9)
-    vim.g._current_runner = nil
+  local ok, runner = pcall(require, "nvim-runner.runner")
+  if ok and runner.kill_current() then
     vim.notify("runner cancelled.")
     return
   end
   -- Fallback to insert as normal.
   vim.api.nvim_feedkeys("<C-c>", "t", false)
-end, { desc = "interrup running scripts" })
-
-vim.keymap.set({ "n", "v" }, "<c-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
-vim.keymap.set({ "n", "v" }, "<d-s-cr>", "<cmd>RunScript<CR>", { desc = "run current script" })
+end, { desc = "interrupt running scripts" })
+-- RunScript keymaps are now set by nvim-runner plugin setup()
 
 -- Commenting keymaps
 vim.keymap.set({ "v", "n" }, "<leader>cm", function()
