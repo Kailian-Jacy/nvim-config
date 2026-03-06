@@ -1,0 +1,250 @@
+*nvim-runner.txt*    Run scripts from your Neovim buffer
+
+Author:  Kailian-Jacy
+License: MIT
+URL:     https://github.com/Kailian-Jacy/nvim-runner
+
+==============================================================================
+CONTENTS                                              *nvim-runner-contents*
+
+  1. Introduction ............................ |nvim-runner-introduction|
+  2. Installation ............................ |nvim-runner-installation|
+  3. Configuration ........................... |nvim-runner-configuration|
+  4. Commands ................................ |nvim-runner-commands|
+  5. Template System ......................... |nvim-runner-templates|
+  6. Timeout ................................. |nvim-runner-timeout|
+  7. Lua API ................................. |nvim-runner-api|
+  8. Adding Languages ........................ |nvim-runner-languages|
+
+==============================================================================
+1. INTRODUCTION                                   *nvim-runner-introduction*
+
+nvim-runner is a Neovim plugin for running scripts directly from your buffer.
+It supports Python, Lua, Shell, and Nushell with async execution, timeout
+control, and buffer-local runner overrides.
+
+Features:
+- Multi-language: Python, Lua (in-process), Shell (zsh/bash), Nushell
+- Async execution via `vim.system`, results inserted at cursor
+- Configurable timeout per-runner, per-buffer, or global
+- Visual mode: run selected text instead of entire buffer
+- Buffer-local runners: override per-buffer with `:SetBufRunner`
+- Test runner: discover and run `*_vimtest.lua` files
+
+==============================================================================
+2. INSTALLATION                                   *nvim-runner-installation*
+
+With lazy.nvim: >lua
+  {
+    "Kailian-Jacy/nvim-runner",
+    config = function()
+      require("nvim-runner").setup()
+    end,
+  }
+<
+
+Local development: >lua
+  {
+    dir = "~/path/to/nvim-runner",
+    config = function()
+      require("nvim-runner").setup()
+    end,
+  }
+<
+
+==============================================================================
+3. CONFIGURATION                                 *nvim-runner-configuration*
+
+                                                        *nvim-runner.setup()*
+`require("nvim-runner").setup({opts})`
+
+Default configuration: >lua
+  require("nvim-runner").setup({
+    runners = {
+      python = {
+        runner = function() ... end,
+        template = "echo -e | ${runner} <<EOF\n${text}\nEOF",
+        timeout = 3000,
+      },
+      nu = {
+        runner = "nu",
+        template = "...",
+        timeout = 5000,
+      },
+      lua = {
+        runner = "this_neovim",
+        template = "${text}",
+      },
+      sh = {
+        runner = "zsh",
+        template = "${text}",
+      },
+    },
+    timeout = 3000,
+    insert_result = true,
+    keymaps = {
+      run = { "<c-s-cr>", "<d-s-cr>" },
+    },
+  })
+<
+
+Options:
+
+  `runners`        Table of filetype runner definitions. See |nvim-runner-templates|.
+  `timeout`        Default timeout in milliseconds (default: 3000).
+  `insert_result`  Insert script output at cursor (default: true).
+  `keymaps.run`    Key mappings for `:RunScript` (default: `<C-S-CR>`, `<D-S-CR>`).
+
+==============================================================================
+4. COMMANDS                                         *nvim-runner-commands*
+
+                                                              *:RunScript*
+`:RunScript`
+  Run the current buffer or visual selection. Uses the runner defined for the
+  current filetype. Output is inserted below the cursor.
+
+                                                               *:RunTest*
+`:RunTest`
+  Run all `*_vimtest.lua` files found in the current working directory.
+
+                                                           *:SetBufRunner*
+`:SetBufRunner` {template}
+  Set a buffer-local runner template for the current filetype.
+  Example: >vim
+    :SetBufRunner echo -e | /usr/bin/python3.12 <<EOF\n${text}\nEOF
+<
+
+                                                         *:RunnerTimeout*
+`:RunnerTimeout` {ms}
+  Set buffer-local timeout for the current buffer.
+
+`:RunnerTimeout!` {ms}
+  Set global timeout (with bang).
+
+  Examples: >vim
+    :RunnerTimeout 5000
+    :RunnerTimeout! 10000
+<
+
+==============================================================================
+5. TEMPLATE SYSTEM                                  *nvim-runner-templates*
+
+Templates define how code is executed. Two placeholders are available:
+
+  `${runner}`   Replaced with the resolved runner executable path.
+  `${text}`     Replaced with the buffer content or visual selection.
+
+When `:RunScript` is called:
+1. The `runner` field is resolved (string or function returning a string).
+2. The `text` is read from the buffer or visual selection.
+3. `${runner}` and `${text}` are replaced in the template.
+4. The resulting command is executed via `vim.system`.
+
+Heredoc templates~
+
+For Python/Nushell, heredocs pass multi-line code via stdin: >
+  echo -e | ${runner} <<EOF
+  ${text}
+  EOF
+<
+
+This avoids quoting/escaping issues.
+
+Example: TypeScript with ts-node~ >lua
+  runners = {
+    typescript = {
+      runner = "npx ts-node",
+      template = "${runner} -e '${text}'",
+      timeout = 10000,
+    },
+  }
+<
+
+Example: Ruby~ >lua
+  runners = {
+    ruby = {
+      runner = "ruby",
+      template = "${runner} <<'RUBY'\n${text}\nRUBY",
+      timeout = 5000,
+    },
+  }
+<
+
+Example: Go with temp file~ >lua
+  runners = {
+    go = {
+      runner = "go",
+      template = function(runner, text)
+        local tmpfile = vim.fn.tempname() .. ".go"
+        local f = io.open(tmpfile, "w")
+        f:write(text)
+        f:close()
+        return runner .. " run " .. tmpfile
+      end,
+    },
+  }
+<
+
+Buffer-local override~
+
+Override the runner for the current buffer: >vim
+  :SetBufRunner docker run --rm -i python:3.12 python3 <<EOF\n${text}\nEOF
+<
+
+Or via Lua: >lua
+  vim.b.runner = {
+    python = {
+      runner = "/path/to/special/python",
+      template = "echo -e | ${runner} <<EOF\n${text}\nEOF",
+    },
+  }
+<
+
+==============================================================================
+6. TIMEOUT                                            *nvim-runner-timeout*
+
+Timeout priority (highest to lowest):
+  1. Buffer-local: `vim.b.runner_timeout` or `:RunnerTimeout {ms}`
+  2. Runner-defined: `timeout` field in the runner definition
+  3. Global: `setup({ timeout = ... })` or `:RunnerTimeout! {ms}`
+  4. Default: 3000ms
+
+Lua API: >lua
+  -- Set global timeout
+  require("nvim-runner").set_timeout(10000)
+
+  -- Set buffer-local timeout (0 = current buffer)
+  require("nvim-runner").set_buf_timeout(0, 5000)
+<
+
+==============================================================================
+7. LUA API                                              *nvim-runner-api*
+
+`require("nvim-runner").setup({opts})`      Configure the plugin. See |nvim-runner-configuration|.
+`require("nvim-runner").set_timeout(ms)`    Set global default timeout.
+`require("nvim-runner").set_buf_timeout(bufnr, ms)`  Set buffer-local timeout.
+
+==============================================================================
+8. ADDING LANGUAGES                               *nvim-runner-languages*
+
+Add new languages in `setup()`. The key must match the Neovim filetype
+(check with `:echo &filetype`): >lua
+
+  require("nvim-runner").setup({
+    runners = {
+      javascript = {
+        runner = "node",
+        template = "${runner} <<'EOF'\n${text}\nEOF",
+        timeout = 5000,
+      },
+      rust = {
+        runner = "rust-script",
+        template = "${runner} <<'EOF'\n${text}\nEOF",
+        timeout = 15000,
+      },
+    },
+  })
+<
+
+==============================================================================
+vim:tw=78:ft=help:norl:
