@@ -1,0 +1,15 @@
+:RunScript	nvim-runner.txt	/*:RunScript*
+:RunTest	nvim-runner.txt	/*:RunTest*
+:RunnerTimeout	nvim-runner.txt	/*:RunnerTimeout*
+:SetBufRunner	nvim-runner.txt	/*:SetBufRunner*
+nvim-runner-api	nvim-runner.txt	/*nvim-runner-api*
+nvim-runner-commands	nvim-runner.txt	/*nvim-runner-commands*
+nvim-runner-configuration	nvim-runner.txt	/*nvim-runner-configuration*
+nvim-runner-contents	nvim-runner.txt	/*nvim-runner-contents*
+nvim-runner-installation	nvim-runner.txt	/*nvim-runner-installation*
+nvim-runner-introduction	nvim-runner.txt	/*nvim-runner-introduction*
+nvim-runner-languages	nvim-runner.txt	/*nvim-runner-languages*
+nvim-runner-templates	nvim-runner.txt	/*nvim-runner-templates*
+nvim-runner-timeout	nvim-runner.txt	/*nvim-runner-timeout*
+nvim-runner.setup()	nvim-runner.txt	/*nvim-runner.setup()*
+nvim-runner.txt	nvim-runner.txt	/*nvim-runner.txt*
