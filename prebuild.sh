@@ -1,5 +1,11 @@
 #!/bin/bash -e
 
+###############################################
+# DEPRECATED: This script has been superseded by setup.sh.
+# It is no longer maintained. Please use setup.sh instead.
+# Kept for historical reference only.
+###############################################
+
 SHELL_DOT=~/.bashrc
 INSTALLER="sudo apt"
 ENSURE="-y"
