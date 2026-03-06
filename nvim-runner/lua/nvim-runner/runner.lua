@@ -9,6 +9,50 @@ local M = {}
 -- Track the current running process
 M._current_runner = nil
 
+--- Safe string replacement that avoids gsub pattern/replacement special chars.
+--- Uses plain string.find to locate the pattern, then concatenates.
+--- Only replaces the first occurrence.
+---@param s string the source string
+---@param target string the literal string to find
+---@param replacement string the literal replacement
+---@return string
+local function safe_replace(s, target, replacement)
+  local i, j = s:find(target, 1, true) -- plain find
+  if not i then
+    return s
+  end
+  return s:sub(1, i - 1) .. replacement .. s:sub(j + 1)
+end
+
+--- Safe string replacement that replaces ALL occurrences.
+---@param s string the source string
+---@param target string the literal string to find
+---@param replacement string the literal replacement
+---@return string
+local function safe_replace_all(s, target, replacement)
+  local result = {}
+  local pos = 1
+  local target_len = #target
+  if target_len == 0 then
+    return s
+  end
+  while true do
+    local i, j = s:find(target, pos, true)
+    if not i then
+      table.insert(result, s:sub(pos))
+      break
+    end
+    table.insert(result, s:sub(pos, i - 1))
+    table.insert(result, replacement)
+    pos = j + 1
+  end
+  return table.concat(result)
+end
+
+-- Expose for testing
+M._safe_replace = safe_replace
+M._safe_replace_all = safe_replace_all
+
 --- Kill the current runner if any
 function M.kill_current()
   if M._current_runner then
@@ -19,6 +63,36 @@ function M.kill_current()
   end
   return false
 end
+
+--- Resolve timeout with proper priority:
+--- buffer-local (vim.b.runner_timeout) > runner-defined > setup() global > default 3000ms
+---@param runner_def table the runner definition
+---@param bufnr number buffer number
+---@return number timeout in ms
+local function resolve_timeout(runner_def, bufnr)
+  -- 1. buffer-local timeout (highest priority)
+  local buf_timeout = vim.b[bufnr].runner_timeout
+  if buf_timeout and type(buf_timeout) == "number" and buf_timeout > 0 then
+    return buf_timeout
+  end
+
+  -- 2. runner-defined timeout
+  if runner_def.timeout and type(runner_def.timeout) == "number" and runner_def.timeout > 0 then
+    return runner_def.timeout
+  end
+
+  -- 3. setup() global timeout
+  local opts = config.options
+  if opts.timeout and type(opts.timeout) == "number" and opts.timeout > 0 then
+    return opts.timeout
+  end
+
+  -- 4. default
+  return 3000
+end
+
+-- Expose for testing
+M._resolve_timeout = resolve_timeout
 
 --- Run script for the current buffer
 function M.run()
@@ -59,7 +133,7 @@ function M.run()
     runner_literal = runner.runner()
     -- false or nil
     if not runner_literal then
-      vim.notify("runner function returned abortion.", vim.log.levels.INFO) -- FIXED_BUG: was vim.log.level.INFO
+      vim.notify("runner function returned abortion.", vim.log.levels.INFO)
       return
     end
   else
@@ -76,7 +150,7 @@ function M.run()
     template_literal = runner.template(runner_literal, text_literal)
     -- false or nil
     if not template_literal then
-      vim.notify("template function returned abortion.", vim.log.levels.INFO) -- FIXED_BUG: was vim.log.level.INFO
+      vim.notify("template function returned abortion.", vim.log.levels.INFO)
       return
     end
   else
@@ -85,35 +159,16 @@ function M.run()
   end
   assert(type(template_literal) == "string")
 
-  -- Assemble command
-  template_literal = string.gsub(template_literal, "${runner}", runner_literal)
-  template_literal = string.gsub(template_literal, "${text}", text_literal)
+  -- Assemble command using safe replacement (avoids gsub % special char issues)
+  -- Order matters: replace ${runner} first, then ${text}
+  -- (${text} content might contain "${runner}" literally, so this order is safe)
+  template_literal = safe_replace_all(template_literal, "${runner}", runner_literal)
+  template_literal = safe_replace_all(template_literal, "${text}", text_literal)
 
-  -- Resolve timeout (in ms)
-  -- FIXED_BUG: Original had operator precedence issue and mixed seconds/ms units
-  local timeout = opts.timeout or 3000 -- default fallback in ms
-  local timeout_candidates = {
-    vim.g._runner_global_timeout,
-    runner.timeout,
-  }
-  -- Also check filetype_runner default timeout if different from the runner
-  local ft_default = opts.runners[vim.bo.filetype]
-  if ft_default and ft_default ~= runner then
-    table.insert(timeout_candidates, ft_default.timeout)
-  end
-
-  for _, candidate in ipairs(timeout_candidates) do
-    -- FIXED_BUG: was `candidate and type(candidate) == "number" or candidate > 0`
-    -- which has operator precedence issue. Fixed with proper parentheses.
-    if candidate and (type(candidate) == "number" and candidate > 0) then
-      timeout = candidate
-      break
-    end
-  end
+  -- Resolve timeout with proper priority
+  local timeout = resolve_timeout(runner, bufid)
 
   -- Kill previous runner before starting new one
-  -- FIXED_BUG: Original killed in the callback (race condition).
-  -- Now we kill before starting the new one.
   if M._current_runner then
     pcall(uv.kill, M._current_runner, 9)
     vim.notify("stopped previous running script.", vim.log.levels.INFO)
@@ -162,39 +217,64 @@ function M.run()
         end
 
         if #return_text <= 1 then
-          -- FIXED_BUG: was `string(obj.code)` — `string` is not a Lua global function, use `tostring`
           vim.notify("script_runner ends with nothing: " .. tostring(obj.code))
           return
         end
         return_text = string.gsub(return_text, "\n+$", "") .. "\n"
 
         if opts.insert_result then
+          -- Check buffer/window validity before writing results
+          local target_bufid = bufid
+          local target_winid = winid
+          local buf_valid = vim.api.nvim_buf_is_valid(target_bufid)
+          local win_valid = vim.api.nvim_win_is_valid(target_winid)
+
+          if not buf_valid then
+            -- Original buffer was closed — create a new scratch buffer
+            target_bufid = vim.api.nvim_create_buf(true, true)
+            vim.api.nvim_set_current_buf(target_bufid)
+            target_winid = vim.api.nvim_get_current_win()
+            vim.notify(
+              "原 buffer 已关闭，结果写入新 buffer",
+              vim.log.levels.WARN
+            )
+          elseif not win_valid then
+            -- Buffer is valid but window is gone — open buffer in current window
+            target_winid = vim.api.nvim_get_current_win()
+            vim.notify(
+              "原 window 已关闭，结果写入当前 window",
+              vim.log.levels.WARN
+            )
+          end
+
           -- Set the undo checkpoint for quick undo
           vim.cmd([[ let &ul=&ul ]])
 
           -- Insert at the cursor position
           local pos = {}
-          if vim.api.nvim_get_current_buf() ~= bufid then
+          if vim.api.nvim_get_current_buf() ~= target_bufid then
             vim.notify("script_runner finished in another buf.", vim.log.levels.INFO)
-            pos = vim.api.nvim_buf_get_mark(bufid, '"')
+            pos = vim.api.nvim_buf_get_mark(target_bufid, '"')
           else
-            pos = vim.api.nvim_win_get_cursor(winid)
+            if vim.api.nvim_win_is_valid(target_winid) then
+              pos = vim.api.nvim_win_get_cursor(target_winid)
+            else
+              pos = { vim.api.nvim_buf_line_count(target_bufid), 0 }
+            end
           end
-          vim.api.nvim_buf_set_lines(bufid, pos[1], pos[1], false, vim.split(return_text, "\n"))
+          vim.api.nvim_buf_set_lines(target_bufid, pos[1], pos[1], false, vim.split(return_text, "\n"))
         end
       end)
     )
 
     if not ok then
-      vim.notify(string.format("runner function returned error: %s", job_or_err), vim.log.levels.INFO) -- FIXED_BUG: was vim.log.level.INFO
+      vim.notify(string.format("runner function returned error: %s", job_or_err), vim.log.levels.INFO)
       return
     end
 
     M._current_runner = job_or_err.pid
 
     -- Kill on timeout
-    -- FIXED_BUG: Original timeout values were in seconds (3, 5) but vim.defer_fn uses ms.
-    -- Now all timeout values are consistently in ms.
     vim.defer_fn(function()
       if M._current_runner == job_or_err.pid then
         if pcall(uv.kill, job_or_err.pid, 9) then
