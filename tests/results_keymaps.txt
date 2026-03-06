@@ -1,0 +1,146 @@
+PASS | TC-KEY-001 | * does not jump to next match
+PASS | TC-KEY-002 | Y maps to clipboard yank in normal
+PASS | TC-KEY-003 | Y maps in visual mode
+PASS | TC-KEY-004 | <D-v> in insert mode
+PASS | TC-KEY-005 | <D-v> in terminal mode
+PASS | TC-KEY-006 | <D-v> in command mode
+PASS | TC-KEY-007 | <C-e> in command mode to end
+PASS | TC-KEY-008 | <C-a> in command mode to home
+PASS | TC-KEY-009 | <leader>pr in visual mode for LuaPrint
+PASS | TC-KEY-010 | <leader>yd copies dir
+PASS | TC-KEY-011 | <leader>yp copies full path
+PASS | TC-KEY-012 | <leader>yr copies relative path
+PASS | TC-KEY-013 | <leader>yf copies filename
+PASS | TC-KEY-014 | <leader>yl copies filename:line
+PASS | TC-KEY-015 | Path copy also in visual mode
+PASS | TC-KEY-016 | <leader>rn in visual uses IncRename
+SKIP | TC-KEY-017 | C++ <leader>hh header switch | Reason: Requires opening .cpp file
+SKIP | TC-KEY-018 | Non-C++ no <leader>hh mapping | Reason: Requires opening .py file
+PASS | TC-KEY-019 | <leader>- horizontal split mapping exists
+PASS | TC-KEY-020 | <leader>| vertical split mapping exists
+PASS | TC-KEY-021 | <leader>wd close window mapping exists
+PASS | TC-KEY-022 | <Esc> clears search highlight
+PASS | TC-KEY-023 | <leader>ps paste from clipboard
+PASS | TC-KEY-024 | <leader>wm maximize window mapping exists
+SKIP | TC-KEY-025 | <leader>wm restore window | Reason: Requires multi-window setup
+PASS | TC-KEY-026 | <C-c> kills running script mapping exists
+PASS | TC-KEY-027 | <C-c> fallback without running script
+PASS | TC-KEY-028 | <C-S-CR> maps to RunScript
+PASS | TC-KEY-029 | <D-S-CR> maps to RunScript
+PASS | TC-KEY-030 | <leader>cm in normal mode
+PASS | TC-KEY-031 | <leader>cm in visual mode
+SKIP | TC-KEY-032 | svn module mapping | Reason: svn module not enabled
+PASS | TC-KEY-032 | svn module mapping check
+SKIP | TC-KEY-033 | svn module disabled no mapping | Reason: Environment dependent
+PASS | TC-KEY-034 | <C-i> preserved
+PASS | TC-KEY-035 | ZA save and quit all
+PASS | TC-KEY-036 | <leader>G opens LazyGit
+PASS | TC-KEY-037 | <C-J> move to window below
+PASS | TC-KEY-038 | <C-H> move to window left
+PASS | TC-KEY-039 | <C-L> move to window right
+PASS | TC-KEY-040 | <C-K> move to window above
+PASS | TC-KEY-041 | Window keys in visual mode
+PASS | TC-KEY-042 | Window keys in insert mode
+PASS | TC-KEY-043 | Window keys in terminal mode
+SKIP | TC-KEY-044 | Floating window blocks direction move | Reason: Requires floating window
+PASS | TC-KEY-045 | <C-S-l> throw buffer right
+PASS | TC-KEY-046 | <C-S-k> throw buffer up
+PASS | TC-KEY-047 | <C-S-j> throw buffer down
+PASS | TC-KEY-048 | <C-S-h> throw buffer left
+PASS | TC-KEY-049 | <leader>qj next quickfix
+PASS | TC-KEY-050 | <leader>qk prev quickfix
+PASS | TC-KEY-051 | <leader>ql newer quickfix list
+PASS | TC-KEY-052 | <leader>qh older quickfix list
+PASS | TC-KEY-053 | / in visual mode searches selection
+PASS | TC-KEY-054 | gh hover/ufo peek
+PASS | TC-KEY-055 | ge opens diagnostic float
+PASS | TC-KEY-056 | ga code action
+PASS | TC-KEY-057 | <leader>bd close buffer mapping exists
+SKIP | TC-KEY-058 | <leader>bd doesn't close modified buffer | Reason: Requires buffer modification
+SKIP | TC-KEY-059 | <leader>bd force closes dap-terminal | Reason: Requires dap-terminal buffer
+PASS | TC-KEY-060 | <M-j> move line down mapping exists
+PASS | TC-KEY-061 | <M-k> move line up mapping exists
+PASS | TC-KEY-062 | <M-j> in visual mode
+SKIP | TC-KEY-063 | <M-j> supports count | Reason: Requires functional test
+PASS | TC-KEY-064 | [ maps to t[
+PASS | TC-KEY-065 | ] maps to t]
+PASS | TC-KEY-066 | { maps to t{
+PASS | TC-KEY-067 | } maps to t}
+PASS | TC-KEY-068 | ( maps to t(
+PASS | TC-KEY-069 | ) maps to t)
+PASS | TC-KEY-070 | , maps to t,
+PASS | TC-KEY-071 | ? maps to t?
+PASS | TC-KEY-072 | d[ maps to dt[
+PASS | TC-KEY-073 | [ in visual mode maps to t[
+PASS | TC-KEY-074 | <leader><tab> creates new tab
+PASS | TC-KEY-075 | <tab> maps to FlipPinnedTab
+PASS | TC-KEY-076 | d<tab> closes tab
+PASS | TC-KEY-077 | <C-tab> next tab
+PASS | TC-KEY-078 | <S-C-tab> prev tab
+PASS | TC-KEY-079 | <leader>up pin/unpin tab
+PASS | TC-KEY-080 | <leader>uP pin tab with arg
+PASS | TC-KEY-081 | <leader>uT toggle transparency
+PASS | TC-KEY-082 | <C-G> shows navic location
+PASS | TC-KEY-083 | <leader>db toggle breakpoint
+PASS | TC-KEY-084 | <leader>dB breakpoint list
+PASS | TC-KEY-085 | <leader>dc continue
+PASS | TC-KEY-086 | <leader>dC run to cursor
+PASS | TC-KEY-087 | <leader>dW add watch
+PASS | TC-KEY-088 | <leader>dn step over
+PASS | TC-KEY-089 | <leader>dN new session
+PASS | TC-KEY-090 | <leader>ds step into
+PASS | TC-KEY-091 | <leader>dS show sessions
+PASS | TC-KEY-092 | <leader>do step out
+PASS | TC-KEY-093 | <leader>du up callstack
+PASS | TC-KEY-094 | <leader>dd down callstack
+PASS | TC-KEY-095 | <leader>dF show frames
+PASS | TC-KEY-096 | <leader>dp hover
+PASS | TC-KEY-097 | <leader>dP show scopes
+PASS | TC-KEY-098 | <leader>dR restart debug
+PASS | TC-KEY-100 | <leader>dT toggle DapView
+PASS | TC-KEY-101 | <leader>dE disconnect and close debug
+PASS | TC-KEY-099 | <leader>d<c-c> pause
+PASS | TC-KEY-102 | <leader>dD toggle debug keymap mode
+SKIP | TC-KEY-103 | Debug mode b maps to breakpoint | Reason: Requires debug mode activation
+SKIP | TC-KEY-104 | Debug mode c maps to continue | Reason: Requires debug mode activation
+SKIP | TC-KEY-105 | Exit debug mode restores mappings | Reason: Requires debug mode activation
+PASS | TC-KEY-106 | <leader>DD start generic debug
+PASS | TC-KEY-107 | <leader>Dt terminate debug
+PASS | TC-KEY-108 | <D-a> maps to AI modify
+PASS | TC-KEY-109 | <D-b> maps to buffer list
+PASS | TC-KEY-110 | <D-c> maps to comment
+PASS | TC-KEY-111 | <D-D> maps to debug mode toggle
+PASS | TC-KEY-112 | <D-e> maps to file browse
+PASS | TC-KEY-113 | <D-f> maps to file find
+PASS | TC-KEY-114 | <D-g> maps to git hunk preview
+PASS | TC-KEY-115 | <D-i> maps to message history
+PASS | TC-KEY-116 | <D-j> maps to buffer diagnostics
+PASS | TC-KEY-117 | <D-k> maps to keymaps list
+PASS | TC-KEY-118 | <D-l> maps to task output
+PASS | TC-KEY-119 | <D-n> maps to new buffer
+PASS | TC-KEY-120 | <D-o> maps to window maximize
+PASS | TC-KEY-121 | <D-p> maps to command history
+PASS | TC-KEY-122 | <D-r> maps to LSP rename
+PASS | TC-KEY-123 | <D-s> maps to symbols
+PASS | TC-KEY-124 | <D-t> maps to terminal
+PASS | TC-KEY-125 | <D-v> maps to paste
+PASS | TC-KEY-126 | <D-w> maps to close buffer
+PASS | TC-KEY-127 | <D-x> maps to horizontal split
+PASS | TC-KEY-128 | <D-y> maps to yanky
+PASS | TC-KEY-129 | <D-z> maps to zoxide
+PASS | TC-KEY-130 | <D-/> maps to global search
+PASS | TC-KEY-131 | <D-CR> maps to format
+PASS | TC-KEY-132 | D-* mappings also in insert mode
+FAIL | TC-KEY-133 | no_insert_mode mappings not in insert mode | Error: tests/harness.lua:60: <D-CR> should NOT be in insert mode
+SKIP | TC-KEY-134 | back_to_insert returns to insert mode | Reason: Requires functional test
+PASS | TC-KEY-087v | <leader>dW also in visual mode
+
+========================================
+TEST SUMMARY
+========================================
+Total:     136
+Pass:      122
+Fail:      1
+Known Bug: 0
+Skip:      13
+========================================

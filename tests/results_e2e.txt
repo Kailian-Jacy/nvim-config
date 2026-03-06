@@ -1,0 +1,60 @@
+PASS | TC-E2E-001 | Complete startup no errors
+PASS | TC-E2E-002 | Plugins loaded after startup
+PASS | TC-E2E-003 | Load order correct (options before keymaps)
+PASS | TC-E2E-004 | Tab lifecycle: create -> pin -> unpin
+FAIL | TC-E2E-005 | Closing pinned tab auto-unpins | Error: tests/harness.lua:60: pinned_tab should be nil after closing pinned tab
+PASS | TC-E2E-006 | Tabline shows pinned marker
+SKIP | TC-E2E-007 | Terminal float -> right -> bottom -> reset | Reason: Requires terminal UI
+SKIP | TC-E2E-008 | Terminal direction keys jump to nvim | Reason: Requires terminal + window
+SKIP | TC-E2E-009 | Buffer jump history H/L | Reason: Requires multiple buffer navigation
+FAIL | TC-E2E-010 | Buffer close preserves window | Error: vim/_editor.lua:0: command line..script nvim_exec2() called at command line:0, line 1: Vim(bdelete):E89: No write since last change for buffer 1 (add ! to override)
+SKIP | TC-E2E-011 | ThrowAndReveal to right new window | Reason: Requires single window
+SKIP | TC-E2E-012 | ThrowAndReveal to existing window | Reason: Requires multi-window
+PASS | TC-E2E-013 | Debug mode toggle on/off
+SKIP | TC-E2E-014 | debugging_status changes with DAP events | Reason: Requires DAP session
+SKIP | TC-E2E-015 | lualine shows debug info | Reason: Requires debugging_keymap=true
+SKIP | TC-E2E-016 | ConformFormat restrict mode | Reason: Requires buffer with code
+SKIP | TC-E2E-017 | ConformFormat visual mode | Reason: Requires visual selection
+SKIP | TC-E2E-018 | <leader><CR> format + lint + save | Reason: Requires file to save
+PASS | TC-E2E-019 | Quickfix dd deletes entry
+SKIP | TC-E2E-020 | Quickfix visual d deletes multiple | Reason: Requires quickfix interaction
+PASS | TC-E2E-021 | Qnext/Qprev cycle navigation commands exist
+SKIP | TC-E2E-022 | CopyFilePath full end-to-end | Reason: Requires clipboard
+SKIP | TC-E2E-023 | CopyFilePath relative removes cwd prefix | Reason: Requires clipboard
+SKIP | TC-E2E-024 | Lua script runs in neovim | Reason: Requires file opened
+SKIP | TC-E2E-025 | SetBufRunner overrides RunScript runner | Reason: Requires buffer setup
+SKIP | TC-E2E-026 | <C-c> interrupts running script | Reason: Requires running process
+PASS | TC-E2E-027 | TextYankPost highlight exists
+SKIP | TC-E2E-028 | TextYankPost yanky ring filter | Reason: Requires yanky API
+PASS | TC-E2E-029 | OSC52 clipboard sync autocmd exists
+SKIP | TC-E2E-030 | Recording start sets status true | Reason: Requires macro recording
+SKIP | TC-E2E-031 | Recording stop sets status false | Reason: Requires macro recording
+SKIP | TC-E2E-032 | Lualine shows q during recording | Reason: Requires lualine capture
+SKIP | TC-E2E-033 | SnipEdit -> SnipLoad flow | Reason: Requires snippet editing
+SKIP | TC-E2E-034 | SnipPick opens picker | Reason: Requires UI
+SKIP | TC-E2E-035 | Bookmark create -> view -> delete | Reason: Requires interactive test
+SKIP | TC-E2E-036 | BookmarkGrepMarkedFiles | Reason: Requires marked files
+PASS | TC-E2E-037 | Window maximize toggle
+SKIP | TC-E2E-038 | Lualine shows m during maximize | Reason: Requires lualine capture
+PASS | TC-E2E-039 | VimLeavePre saves LAST_WORKING_DIRECTORY
+PASS | TC-E2E-040 | VimLeave has tmux detach logic
+SKIP | TC-E2E-041 | picker <c-t> opens in new tab | Reason: Requires picker UI
+SKIP | TC-E2E-042 | picker <c-/> search selected file | Reason: Requires picker UI
+SKIP | TC-E2E-043 | picker maximize action | Reason: Requires picker UI
+SKIP | TC-E2E-044 | zoxide picker lcd/tcd | Reason: Requires picker UI
+SKIP | TC-E2E-045 | explorer <d-cr> tcd to dir | Reason: Requires picker UI
+SKIP | TC-E2E-046 | command_history modify/execute | Reason: Requires picker UI
+FAIL | TC-E2E-047 | <M-j> line move down functional test | Error: tests/harness.lua:51: line2 should be first after moving line1 down: expected line2 (string), got line1 (string)
+FAIL | TC-E2E-048 | <M-k> line move up functional test | Error: tests/harness.lua:51: line2 should be first after moving up: expected line2 (string), got line1 (string)
+PASS | TC-E2E-049 | [ key jumps to before [ character
+PASS | TC-E2E-050 | d[ deletes to before [
+
+========================================
+TEST SUMMARY
+========================================
+Total:     50
+Pass:      15
+Fail:      4
+Known Bug: 0
+Skip:      31
+========================================

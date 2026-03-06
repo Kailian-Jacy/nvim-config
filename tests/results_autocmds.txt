@@ -1,0 +1,135 @@
+PASS | TC-CMD-001 | RunTest command exists
+SKIP | TC-CMD-002 | RunTest executes *_vimtest.lua | Reason: Requires file creation and cd
+SKIP | TC-CMD-003 | RunTest no test file no error | Reason: Requires specific cwd
+PASS | TC-CMD-004 | Copen command exists
+SKIP | TC-CMD-005 | Copen opens fullwidth quickfix | Reason: Requires UI interaction
+PASS | TC-CMD-006 | RunScript command exists
+SKIP | TC-CMD-007 | RunScript executes lua file | Reason: Requires opening lua file
+SKIP | TC-CMD-008 | RunScript executes python file | Reason: Requires python file setup
+SKIP | TC-CMD-009 | RunScript executes shell file | Reason: Requires sh file setup
+SKIP | TC-CMD-010 | RunScript no runner error | Reason: Requires unsupported filetype
+SKIP | TC-CMD-011 | RunScript no filetype error | Reason: Requires empty filetype
+SKIP | TC-CMD-012 | RunScript timeout kills process | Reason: Requires long-running script
+SKIP | TC-CMD-013 | RunScript visual mode executes selection | Reason: Requires visual selection
+PASS | TC-CMD-014 | SetBufRunner command exists
+SKIP | TC-CMD-015 | SetBufRunner sets buffer-local runner | Reason: Requires buffer setup
+PASS | TC-CMD-016 | OverseerRestartLast command exists
+PASS | TC-CMD-017 | DebugServe command exists
+PASS | TC-CMD-018 | MasonInstallAll command exists
+PASS | TC-CMD-019 | OpenLaunchJson command exists
+SKIP | TC-CMD-020 | OpenLaunchJson opens launch.json | Reason: Requires .vscode/launch.json
+PASS | TC-CMD-021 | PinTab command exists
+PASS | TC-CMD-022 | PinTab pins current tab
+SKIP | TC-CMD-023 | PinTab moves tab to first position | Reason: Requires multi-tab setup
+FAIL | TC-CMD-024 | PinTab with arg sets name | Error: tests/harness.lua:51: pinned_tab.name should be TestName: expected TestName (string), got  (string)
+PASS | TC-CMD-025 | UnpinTab command exists
+PASS | TC-CMD-026 | UnpinTab clears pinned state
+PASS | TC-CMD-027 | FlipPinnedTab command exists
+SKIP | TC-CMD-028 | FlipPinnedTab jumps to pinned tab | Reason: Requires multi-tab with pinned
+SKIP | TC-CMD-029 | FlipPinnedTab jumps back | Reason: Requires multi-tab with pinned
+PASS | TC-CMD-030 | FlipPinnedTab no pinned tab does nothing
+PASS | TC-CMD-031 | SetTabName command sets name
+PASS | TC-CMD-032 | ResetTabName clears name
+SKIP | TC-CMD-033 | TabLeave records last_tab | Reason: Requires tab switching
+SKIP | TC-CMD-034 | TabClosed cleans pinned_tab | Reason: Requires tab close
+PASS | TC-CMD-035 | FocusGained autocmd exists
+PASS | TC-CMD-036 | SnipEdit command exists
+PASS | TC-CMD-037 | SnipLoad command exists
+PASS | TC-CMD-038 | SnipPick command exists
+PASS | TC-CMD-039 | LuaPrint command exists
+SKIP | TC-CMD-040 | LuaPrint executes and prints | Reason: Requires visual selection
+PASS | TC-CMD-041 | TextYankPost autocmd exists
+SKIP | TC-CMD-042 | Short text not in yanky ring | Reason: Requires yanky API
+SKIP | TC-CMD-043 | Long text not in yanky ring | Reason: Requires yanky API
+SKIP | TC-CMD-044 | SvnDiffThis exists | Reason: svn module not enabled
+SKIP | TC-CMD-045 | SvnDiffThisClose exists | Reason: svn module not enabled
+SKIP | TC-CMD-046 | SvnDiffShiftVersion exists | Reason: svn module not enabled
+SKIP | TC-CMD-047 | SvnDiffAll exists | Reason: svn module not enabled
+SKIP | TC-CMD-048 | FileType enables TSBufEnable for treesitter types | Reason: Requires file open
+SKIP | TC-CMD-049 | Non-treesitter types enable syntax | Reason: Requires file open
+PASS | TC-CMD-050 | highlight_yank autocmd group exists
+SKIP | TC-CMD-051 | quickfix q closes buffer | Reason: Requires quickfix open
+SKIP | TC-CMD-052 | gitsigns-blame q closes buffer | Reason: Requires gitsigns buffer
+SKIP | TC-CMD-053 | help q closes buffer | Reason: Requires help open
+SKIP | TC-CMD-054 | man q closes buffer | Reason: Requires man page open
+PASS | TC-CMD-055 | Qnext command exists
+PASS | TC-CMD-056 | Qprev command exists
+PASS | TC-CMD-057 | Qnewer command exists
+PASS | TC-CMD-058 | Qolder command exists
+SKIP | TC-CMD-059 | Qnext wraps around | Reason: Requires quickfix list
+SKIP | TC-CMD-060 | Qprev wraps around | Reason: Requires quickfix list
+PASS | TC-CMD-061 | Split command exists
+PASS | TC-CMD-062 | Vsplit command exists
+SKIP | TC-CMD-063 | Split cursor in new window | Reason: Requires window check
+PASS | TC-CMD-064 | SnackOldfiles command exists
+PASS | TC-CMD-065 | BookmarkGrepMarkedFiles command exists
+PASS | TC-CMD-066 | BookmarkSnackPicker command exists
+PASS | TC-CMD-067 | BookmarkEditNameAtCursor command exists
+PASS | TC-CMD-068 | DeleteBookmarkAtCursor command exists
+PASS | TC-CMD-069 | ClearBookmark command exists
+PASS | TC-CMD-070 | guicursor contains block and ver25
+PASS | TC-CMD-071 | nvim 0.11+ guicursor contains t:ver25
+PASS | TC-CMD-072 | NeovideNew command exists
+PASS | TC-CMD-073 | NeovideTransparentToggle command exists
+SKIP | TC-CMD-074 | NeovideTransparentToggle toggles | Reason: Requires Neovide runtime
+PASS | TC-CMD-075 | SearchHistory command exists
+PASS | TC-CMD-076 | ThrowAndReveal command exists
+SKIP | TC-CMD-077 | ThrowAndReveal l creates right window | Reason: Requires window operation test
+SKIP | TC-CMD-078 | ThrowAndReveal reuses existing window | Reason: Requires multi-window test
+PASS | TC-CMD-079 | Code command exists
+PASS | TC-CMD-080 | CopyFilePath command exists
+SKIP | TC-CMD-081 | CopyFilePath full | Reason: Requires file opened
+SKIP | TC-CMD-082 | CopyFilePath relative | Reason: Requires file opened
+SKIP | TC-CMD-083 | CopyFilePath dir | Reason: Clipboard not available in headless
+SKIP | TC-CMD-084 | CopyFilePath filename | Reason: Requires file opened
+SKIP | TC-CMD-085 | CopyFilePath line | Reason: Requires file opened
+SKIP | TC-CMD-086 | RecordingEnter sets status true | Reason: Requires macro recording
+SKIP | TC-CMD-087 | RecordingLeave sets status false | Reason: Requires macro recording
+PASS | TC-CMD-088 | VimEnter autocmd exists
+PASS | TC-CMD-089 | VimLeavePre autocmd exists
+PASS | TC-CMD-090 | VimLeave autocmd exists
+SKIP | TC-CMD-091 | BufRead markdown autocmd | Reason: Requires markdown group check
+SKIP | TC-CMD-092 | Markdown buffer pi mapping | Reason: Requires .md file
+PASS | TC-CMD-093 | Cd command exists
+PASS | TC-CMD-094 | Cd changes working directory
+PASS | TC-CMD-095 | Lint command exists
+PASS | TC-CMD-096 | BufWritePost has lint callback
+PASS | TC-CMD-097 | LintInfo command exists
+SKIP | TC-CMD-098 | dap-float FileType autocmd | Reason: Requires dap-float buffer
+SKIP | TC-CMD-099 | dap-float esc and q close | Reason: Requires dap-float buffer
+PASS | TC-CMD-100 | DapTerminate command exists
+PASS | TC-CMD-101 | Lcmd command exists
+PASS | TC-CMD-102 | Lcmdv command exists
+PASS | TC-CMD-103 | Lcmdh command exists
+PASS | TC-CMD-104 | Term command exists
+PASS | TC-CMD-105 | Termv command exists
+PASS | TC-CMD-106 | Termh command exists
+SKIP | TC-CMD-107 | Lcmd opens lua buffer | Reason: Requires window test
+SKIP | TC-CMD-108 | Term opens terminal | Reason: Requires terminal test
+PASS | TC-CMD-109 | virtual_text disabled
+PASS | TC-CMD-110 | signs enabled
+PASS | TC-CMD-111 | underline enabled
+PASS | TC-CMD-112 | update_in_insert disabled
+PASS | TC-CMD-113 | severity_sort enabled
+PASS | TC-CMD-114 | float border = rounded
+PASS | TC-CMD-115 | read_binary_with_xxd=false no hex autocmd
+PASS | TC-CMD-116 | TextYankPost includes OSC52 copy
+SKIP | TC-CMD-117 | barbecue default off | Reason: Requires barbecue status check
+PASS | TC-CMD-118 | shell_run function exists
+FAIL | TC-CMD-119 | shell_run executes and returns output | Error: tests/harness.lua:72: output should contain echo'd text: expected string, got number = 0
+PASS | TC-CMD-120 | ObsUnlink command exists
+PASS | TC-CMD-121 | ObsOpen command exists
+SKIP | TC-CMD-122 | Avante c-c stops generation | Reason: Requires Avante buffer
+PASS | TC-CMD-123 | TelescopeAutoCommands command exists
+FAIL | TC-CMD-124 | TaskLoad command exists | Error: tests/harness.lua:51: assertion failed: expected 2 (number), got 0 (number)
+FAIL | TC-CMD-125 | TaskEdit command exists | Error: tests/harness.lua:51: assertion failed: expected 2 (number), got 0 (number)
+
+========================================
+TEST SUMMARY
+========================================
+Total:     125
+Pass:      70
+Fail:      4
+Known Bug: 0
+Skip:      51
+========================================
