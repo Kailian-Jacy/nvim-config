@@ -566,13 +566,29 @@ local debugging_keymaps = {
     desc = "Terminate session"
   },
   {
+    -- Fix #63: Distinguish attach vs launch when stopping a session.
+    -- Attach: disconnect (release debuggee, let it continue running).
+    -- Launch: terminate (kill the debuggee process DAP started).
     normalModeKey = "<leader>dE",
     debugModeKey = "E",
     action = function()
-      require("dap").disconnect()
-      require("dap").close()
+      local dap = require("dap")
+      local session = dap.session()
+      if not session then
+        vim.print_silent("No active debug session.")
+        return
+      end
+      if session.config.request == "attach" then
+        -- Attached to an external process: release it, let it continue
+        dap.disconnect()
+        vim.print_silent("Detached from debuggee (still running).")
+      else
+        -- Launched by DAP: kill the debuggee
+        dap.terminate()
+        vim.print_silent("Terminated debuggee.")
+      end
     end,
-    desc = "Stop session"
+    desc = "Stop session (terminate if launched, detach if attached)"
   },
   {
     normalModeKey = "<leader>dX",
