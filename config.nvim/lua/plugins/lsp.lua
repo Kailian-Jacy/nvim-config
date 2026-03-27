@@ -207,50 +207,61 @@ return {
   {
     -- nvim-lspconfig: now used as a "bag of configs" providing default LSP
     -- server configurations. The actual LSP management uses Neovim 0.11+
-    -- builtin vim.lsp.config / vim.lsp.enable.
+    -- LSP server configurations using nvim-lspconfig.
     --
     -- Server configs live in config.nvim/lsp/*.lua (on runtimepath).
     -- nvim-lspconfig provides additional defaults that are merged automatically.
     "neovim/nvim-lspconfig",
     config = function()
-      -- Set default root markers for all LSP servers
-      vim.lsp.config('*', {
-        root_markers = { '.git' },
+      local lspconfig = require("lspconfig")
+      local cmp_nvim_lsp = require("cmp_nvim_lsp")
+
+      -- markdown
+      lspconfig.marksman.setup({})
+      -- lua
+      lspconfig.lua_ls.setup({
+        capabilities = cmp_nvim_lsp.default_capabilities(),
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { "vim", "Snacks" },
+            },
+          },
+        },
       })
+      -- json
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
+      lspconfig.jsonls.setup({ capabilities = capabilities })
+      -- docker
+      lspconfig.docker_compose_language_service.setup({})
+      lspconfig.dockerls.setup({})
+      -- yaml
+      lspconfig.yamlls.setup({})
+      -- python
+      lspconfig.pyright.setup({})
+      -- nix
+      lspconfig.nil_ls.setup({})
 
-      -- Build the list of LSP servers to enable based on module availability.
-      -- Base servers (always enabled if their lsp/*.lua config exists):
-      local servers = {
-        'lua_ls',
-        'marksman',
-        'jsonls',
-        'pyright',
-        'nil_ls',
-        'docker_compose_language_service',
-        'dockerls',
-        'yamlls',
-        'taplo',
-        'bashls',
-        'vimls',
-        'lemminx',
-      }
-
-      -- Conditionally enable C/C++ servers
+      -- Conditional servers
       if vim.g.modules.cpp and vim.g.modules.cpp.enabled then
-        table.insert(servers, 'clangd')
-        table.insert(servers, 'cmake')
+        lspconfig.cmake.setup({})
+        lspconfig.clangd.setup({
+          capabilities = cmp_nvim_lsp.default_capabilities(),
+          cmd = {
+            "clangd",
+            "--offset-encoding=utf-16",
+            "--background-index",
+            "-j=" .. math.max((vim.g._resource_cpu_cores or 0) - 2, 2),
+          },
+        })
       end
 
-      -- Conditionally enable Go server
       if vim.g.modules.go and vim.g.modules.go.enabled then
-        table.insert(servers, 'gopls')
+        lspconfig.gopls.setup({})
       end
 
       -- Note: rust-analyzer is managed by rustaceanvim, not enabled here.
-      -- Enabling it separately would result in duplicate LSP clients.
-
-      -- Enable all configured servers using Neovim 0.11+ builtin API
-      vim.lsp.enable(servers)
 
       -- Start LSP inlay hints
       vim.lsp.inlay_hint.enable(true)
