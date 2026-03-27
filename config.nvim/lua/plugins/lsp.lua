@@ -31,12 +31,12 @@ return {
         -- Create symlink from link_source to package_path/package_name/package_name
         local package_binary = package_dir .. "/" .. package_name
         vim.fn.delete(package_binary) -- Remove if exists
-        vim.loop.fs_symlink(link_source, package_binary)
+        vim.uv.fs_symlink(link_source, package_binary)
 
         -- Create symlink from package binary to bin_path/package_name
         local bin_binary = bin_path .. "/" .. package_name
         vim.fn.delete(bin_binary) -- Remove if exists
-        vim.loop.fs_symlink(package_binary, bin_binary)
+        vim.uv.fs_symlink(package_binary, bin_binary)
 
         -- Make sure the binary is executable
         vim.fn.setfperm(package_binary, "rwxr-xr-x")
@@ -164,105 +164,95 @@ return {
       { "nvim-treesitter/nvim-treesitter" },
     },
     config = function()
-      require("nvim-treesitter.configs").setup({
-        textobjects = {
-          select = {
-            enable = true,
-            lookahead = true,
-            keymaps = {
-              -- You can use the capture groups defined in textobjects.scm
-              ["af"] = "@function.outer",
-              ["if"] = "@function.inner",
-              ["ac"] = "@class.outer",
-              ["ic"] = "@class.inner",
+      -- nvim-treesitter.configs is deprecated in newer treesitter versions;
+      -- use pcall to avoid hard errors and fall back to vim.treesitter built-ins.
+      local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
+      if ok then
+        ts_configs.setup({
+          textobjects = {
+            select = {
+              enable = true,
+              lookahead = true,
+              keymaps = {
+                -- You can use the capture groups defined in textobjects.scm
+                ["af"] = "@function.outer",
+                ["if"] = "@function.inner",
+                ["ac"] = "@class.outer",
+                ["ic"] = "@class.inner",
+              },
+              include_surrounding_whitespace = true,
             },
-            include_surrounding_whitespace = true,
           },
-        },
-      })
-      require('nvim-treesitter.configs').setup({
-        highlight = {
-          enable = true,
-          additional_vim_regex_highlighting = true,
-        },
-        incremental_selection = {
-          enable = true,
-          keymaps = {
-            init_selection = '<Tab>',
-            node_incremental = '<TAB>',
-            node_decremental = '<S-TAB>',
+        })
+        ts_configs.setup({
+          highlight = {
+            enable = true,
+            additional_vim_regex_highlighting = true,
+          },
+          incremental_selection = {
+            enable = true,
+            keymaps = {
+              init_selection = '<Tab>',
+              node_incremental = '<TAB>',
+              node_decremental = '<S-TAB>',
+            }
           }
-        }
-      })
+        })
+      else
+        -- Newer treesitter: configure via vim.treesitter directly
+        vim.treesitter.start = vim.treesitter.start or function() end
+      end
     end,
   },
   {
-    -- lsp configurations:
-    -- 1. Configure lsp from here as example does: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
-    -- 2. LspInfo to check if working.
+    -- nvim-lspconfig: now used as a "bag of configs" providing default LSP
+    -- server configurations. The actual LSP management uses Neovim 0.11+
+    -- builtin vim.lsp.config / vim.lsp.enable.
+    --
+    -- Server configs live in config.nvim/lsp/*.lua (on runtimepath).
+    -- nvim-lspconfig provides additional defaults that are merged automatically.
     "neovim/nvim-lspconfig",
     config = function()
-      local lspconfig = require("lspconfig")
-      -- local keys = require("lazyvim.plugins.lsp.keymaps").get()
-      -- keys[#keys + 1] = { "K", false }
-      -- keys[#keys + 1] = { "<C-K>", false, mode = { "i" } }
-      -- markdown config.
-      lspconfig.marksman.setup({
-        on_attach = lspconfig.marksman.LspOnAttach,
-        capabilities = lspconfig.marksman.LspCapabilities,
+      -- Set default root markers for all LSP servers
+      vim.lsp.config('*', {
+        root_markers = { '.git' },
       })
-      -- clang config.
-      local cmp_nvim_lsp = require("cmp_nvim_lsp")
-      -- lua config
-      lspconfig.lua_ls.setup({
-        capabilities = cmp_nvim_lsp.default_capabilities(),
-        settings = {
-          Lua = {
-            diagnostics = {
-              -- let lua interpreter recognize vim as global to disable warnings.
-              globals = { "vim", "Snacks" },
-            },
-          },
-        },
-      })
-      -- json config
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities.textDocument.completion.completionItem.snippetSupport = true
-      lspconfig.jsonls.setup({
-        capabilities = capabilities,
-      })
-      -- docker/docker-compose
-      lspconfig.docker_compose_language_service.setup({})
-      lspconfig.dockerls.setup({})
-      -- yaml
-      lspconfig.yamlls.setup({})
-      -- rust
-      -- lspconfig.rust_analyzer.setup({}) -- Rust analyzer configured by rustaceanvim. If enabled, there will be two lsps.
-      -- python
-      lspconfig.pyright.setup({})
-      -- nix
-      lspconfig.nil_ls.setup({})
 
+      -- Build the list of LSP servers to enable based on module availability.
+      -- Base servers (always enabled if their lsp/*.lua config exists):
+      local servers = {
+        'lua_ls',
+        'marksman',
+        'jsonls',
+        'pyright',
+        'nil_ls',
+        'docker_compose_language_service',
+        'dockerls',
+        'yamlls',
+        'taplo',
+        'bashls',
+        'vimls',
+        'lemminx',
+      }
+
+      -- Conditionally enable C/C++ servers
       if vim.g.modules.cpp and vim.g.modules.cpp.enabled then
-        -- cmake
-        lspconfig.cmake.setup({})
-        lspconfig.clangd.setup({
-          -- on_attach = on_attach,
-          capabilities = cmp_nvim_lsp.default_capabilities(),
-          cmd = {
-            "clangd",
-            "--offset-encoding=utf-16",
-            "--background-index",
-            "-j=" .. math.max((vim.g._resource_cpu_cores or 0) - 2, 2),
-          },
-        })
+        table.insert(servers, 'clangd')
+        table.insert(servers, 'cmake')
       end
 
+      -- Conditionally enable Go server
       if vim.g.modules.go and vim.g.modules.go.enabled then
-        -- cmake
-        lspconfig.gopls.setup({})
+        table.insert(servers, 'gopls')
       end
-      -- Start LSP inlay hint.
+
+      -- Note: rust-analyzer is managed by rustaceanvim, not enabled here.
+      -- Enabling it separately would result in duplicate LSP clients.
+
+      -- Enable all configured servers using Neovim 0.11+ builtin API
+      vim.lsp.enable(servers)
+
+      -- Start LSP inlay hints
       vim.lsp.inlay_hint.enable(true)
     end,
   },
@@ -359,7 +349,7 @@ return {
       end
 
       vim.api.nvim_create_user_command("ConformFormat", function()
-        vim.g.format_behavior = vim.g.format_behavior or { default = "restricted" }
+        vim.g.format_behavior = vim.g.format_behavior or { default = "restrict" }
 
         local filetype = vim.bo.filetype
         local behavior = vim.g.format_behavior.default
@@ -384,14 +374,13 @@ return {
             }
           else
             vim.notify("LSP: No parser available for current buffer", vim.log.levels.WARN)
-            return
+            return nil, 0
           end
 
           local node = ts_utils.get_node_at_cursor()
 
           if node == nil then
-            vim.print("node is nil")
-            return 0
+            return nil, 0
           end
 
           local start = node:start()
@@ -403,12 +392,14 @@ return {
         -- Restrict mode selection size.
         if (behavior == "restrict" and vim.fn.mode() == "n") then
           local node, line_cnt = get_select_line_cnt()
-          -- Restrict selection. If it's more than certain number of lines, skip formatting.
-          if vim.g.max_silent_format_line_cnt and vim.g.max_silent_format_line_cnt < line_cnt then
+          if not node or not line_cnt then
+            -- No treesitter node found, fall through to format entire buffer
+          elseif vim.g.max_silent_format_line_cnt and vim.g.max_silent_format_line_cnt > 0 and line_cnt > vim.g.max_silent_format_line_cnt then
             return
+          else
+            -- Minimal selection
+            require("nvim-treesitter.ts_utils").update_selection(vim.api.nvim_get_current_buf(), node, "linewise")
           end
-          -- Minimal selection
-          require("nvim-treesitter.ts_utils").update_selection(vim.api.nvim_get_current_buf(), node, "linewise")
         end
         require("conform").format({ async = true, lsp_format = "fallback" }, function(err)
           if not err then
@@ -420,18 +411,6 @@ return {
         end)
       end, {})
     end,
-  },
-  {
-    "utilyre/barbecue.nvim",
-    name = "barbecue",
-    version = "*",
-    dependencies = {
-      "SmiteshP/nvim-navic",
-      "nvim-tree/nvim-web-devicons", -- optional dependency
-    },
-    opts = {
-      -- configurations go here
-    },
   },
   {
     "smjonas/inc-rename.nvim",
@@ -473,19 +452,6 @@ return {
     config = function()
       require("aerial").setup({
         backends = { "lsp", "treesitter", "markdown", "asciidoc", "man" },
-        -- optionally use on_attach to set keymaps when aerial has attached to a buffer
-        require("telescope").setup({
-          extensions = {
-            aerial = {
-              -- Display symbols as <root>.<parent>.<symbol>
-              show_nesting = {
-                ["_"] = false, -- This key will be the default
-                json = true,   -- You can set the option for specific filetypes
-                yaml = true,
-              },
-            },
-          },
-        }),
       })
     end,
   },

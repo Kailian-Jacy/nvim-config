@@ -276,7 +276,7 @@ return {
             term_normal = {
               "<esc>",
               function(self)
-                self.esc_timer = self.esc_timer or (vim.uv or vim.loop).new_timer()
+                self.esc_timer = self.esc_timer or vim.uv.new_timer()
                 if self.esc_timer:is_active() then
                   self.esc_timer:stop()
                   vim.cmd("stopinsert")
@@ -297,6 +297,8 @@ return {
         enabled = true,
       },
       indent = { enabled = false },
+      -- Disable snacks notifications when noice.nvim is handling them.
+      -- noice.nvim provides a more responsive floating UI for messages/notifications.
       notify = { enabled = false },
       notifier = { enabled = false },
       quickfile = { enabled = false },
@@ -1184,159 +1186,8 @@ return {
     opts = { use_diagnostic_signs = true },
   },
 
-  -- change some telescope options and a keymap to browse plugin files
-  {
-    "nvim-telescope/telescope.nvim",
-    keys = {
-      -- {
-      --   "<leader>ff",
-      --   "<cmd>Telescope find_files no_ignore=false<CR>",
-      --   mode = { "n" },
-      -- },
+  -- telescope.nvim removed: replaced by Snacks picker (see issue #45)
 
-      -- files
-      { "<leader>fe", false },
-      { "<leader>ff", false },
-      { "<leader>fb", false },
-      { "<leader>fc", false },
-      { "<leader>fo", false },
-
-      -- Symbols
-      { "<leader>ss", false },
-      { "<leader>sS", false },
-      { "<leader>sk", false },
-
-      -- Command
-      { "<leader>sc", false },
-      { "<leader>sC", false },
-
-      -- LSP.
-      { "gy", false },
-      { "gd", false },
-      { "gi", false },
-      { "gr", false },
-
-      { "<leader>fh", false },
-
-      -- Search
-      { "<leader>/", false },
-      -- { "<leader>/", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
-      -- {
-      --   "<leader>ss",
-      --   "<cmd>lua require(\"telescope.builtin\").lsp_document_symbols()<cr>",
-      --   mode = { "n" },
-      --   desc = "Navigate symbols in buffer.",
-      -- },
-      -- migrate from lsp_dynamic_workspace_symbols, which can't use tag search :object:
-      -- {
-      --   "<leader>sS",
-      --   "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>",
-      --   mode = { "n" },
-      --   desc = "Navigate symbols in the Workspace.",
-      -- },
-      -- {
-      --   "<leader>sS",
-      --   "\"zy:Telescope lsp_dynamic_workspace_symbols default_text=<C-r>z<cr>",
-      --   mode = { "v" },
-      --   desc = "Navigate symbols in the Workspace.",
-      -- },
-    },
-    -- keys = {
-    -- add a keymap to browse plugin files
-    -- stylua: ignore
-    -- {
-    --	 "<leader>fp",
-    --	 function() require("telescope.builtin").find_files({ cwd = require("lazy.core.config").options.root }) end,
-    --	 desc = "Find Plugin File",
-    -- },
-    -- },
-    dependencies = {
-      -- {
-        -- "nvim-telescope/telescope-live-grep-args.nvim",
-        -- version = "^1.0.0",
-        -- This will not install any breaking changes.
-        -- For major updates, this must be adjusted manually.
-      -- },
-      -- {
-      --   "nvim-telescope/telescope-fzf-native.nvim",
-      -- }
-    },
-    -- change some options
-    opts = {
-      defaults = {
-        wrap_results = true,
-        layout_strategy = "vertical",
-        layout_config = { prompt_position = "top" },
-        sorting_strategy = "ascending",
-        winblend = 0,
-        file_ignore_patterns = {
-          "%.o",
-          "%.obj",
-          "%.a",
-          "%.lib",
-          "%.dll",
-          "%.exe",
-          "%.pdb",
-          "%.sln",
-          "%.vcxproj",
-          "Session.vim",
-        },
-        mappings = {
-          -- i = { ["<c-t>"] = require("trouble.sources.telescope").open},
-          -- n = { ["<c-t>"] = require("trouble.sources.telescope").open },
-        }
-      }
-    },
-  },
-  -- {
-  --   'nvim-telescope/telescope-fzf-native.nvim',
-  --   build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release',
-  --   config = function ()
-  --     -- To get fzf loaded and working with telescope, you need to call
-  --     -- load_extension, somewhere after setup function:
-  --     require('telescope').load_extension('fzf')
-  --   end
-  -- },
-  --[[{
-    'nvimdev/dashboard-nvim',
-    event = 'VimEnter',
-    config = function()
-      require('dashboard').setup {
-        theme = 'hyper',
-        config = {
-          week_header = {
-            enable = true,
-          },
-          project = { enable = true, limit = 8, icon = 'your icon', label = '', action = 'Telescope find_files cwd=' },
-          mru = { limit = 10, icon = 'your icon', label = '', cwd_only = false },
-          shortcut = {
-            { desc = 'ó°?? Update', group = '@property', action = 'Lazy update', key = 'u' },
-            {
-              icon = '??? ',
-              icon_hl = '@variable',
-              desc = 'Files',
-              group = 'Label',
-              action = 'Telescope find_files',
-              key = 'f',
-            },
-            {
-              desc = '??? Apps',
-              group = 'DiagnosticHint',
-              action = 'Telescope app',
-              key = 'a',
-            },
-            {
-              desc = 'î¬? dotfiles',
-              group = 'Number',
-              action = 'Telescope dotfiles',
-              key = 'd',
-            },
-          },
-        },
-      }
-    end,
-    dependencies = { { 'nvim-tree/nvim-web-devicons' } }
-  },]]
   {
     "okuuva/auto-save.nvim",
     event = { "InsertLeave", "TextChanged" },
@@ -1360,8 +1211,7 @@ return {
 
     build = ":TSUpdate html",
     dependencies = {
-      -- "nvim-telescope/telescope.nvim",
-      "nvim-lua/plenary.nvim", -- required by telescope
+      "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
 
       -- optional

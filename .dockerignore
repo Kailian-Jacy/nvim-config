@@ -1,0 +1,8 @@
+.git
+.gitmodules
+monolisa-nerd-font
+neovim-source
+*.md
+prebuild.sh
+dockerfile
+.dockerignore

@@ -9,7 +9,7 @@ end
 local vimrc = vim.fn.stdpath("config") .. "/vimrc.vim"
 vim.cmd.source(vimrc)
 
--- load options.
+-- load options (also loads helpers and tabline).
 require("config.options")
 if success and local_funcs.after_options and type(local_funcs.after_options) == "function" then
   local_funcs.after_options()
@@ -24,7 +24,7 @@ if success and local_funcs.after_plugins_load and type(local_funcs.after_plugins
   local_funcs.after_plugins_load()
 end
 
--- Load autocmds
+-- Load autocmds (also loads commands and pickers).
 if success and local_funcs.before_autocmds and type(local_funcs.before_autocmds) == "function" then
   local_funcs.before_autocmds()
 end

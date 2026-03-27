@@ -25,7 +25,13 @@ return {
             -- If wanting to use any cursorline linked to this, need manually setting.
             CursorLine = { bg = "" },
             CursorLineNoneEmpty = { link = "Visual" },
-            -- Basics
+            -- Snacks Picker highlights.
+            -- SnacksPickerListCursorLine: Used by Snacks' update_cursorline()
+            -- when the picker is focused. Without this explicit override,
+            -- it defaults to Visual (with default=true), but we set it
+            -- explicitly to survive colorscheme changes and ensure the
+            -- selected row is always visible in the picker list.
+            SnacksPickerListCursorLine = { link = "CursorLineNoneEmpty" },
             SnacksPickerDir = { link = "SnacksPickerFile" },
             -- SnacksPickerDir = { link = "Delimiter" },
             SnacksPickerMatch = { link = "Search" },
@@ -43,8 +49,6 @@ return {
             StatusLineTerm = { bg = "" },
             WinBar = { bg = "" },
             WinBarNC = { bg = "" },
-            -- Telescope borders
-            TelescopeBorder = { link = "Constant" },
             WinSeparator = { fg = "#565f89" },
             -- Message region separator
             MsgSeparator = { bg = "" },
@@ -296,7 +300,22 @@ return {
           lualine_a = {
             { "filename", path = 1 },
           },
-          lualine_b = {},
+          lualine_b = {
+            -- Git branch and diff stats (Issue #13: scriptlize git info for workflow)
+            { "branch", icon = "" },
+            {
+              "diff",
+              colored = true,
+              symbols = { added = "+", modified = "~", removed = "-" },
+              source = function()
+                -- Use gitsigns data if available (already computed, no extra overhead)
+                local gs = vim.b.gitsigns_status_dict
+                if gs then
+                  return { added = gs.added, modified = gs.changed, removed = gs.removed }
+                end
+              end,
+            },
+          },
           lualine_c = {},
           lualine_x = {
             dap_block
@@ -313,7 +332,7 @@ return {
                   if vim.g._status_bar_system_icon and #vim.g._status_bar_system_icon > 0 then
                     return vim.g._status_bar_system_icon
                   end
-                  local sysname = vim.loop.os_uname().sysname
+                  local sysname = vim.uv.os_uname().sysname
                   if sysname == "Darwin" then
                     return "󰀵" -- Mac icon
                   elseif sysname == "Linux" then

@@ -16,7 +16,7 @@ return {
       "mfussenegger/nvim-dap-python",
     },
     -- Selector is not needed except wanting to point
-    --  python intepreter manually.
+    --  python interpreter manually.
     config = function()
       require("venv-selector").setup({
         stay_on_this_version = true,

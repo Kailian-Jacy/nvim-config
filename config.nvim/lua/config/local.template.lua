@@ -2,7 +2,7 @@
 -- It will not be synchronized between git repos.
 -- Rename this file to local.lua to make it take effect.
 
-M = {}
+local M = {}
 
 local modules = {}
 
@@ -55,15 +55,15 @@ M.before_plugins_load = function()
   --
   --         -- Sort core files by modification time to get the latest one
   --         table.sort(core_files, function(a, b)
-  --           local stat_a = vim.loop.fs_stat(a)
-  --           local stat_b = vim.loop.fs_stat(b)
+  --           local stat_a = vim.uv.fs_stat(a)
+  --           local stat_b = vim.uv.fs_stat(b)
   --           return stat_a.mtime.sec > stat_b.mtime.sec
   --         end)
   --
   --         -- Use the latest (most recently modified) core file
   --         local latest_core = core_files[1]
   --         local core_name = vim.fn.fnamemodify(latest_core, ":t")
-  --         local stat = vim.loop.fs_stat(latest_core)
+  --         local stat = vim.uv.fs_stat(latest_core)
   --         local creation_time = os.date("%Y-%m-%d %H:%M:%S", stat.mtime.sec)
   --
   --         vim.notify("Using latest core file: " .. core_name .. " (created: " .. creation_time .. ")", vim.log.levels.INFO)

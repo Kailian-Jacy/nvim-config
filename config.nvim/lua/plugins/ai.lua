@@ -53,20 +53,51 @@ return {
     end
   )(),
   {
+    -- Quick one-key AI modification helper.
+    -- Addresses nvim-config#14: A quick one-key ai modification helper.
+    -- Philosophy: keep it simple, select code → one key → AI edits in place.
     "robitx/gp.nvim",
     lazy = true,
     keys = {
+      -- Primary: one-key rewrite (implements pseudocode, fixes based on comments).
       {
         "<leader>ae",
         "V:'<,'>Rewrite<CR>",
         mode = { "n" },
-        desc = "Rewrite unfinished code.",
+        desc = "AI: Rewrite current line",
       },
       {
         "<leader>ae",
         ":'<,'>Rewrite<CR>",
         mode = { "v" },
-        desc = "Rewrite unfinished code.",
+        desc = "AI: Rewrite selection",
+      },
+      -- Hazard check: review selected code for potential issues.
+      {
+        "<leader>ac",
+        ":'<,'>HazardCheck<CR>",
+        mode = { "v" },
+        desc = "AI: Check for hazards/issues",
+      },
+      {
+        "<leader>ac",
+        "V:'<,'>HazardCheck<CR>",
+        mode = { "n" },
+        desc = "AI: Check current line for hazards",
+      },
+      -- Explain: quick explanation of selected code.
+      {
+        "<leader>ax",
+        ":'<,'>Explain<CR>",
+        mode = { "v" },
+        desc = "AI: Explain selection",
+      },
+      -- Abort: stop ongoing AI generation.
+      {
+        "<leader>a<c-c>",
+        "<cmd>GpStop<CR>",
+        mode = { "n", "v" },
+        desc = "AI: Stop generation",
       },
     },
     opts = {
@@ -75,15 +106,7 @@ return {
         deepseek_internal = {
           disable = false,
           endpoint = os.getenv("DEEPSEEK_INTERNAL_ENDPOINT"),
-          secret = os.getenv("DEEPSEEK_INTERNAL_API_KEY")
-          -- secret = (function()
-          --   local api_key = os.getenv("OPENROUTER_API_KEY")
-          --   if not api_key then
-          --     vim.notify("no openrouter api key found.", vim.log.levels.INFO)
-          --     return ""
-          --   end
-          --   return api_key
-          -- end)(),
+          secret = os.getenv("DEEPSEEK_INTERNAL_API_KEY"),
         }
       },
       agents = {
@@ -102,7 +125,28 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
           model = {
             model = "cloudsway-claude-opus-4.5",
           }
-        }
+        },
+        {
+          -- Lightweight reviewer agent for hazard check.
+          provider = "deepseek_internal",
+          name = "reviewer",
+          chat = false,
+          system_prompt = [[
+You are a code reviewer. Analyze the given code for:
+1. Potential bugs, null pointer dereferences, race conditions.
+2. Resource leaks (file handles, memory, connections).
+3. Security vulnerabilities (injection, overflow, etc).
+4. Logic errors or edge cases not handled.
+
+Add brief WARNING comments inline at the problematic lines.
+Format: # WARNING: (AI) <description> (for Python) or // WARNING: (AI) <description> (for C/Go/Rust/JS).
+Keep the original code intact. ONLY add warning comments. Do not modify the code itself.
+Output the code with warnings as-is replacement.
+          ]],
+          model = {
+            model = "cloudsway-claude-opus-4.5",
+          }
+        },
       },
       whisper = {
         disable = true,
@@ -111,7 +155,7 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
         disable = true,
       },
       hooks = {
-        -- GpImplement rewrites the provided selection/range based on comments in it
+        -- Rewrite: implements pseudocode or fixes based on comments.
         Rewrite = function(gp, params)
           local template = "Having following from {{filename}}:\n\n"
               .. "```{{filetype}}\n{{selection}}\n```\n\n"
@@ -126,125 +170,54 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
             gp.Target.rewrite,
             agent,
             template,
-            nil, -- command will run directly without any prompting for user input
-            nil -- no predefined instructions (e.g. speech-to-text from Whisper)
+            nil,
+            nil
+          )
+        end,
+
+        -- HazardCheck: review code and add warning comments.
+        HazardCheck = function(gp, params)
+          local template = "Review this {{filetype}} code from {{filename}} for potential hazards:\n\n"
+              .. "```{{filetype}}\n{{selection}}\n```\n\n"
+              .. "Add inline WARNING comments at problematic lines. Keep all original code intact."
+              .. "\n\nRespond exclusively with the code (with added warnings) that should replace the selection above."
+
+          local agent = gp.get_command_agent("reviewer")
+          gp.logger.info("Hazard checking with agent: " .. agent.name)
+
+          gp.Prompt(
+            params,
+            gp.Target.rewrite,
+            agent,
+            template,
+            nil,
+            nil
+          )
+        end,
+
+        -- Explain: explain code in a popup (does not modify).
+        Explain = function(gp, params)
+          local template = "Explain this {{filetype}} code briefly and clearly:\n\n"
+              .. "```{{filetype}}\n{{selection}}\n```\n\n"
+              .. "Focus on: what it does, key design decisions, and any non-obvious behavior."
+              .. " Keep explanation concise (max 10 lines)."
+
+          local agent = gp.get_command_agent("inline")
+          gp.logger.info("Explaining selection with agent: " .. agent.name)
+
+          gp.Prompt(
+            params,
+            gp.Target.popup,
+            agent,
+            template,
+            nil,
+            nil
           )
         end,
       }
     }
   },
-  {
-    "tzachar/cmp-tabnine",
-    -- there is some problem with tabnine installation. Just
-    -- go to the tabnine path and run the install.sh
-    enabled = false,
-    build = "./install.sh",
-    dependencies = "hrsh7th/nvim-cmp",
-  },
-  {
-    "ravitemer/mcphub.nvim",
-    enabled = false, -- Complains about version.
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-    build = "npm install -g mcp-hub@latest", -- Installs `mcp-hub` node binary globally
-    config = function()
-      local mcphub = require("mcphub")
-      mcphub.setup({
-        auto_approve = true,
-      })
-      if (vim.g.modules.rust and vim.g.modules.rust.enabled) and vim.fn.executable("rustc") then
-        mcphub.add_server("rust-playground")
-        local cache_dir = vim.fn.stdpath("cache")
-        if #cache_dir == 0 then
-          vim.notify("std path cache returns empty.")
-          return
-        end
-        cache_dir = cache_dir .. "/rust_playground"
-        if vim.fn.isdirectory(cache_dir) == 0 then
-          local ok = vim.fn.mkdir(cache_dir, "p")
-          if ok == 0 then
-            return vim.notify("Failed to create cache directory: " .. cache_dir, vim.log.levels.ERROR)
-          end
-        end
 
-        mcphub.add_tool("rust-playground", {
-          name = "run_rust_code",
-          description = "run a rust code for validation, you should not execute heavy work inside it. You can update your code from result or compilation error.",
-          inputSchema = {
-            type = "object",
-            properties = {
-              name = {
-                type = "string",
-                description = "underline_connected_func_name_test that points the function you are testing, adding _test postfix. Should be a valid filename without extension.",
-                examples = {
-                  "bpe_algorithm_test",
-                },
-              },
-              compile_only = {
-                type = "boolean",
-                description = "set to true to skip running.",
-              },
-              code = {
-                type = "string",
-                description = "code that wants to be run. Should be full code starting from main.",
-                examples = {
-                  'fn main() { println!("Hello, world!"); }',
-                },
-              },
-            },
-            required = { "name", "code" },
-          },
-          handler = function(req, res)
-            local time_stamp = os.time()
-            if not time_stamp then
-              return res:error("Failed to generate timestamp")
-            end
-            local file_abs = cache_dir .. "/" .. req.params.name .. "_" .. time_stamp .. ".rs"
-
-            local file = io.open(file_abs, "w")
-            if not file then
-              return res:error("Failed to create file: " .. file_abs)
-            end
-            file:write(req.params.code)
-            file:close()
-
-            -- Get output binary path by removing .rs extension
-            local binary_path = cache_dir .. "/" .. vim.fn.fnamemodify(file_abs, ":t:r")
-
-            -- Compile with output in same directory
-            local output = vim.fn.system({ "rustc", file_abs, "-o", binary_path })
-            local compilation_failed = vim.v.shell_error ~= 0
-
-            if compilation_failed then
-              return res:error("Compilation failed:\n" .. output)
-            end
-
-            local ret = res:text("Compilation succeeded.")
-
-            if req.params.compile_only then
-              -- Clean up binary if compile-only
-              os.remove(binary_path)
-              return ret
-            end
-
-            -- Execute the compiled binary with explicit path
-            local exec_output = vim.fn.system(binary_path)
-            local exec_failed = vim.v.shell_error ~= 0
-
-            -- Clean up binary after execution
-            os.remove(binary_path)
-
-            if exec_failed then
-              return res:error("Execution failed:\n" .. exec_output)
-            end
-
-            return ret:text("\nOutput:\n"):text(exec_output):send()
-          end,
-        })
-      end
-    end,
-  },
   {
     "yetone/avante.nvim",
     event = "VeryLazy",
@@ -281,27 +254,8 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
     opts = {
       debug = false,
       mode = "legacy",
-      -- system_prompt as function ensures LLM always has latest MCP server state
-      -- This is evaluated for every message, even in existing chats
-      system_prompt = function()
-        local success, module = pcall(require, "mcphub")
-        if not success then
-          return ""
-        end
-        local hub = module.get_hub_instance()
-        return hub and hub:get_active_servers_prompt() or ""
-      end,
-      -- Using function prevents requiring mcphub before it's loaded
-      custom_tools = function()
-        local ret = {}
-        local success, module = pcall(require, "mcphub.extensions.avante")
-        if success then
-          vim.tbl_extend("error", ret, {
-            module.mcp_tool(),
-          })
-        end
-        return ret
-      end,
+      system_prompt = "",
+      custom_tools = {},
       ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
       provider = "deepseek_internal_claude_opus", -- Recommend using Claude
       auto_suggestions_provider = "deepseek_internal_claude_haiku", -- Since auto-suggestions are a high-frequency operation and therefore expensive, it is recommended to specify an inexpensive provider or even a free provider: copilot
@@ -422,7 +376,6 @@ Under any condition, You should NOT give ANY wasted text except code. If anythin
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
       -- "stevearc/dressing.nvim",
-      "ravitemer/mcphub.nvim",
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
       --- The below dependencies are optional,
