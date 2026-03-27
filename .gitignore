@@ -1,6 +1,19 @@
+# Local configuration (user-specific, not synced)
 config.nvim/lua/config/local.lua
 CONTEXT.md
 reports/
 tests/harness.lua
 tests/results_*.txt
 tests/test_*.lua
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor swap/backup files
+*.swp
+*.swo
+*~
+
+# Neovim
+config.nvim/plugin/packer_compiled.lua

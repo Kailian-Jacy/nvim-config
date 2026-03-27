@@ -8,11 +8,7 @@ return {
   {
     "onsails/lspkind.nvim",
   },
-  {
-    "tzachar/cmp-tabnine",
-    build = "./install.sh",
-    dependencies = "hrsh7th/nvim-cmp",
-  },
+
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -32,16 +28,94 @@ return {
       { "hrsh7th/cmp-buffer" },
       { "hrsh7th/cmp-git" },
       { "hrsh7th/cmp-path" },
+      { "lukas-reineke/cmp-under-comparator" },
     },
     config = function()
-      --[[local has_words_before = function()
-        unpack = unpack or table.unpack
-        local line, col = unpack(vim.api.nv(0))
-        return col ~= 0 and
-          vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
-      end]]
       local cmp = require("cmp")
       local luasnip = require("luasnip")
+
+      -- Smart comparator: boost items that are closer to the cursor (locality)
+      -- and prefer items matching the current scope/context.
+      local locality_bonus_comparator = function(entry1, entry2)
+        -- Strongly prefer items from the same file/buffer over remote sources
+        local source1 = entry1.source.name
+        local source2 = entry2.source.name
+        local local_sources = { nvim_lsp = true, luasnip = true, buffer = true, nvim_lsp_signature_help = true }
+
+        local is_local1 = local_sources[source1] or false
+        local is_local2 = local_sources[source2] or false
+
+        if is_local1 and not is_local2 then
+          return true
+        elseif not is_local1 and is_local2 then
+          return false
+        end
+
+        -- For LSP items, prefer items with smaller sort text (usually indicates proximity)
+        -- and prefer variables/fields over keywords
+        local kind1 = entry1:get_kind()
+        local kind2 = entry2:get_kind()
+
+        -- Variable and Field kinds are more relevant in most editing contexts
+        local variable_kinds = {
+          [cmp.lsp.CompletionItemKind.Variable] = true,
+          [cmp.lsp.CompletionItemKind.Field] = true,
+          [cmp.lsp.CompletionItemKind.Property] = true,
+        }
+
+        local is_var1 = variable_kinds[kind1] or false
+        local is_var2 = variable_kinds[kind2] or false
+
+        -- When one is a variable/field and the other is not, prefer the variable
+        -- But only when both are from LSP
+        if source1 == "nvim_lsp" and source2 == "nvim_lsp" then
+          if is_var1 and not is_var2 then
+            return true
+          elseif not is_var1 and is_var2 then
+            return false
+          end
+        end
+
+        return nil -- Fall through to next comparator
+      end
+
+      -- Prefer items that start with the input (prefix match) over fuzzy matches.
+      -- Uses live vim context (not entry context) to ensure strict weak ordering:
+      -- entry1.context may differ from entry2.context when sources are isIncomplete
+      -- (e.g. cmdline source), which would violate antisymmetry. (fix #52)
+      local prefix_match_comparator = function(entry1, entry2)
+        local cursor_before_line
+        if vim.fn.mode() == "c" then
+          local pos = vim.fn.getcmdpos()
+          cursor_before_line = string.sub(vim.fn.getcmdline(), 1, pos - 1)
+        else
+          local ok, cursor = pcall(vim.api.nvim_win_get_cursor, 0)
+          if not ok then
+            return nil
+          end
+          cursor_before_line = string.sub(vim.api.nvim_get_current_line(), 1, cursor[2])
+        end
+
+        local input = cursor_before_line:match("[%w_]+$") or ""
+        if #input == 0 then
+          return nil
+        end
+
+        local word1 = entry1:get_filter_text() or entry1.completion_item.label or ""
+        local word2 = entry2:get_filter_text() or entry2.completion_item.label or ""
+
+        local prefix1 = vim.startswith(word1:lower(), input:lower())
+        local prefix2 = vim.startswith(word2:lower(), input:lower())
+
+        if prefix1 and not prefix2 then
+          return true
+        elseif not prefix1 and prefix2 then
+          return false
+        end
+
+        return nil
+      end
+
       require("cmp").setup({
         auto_brackets = {}, -- disabled. Being managed by other plugins.
         preselect = "none",
@@ -71,6 +145,12 @@ return {
             winblend = 0,
           },
         },
+        -- Snippet configuration - ensure LuaSnip is properly connected
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
+        },
         -- Docs has example about how to set for copilot compatibility:
         mapping = cmp.mapping.preset.insert({
           -- Tab will only be used to expand when item being selected. Else you can be sure to tab expand snippets.
@@ -93,7 +173,6 @@ return {
             end
           end),
           -- aligned with nvim screen shift and telescope previews shift.
-          -- TODO: Not warking now.
           ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "v", "n" }),
           ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "v", "n" }),
           -- cancel suggestion.
@@ -157,19 +236,29 @@ return {
         sources = cmp.config.sources({
           {
             name = "luasnip",
-            priority = 150,
+            priority = 160,
             option = {
               show_autosnippets = true,
-              use_show_condition = false,
+              use_show_condition = true,
             },
           },
           {
             name = "async_path",
-            priority = 150,
+            priority = 155,
           },
           {
             name = "nvim_lsp",
             priority = 150,
+            -- Filter out snippet items from LSP when LuaSnip can handle them,
+            -- to avoid duplicate snippet entries.
+            entry_filter = function(entry, _)
+              local kind = entry:get_kind()
+              -- Allow everything except Snippet kind from LSP when LuaSnip is active
+              if kind == cmp.lsp.CompletionItemKind.Snippet then
+                return false
+              end
+              return true
+            end,
           },
           {
             name = "nvim_lsp_signature_help",
@@ -178,7 +267,7 @@ return {
           },
           {
             name = "cmp_yanky",
-            priority = 130,
+            priority = 100,
             option = {
               minLength = 3,
               onlyCurrentFiletype = false,
@@ -186,7 +275,17 @@ return {
           },
           {
             name = "buffer",
-            priority = 120,
+            priority = 90,
+            option = {
+              -- Only get completions from visible buffers to limit noise
+              get_bufnrs = function()
+                local bufs = {}
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                  bufs[vim.api.nvim_win_get_buf(win)] = true
+                end
+                return vim.tbl_keys(bufs)
+              end,
+            },
           },
           {
             name = "nvim_lua",
@@ -202,7 +301,7 @@ return {
           -- Temporarily removing dotenv.
           -- It's rarely used, and introducing many rubbish envvar.
           -- Being marked as variable type makes them enjoying lsp level priority.
-          -- And it has something to do with matching logic. 
+          -- And it has something to do with matching logic.
           -- {
           --   name = "dotenv",
           --   priority = 20,
@@ -223,22 +322,29 @@ return {
           --   },
           -- },
           {
-            name = "cmp_tabnine",
-            priority = 90,
-          },
-          {
             max_item_count = 7,
           },
         }),
         sorting = {
           priority_weight = 2,
           comparators = {
+            -- 1. Recently used items first
             cmp.config.compare.recently_used,
-            cmp.config.compare.kind,
-            cmp.config.compare.locality,
-            cmp.config.compare.score,
+            -- 2. Prefer prefix matches over fuzzy
+            prefix_match_comparator,
+            -- 3. Exact matches
             cmp.config.compare.exact,
+            -- 4. Locality-aware: prefer variables/fields, prefer local sources
+            locality_bonus_comparator,
+            -- 5. LSP-provided sort order
+            cmp.config.compare.score,
+            -- 6. Kind-based ordering (variables > functions > keywords)
+            cmp.config.compare.kind,
+            -- 7. Proximity in buffer
+            cmp.config.compare.locality,
+            -- 8. Offset-based ordering
             cmp.config.compare.offset,
+            -- 9. Underscore items last
             require("cmp-under-comparator").under,
           },
         },
@@ -251,7 +357,22 @@ return {
           disallow_symbol_nonprefix_matching = false,
         },
       })
+      -- Cmdline sorting: omit insert-mode-specific comparators (locality_bonus,
+      -- prefix_match) that are unnecessary for cmdline and could cause issues
+      -- with context inconsistency. (fix #52)
+      local cmdline_sorting = {
+        priority_weight = 2,
+        comparators = {
+          cmp.config.compare.recently_used,
+          cmp.config.compare.exact,
+          cmp.config.compare.score,
+          cmp.config.compare.kind,
+          cmp.config.compare.order,
+        },
+      }
+
       cmp.setup.cmdline({ "/", "?" }, {
+        sorting = cmdline_sorting,
         mapping = cmp.mapping.preset.cmdline({
           ["<Down>"] = {
             c = function(fallback)
@@ -278,31 +399,13 @@ return {
             end,
           },
         }),
-        --[[mapping = cmp.mapping.preset.cmdline({
-          ["<Up>"] = function(fallback)
-
-            vim.print("Up")
-            if cmp.visible() then
-              cmp.select_prev_item()
-            else
-              fallback()
-            end
-          end,
-          ["<Down>"] = function(fallback)
-            vim.print("Down")
-            if cmp.visible() then
-              cmp.select_next_item()
-            else
-              fallback()
-            end
-          end,
-        }),]]
         sources = {
           { name = "buffer", max_item_count = 7 },
         },
       })
       -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
       cmp.setup.cmdline(":", {
+        sorting = cmdline_sorting,
         mapping = cmp.mapping.preset.cmdline({
           ["<Down>"] = {
             c = function(fallback)
@@ -329,24 +432,6 @@ return {
             end,
           },
         }),
-        --[[mapping = cmp.mapping.preset.cmdline({
-          ["<Up>"] = function(fallback)
-            vim.print("Up")
-            if cmp.visible() then
-              cmp.select_prev_item()
-            else
-              fallback()
-            end
-          end,
-          ["<Down>"] = function(fallback)
-            vim.print("Down")
-            if cmp.visible() then
-              cmp.select_next_item()
-            else
-              fallback()
-            end
-          end,
-        }),]]
         sources = cmp.config.sources({
           { name = "async_path", max_item_count = 7 },
           { name = "cmdline", max_item_count = 7 },

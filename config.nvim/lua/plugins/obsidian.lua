@@ -30,21 +30,5 @@ return {
       },
     },
   },
-  {
-    "oflisback/obsidian-bridge.nvim",
-    enabled = false,
-    -- enabled = vim.g.obsidian_functions_enabled,
-    opts = {
-      -- your config here
-      scroll_sync = true,
-    },
-    event = {
-      "BufReadPre *.md",
-      "BufNewFile *.md",
-    },
-    lazy = true,
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-  },
+
 }

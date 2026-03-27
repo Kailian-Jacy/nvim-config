@@ -1,5 +1,19 @@
 #!/bin/bash -e
 
+###############################################
+# DEPRECATED: This script has been replaced by setup.sh.
+# It is kept for reference only.
+# Please use ./setup.sh for new installations.
+###############################################
+echo "⚠️  WARNING: prebuild.sh is deprecated. Please use setup.sh instead."
+echo "   Run: ./setup.sh"
+echo ""
+read -p "Continue anyway? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  exit 0
+fi
+
 SHELL_DOT=~/.bashrc
 INSTALLER="sudo apt"
 ENSURE="-y"
