@@ -1300,8 +1300,6 @@ end
 
 vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
 
--- disable barbecue (Context) showing atop of the window
-require("barbecue.ui").toggle(false)
 
 -- TODO: Link images altogether.
 --[[Obsidian related autoCommands 
