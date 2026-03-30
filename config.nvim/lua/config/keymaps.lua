@@ -348,6 +348,9 @@ vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
       vim.print_silent("N.A.")
       return
     end
+    -- Resolve SymbolKind icon via lspkind (reuses cmp icon mappings)
+    local ok_lspkind, lspkind = pcall(require, "lspkind")
+    local symbol_map = ok_lspkind and lspkind.symbol_map or {}
     -- Walk the symbol tree to find the deepest symbol containing the cursor
     local cursor = vim.api.nvim_win_get_cursor(0)
     local row = cursor[1] - 1
@@ -356,7 +359,10 @@ vim.keymap.set({ "n", "i", "x" }, "<C-G>", function()
       for _, sym in ipairs(symbols) do
         local range = sym.range or sym.location and sym.location.range
         if range and range.start.line <= row and range["end"].line >= row then
-          table.insert(path, sym.name)
+          local kind_name = vim.lsp.protocol.SymbolKind[sym.kind] or ""
+          local icon = symbol_map[kind_name] or ""
+          local label = icon ~= "" and (icon .. " " .. sym.name) or sym.name
+          table.insert(path, label)
           if sym.children then walk(sym.children) end
           return
         end
