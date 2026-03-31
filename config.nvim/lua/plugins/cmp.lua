@@ -235,25 +235,12 @@ return {
         -- 3. Low priority: From other possible contents. Text, yanked text. Env var.
         sources = cmp.config.sources({
           {
-            name = "luasnip",
-            priority = 160,
-            option = {
-              show_autosnippets = true,
-              use_show_condition = true,
-            },
-          },
-          {
-            name = "async_path",
-            priority = 155,
-          },
-          {
             name = "nvim_lsp",
-            priority = 150,
+            priority = 100,
             -- Filter out snippet items from LSP when LuaSnip can handle them,
             -- to avoid duplicate snippet entries.
             entry_filter = function(entry, _)
               local kind = entry:get_kind()
-              -- Allow everything except Snippet kind from LSP when LuaSnip is active
               if kind == cmp.lsp.CompletionItemKind.Snippet then
                 return false
               end
@@ -261,13 +248,25 @@ return {
             end,
           },
           {
+            name = "luasnip",
+            priority = 90,
+            option = {
+              show_autosnippets = true,
+              use_show_condition = true,
+            },
+          },
+          {
+            name = "async_path",
+            priority = 85,
+          },
+          {
             name = "nvim_lsp_signature_help",
-            priority = 150,
+            priority = 80,
             group_index = 1,
           },
           {
             name = "cmp_yanky",
-            priority = 100,
+            priority = 50,
             option = {
               minLength = 3,
               onlyCurrentFiletype = false,
@@ -275,7 +274,7 @@ return {
           },
           {
             name = "buffer",
-            priority = 90,
+            priority = 40,
             option = {
               -- Only get completions from visible buffers to limit noise
               get_bufnrs = function()
@@ -295,7 +294,7 @@ return {
               end
               return true
             end,
-            priority = 110,
+            priority = 35,
             group_index = 1,
           },
           -- Temporarily removing dotenv.
@@ -328,24 +327,28 @@ return {
         sorting = {
           priority_weight = 2,
           comparators = {
-            -- 1. Recently used items first
-            cmp.config.compare.recently_used,
+            -- 1. Exact matches always win
+            cmp.config.compare.exact,
             -- 2. Prefer prefix matches over fuzzy
             prefix_match_comparator,
-            -- 3. Exact matches
-            cmp.config.compare.exact,
-            -- 4. Locality-aware: prefer variables/fields, prefer local sources
-            locality_bonus_comparator,
-            -- 5. LSP-provided sort order
+            -- 3. Match quality (includes source priority weighting)
             cmp.config.compare.score,
-            -- 6. Kind-based ordering (variables > functions > keywords)
-            cmp.config.compare.kind,
-            -- 7. Proximity in buffer
+            -- 4. Recently used as tie-breaker, not dictator
+            cmp.config.compare.recently_used,
+            -- 5. Prefer variables/fields, prefer local sources
+            locality_bonus_comparator,
+            -- 6. Proximity in buffer
             cmp.config.compare.locality,
-            -- 8. Offset-based ordering
-            cmp.config.compare.offset,
+            -- 7. Kind-based ordering (variables > functions > keywords > text)
+            cmp.config.compare.kind,
+            -- 8. LSP-provided sort text
+            cmp.config.compare.sort_text,
             -- 9. Underscore items last
             require("cmp-under-comparator").under,
+            -- 10. Shorter labels preferred
+            cmp.config.compare.length,
+            -- 11. Stable sort fallback
+            cmp.config.compare.order,
           },
         },
         matching = {
