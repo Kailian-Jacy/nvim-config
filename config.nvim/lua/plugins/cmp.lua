@@ -156,8 +156,12 @@ return {
         -- 3. Low priority: From other possible contents. Text, yanked text. Env var.
         sources = cmp.config.sources({
           {
+            name = "nvim_lsp",
+            priority = 100,
+          },
+          {
             name = "luasnip",
-            priority = 150,
+            priority = 90,
             option = {
               show_autosnippets = true,
               use_show_condition = false,
@@ -165,20 +169,16 @@ return {
           },
           {
             name = "async_path",
-            priority = 150,
-          },
-          {
-            name = "nvim_lsp",
-            priority = 150,
+            priority = 85,
           },
           {
             name = "nvim_lsp_signature_help",
-            priority = 150,
+            priority = 80,
             group_index = 1,
           },
           {
             name = "cmp_yanky",
-            priority = 130,
+            priority = 50,
             option = {
               minLength = 3,
               onlyCurrentFiletype = false,
@@ -186,7 +186,7 @@ return {
           },
           {
             name = "buffer",
-            priority = 120,
+            priority = 40,
           },
           {
             name = "nvim_lua",
@@ -196,7 +196,7 @@ return {
               end
               return true
             end,
-            priority = 110,
+            priority = 35,
             group_index = 1,
           },
           -- Temporarily removing dotenv.
@@ -224,7 +224,7 @@ return {
           -- },
           {
             name = "cmp_tabnine",
-            priority = 90,
+            priority = 30,
           },
           {
             max_item_count = 7,
@@ -233,13 +233,15 @@ return {
         sorting = {
           priority_weight = 2,
           comparators = {
-            cmp.config.compare.recently_used,
-            cmp.config.compare.kind,
-            cmp.config.compare.locality,
-            cmp.config.compare.score,
             cmp.config.compare.exact,
-            cmp.config.compare.offset,
+            cmp.config.compare.score,
+            cmp.config.compare.recently_used,
+            cmp.config.compare.locality,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
             require("cmp-under-comparator").under,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
           },
         },
         matching = {
