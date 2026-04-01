@@ -150,25 +150,39 @@
           rust-analyzer
           gopls
           pyright
-          ruff
-          clangd
-          nil  # nix LSP
-          nodePackages.vscode-json-languageserver
+          ruff                    # linter + formatter
+          clang-tools             # provides clangd (and clang-format)
+          nil                     # Nix LSP
+          vscode-langservers-extracted  # JSON/HTML/CSS/ESLint language servers
           yaml-language-server
-          taplo  # TOML LSP
+          taplo                   # TOML LSP
+          cmake-language-server
+          checkmake               # Makefile linter
         ];
         formatters = with pkgs; [
           stylua
           gofumpt
-          gotools          # provides goimports
+          gotools                 # provides goimports
           nixfmt-rfc-style
+          nixpkgs-fmt
+          # clang-tools already in lsp (provides clang-format)
+          python3Packages.cmakelang  # cmake-format + cmake-lint
+          python3Packages.black
+          # rustfmt comes with the Rust toolchain
+          fixjson
+          python3Packages.xmlformatter
+          shfmt
+          gomodifytags
+          impl                    # Go interface implementation generator
+        ];
+        linters = with pkgs; [
+          nodePackages.jsonlint
+          # cmakelang already in formatters (provides cmake-lint)
         ];
         debug = with pkgs; [
           delve                     # Go debugger
           python3Packages.debugpy   # Python debug adapter
-        ] ++ (with pkgs.vscode-extensions.vadimcn; [
-          vscode-lldb               # codelldb for Rust/C/C++
-        ]);
+        ];
       };
 
       # ── Startup plugins (always loaded) ─────────────────────────────────
@@ -292,7 +306,13 @@
       };
 
       # ── Environment variables ───────────────────────────────────────────
-      environmentVariables = {};
+      environmentVariables = {
+        debug = {
+          # Expose codelldb extension path so Lua config can find the adapter binary.
+          # The extension layout is: <ext>/adapter/codelldb and <ext>/lldb/lib/liblldb.so
+          CODELLDB_EXTENSION_PATH = "${pkgs.vscode-extensions.vadimcn.vscode-lldb}/share/vscode/extensions/vadimcn.vscode-lldb";
+        };
+      };
 
       # ── Extra Lua packages ──────────────────────────────────────────────
       extraLuaPackages = {
@@ -318,6 +338,7 @@
           general = true;
           lsp = true;
           formatters = true;
+          linters = true;
           debug = true;
           ai = true;
           core = true;

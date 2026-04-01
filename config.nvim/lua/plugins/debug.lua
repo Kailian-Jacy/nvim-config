@@ -619,6 +619,8 @@ return {
       -- DAP Adapters Registration
       -- ============================================================
 
+      local is_nix = vim.g.nixCats ~= nil
+
       ---@param name string
       ---@param exe_name? string
       local function dap_register_if_executable(name, exe_name)
@@ -633,7 +635,29 @@ return {
         end
       end
       dap_register_if_executable("cppdbg", "OpenDebugAD7")
-      dap_register_if_executable("codelldb")
+
+      -- codelldb: In Nix, it may not be directly on PATH as "codelldb".
+      -- The extension provides adapter/codelldb inside the extension dir.
+      if is_nix then
+        local ext_path = vim.env.CODELLDB_EXTENSION_PATH
+        if ext_path and ext_path ~= "" then
+          local codelldb_bin = ext_path .. "/adapter/codelldb"
+          if vim.fn.executable(codelldb_bin) == 1 then
+            dap.adapters.codelldb = {
+              id = "codelldb",
+              type = "server",
+              port = "${port}",
+              executable = {
+                command = codelldb_bin,
+                args = { "--port", "${port}" },
+              },
+            }
+          end
+        end
+      else
+        dap_register_if_executable("codelldb")
+      end
+
       dap_register_if_executable("gopls")
       dap_register_if_executable("sh", "bash-debug-adapter")
 
