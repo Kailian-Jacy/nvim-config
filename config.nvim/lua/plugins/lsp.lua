@@ -18,53 +18,21 @@ return {
         return package:is_installed()
       end
 
-      ---@param package_name string
-      ---@param link_source string
-      require("mason").link_as_install = function(package_name, link_source)
-        local package_path = require("mason-core.installer.InstallLocation").global():package()
-        local bin_path = require("mason-core.installer.InstallLocation").global():bin()
+      -- NOTE: Mason is a "portable package manager" — it manages what it downloads,
+      -- not system binaries. Mason does not officially support linking external binaries.
+      -- To prefer system-installed tools over Mason-managed ones, set PATH = "append"
+      -- in mason.setup() so system PATH takes priority over Mason's bin/.
+      -- For per-tool overrides, configure the consumer plugin directly:
+      --   - LSP: lspconfig.xxx.setup({ cmd = { "/path/to/binary" } })
+      --   - Formatter: conform.formatters.xxx = { command = "/path/to/binary" }
+      --   - Linter: require("lint").linters.xxx.cmd = "/path/to/binary"
+      -- See: https://github.com/Kailian-Jacy/nvim-config/issues/30
 
-        -- Create package directory
-        local package_dir = package_path .. "/" .. package_name
-        vim.fn.mkdir(package_dir, "p")
-
-        -- Create symlink from link_source to package_path/package_name/package_name
-        local package_binary = package_dir .. "/" .. package_name
-        vim.fn.delete(package_binary) -- Remove if exists
-        vim.uv.fs_symlink(link_source, package_binary)
-
-        -- Create symlink from package binary to bin_path/package_name
-        local bin_binary = bin_path .. "/" .. package_name
-        vim.fn.delete(bin_binary) -- Remove if exists
-        vim.uv.fs_symlink(package_binary, bin_binary)
-
-        -- Make sure the binary is executable
-        vim.fn.setfperm(package_binary, "rwxr-xr-x")
-        vim.fn.setfperm(bin_binary, "rwxr-xr-x")
-      end
-
-      ---@param package_name string
-      ---@param executable_name? string
-      --- Try to link from executable before falling back to install from mason.
-      require("mason").try_link_before_install = function(package_name, executable_name)
-        executable_name = executable_name or package_name
-        local path = vim.fn.exepath(executable_name)
-        -- no local rust-analyzer, return to mason to install.
-        if #path == 0 then
-          return package_name
-        end
-        vim.print(path)
-        if not require("mason").is_installed(package_name) then
-          require("mason").link_as_install(package_name, path)
-        end
-      end
       require("mason").ensure_installed = {
         rust = {
-          -- install rust-analyzer manually and link to there.
-          -- "bacon",
-          function()
-            require("mason").try_link_before_install("rust-analyzer")
-          end,
+          -- rust-analyzer: managed by rustaceanvim, not installed via Mason.
+          -- If system rust-analyzer is not on PATH, uncomment to let Mason install:
+          -- "rust-analyzer",
           "codelldb", -- Also used for Rust
         },
         make = {
