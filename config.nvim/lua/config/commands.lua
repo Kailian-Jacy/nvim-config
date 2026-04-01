@@ -289,7 +289,8 @@ vim.api.nvim_create_user_command("DebugServe", function(opt)
   require("osv").launch({ port = port })
 end, { nargs = "?" })
 
--- Mason
+-- Mason (skip in Nix environment — tools are provided by Nix)
+if vim.g.nixCats == nil then
 vim.api.nvim_create_user_command("MasonInstallAll", function(opts)
   local ensure_installed = require("mason").ensure_installed
 
@@ -328,6 +329,7 @@ end, {
   desc = "Demand mason to install all the dependencies defined by `mason.ensure_installed`.",
   nargs = "?",
 })
+end -- if not is_nix
 
 -- Open the launch.json related to the current workdir.
 vim.api.nvim_create_user_command("OpenLaunchJson", function()

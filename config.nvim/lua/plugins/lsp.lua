@@ -1,6 +1,14 @@
+-- Detect nixCats Nix environment.
+-- In Nix, tools (LSPs, formatters, linters) are provided on PATH by Nix;
+-- Mason is not needed and should be skipped.
+-- In non-Nix environments, Mason manages everything as before.
+local is_nix = vim.g.nixCats ~= nil
+
 return {
   {
     "williamboman/mason.nvim",
+    -- In Nix environment, disable Mason entirely: tools come from Nix PATH.
+    enabled = not is_nix,
     cmd = {
       "Mason",
       "MasonInstall",
