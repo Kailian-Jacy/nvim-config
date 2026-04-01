@@ -14,18 +14,17 @@ ALIAS_LINE='alias nvim="nvim-nix"'
 # --- Helpers ---
 
 get_rc_files() {
-  local files=()
+  RC_FILES=()
   if [ -f "$HOME/.bashrc" ]; then
-    files+=("$HOME/.bashrc")
+    RC_FILES+=("$HOME/.bashrc")
   fi
   if [ -f "$HOME/.zshrc" ]; then
-    files+=("$HOME/.zshrc")
+    RC_FILES+=("$HOME/.zshrc")
   fi
   # If neither exists, default to .bashrc
-  if [ ${#files[@]} -eq 0 ]; then
-    files+=("$HOME/.bashrc")
+  if [ ${#RC_FILES[@]} -eq 0 ]; then
+    RC_FILES+=("$HOME/.bashrc")
   fi
-  echo "${files[@]}"
 }
 
 has_alias_block() {
@@ -55,12 +54,18 @@ remove_alias_block() {
     # Not present — idempotent
     return 0
   fi
-  # Use sed to remove the block (including the blank line before it if present)
+  # Use sed to remove the block
+  local SED_SUFFIX=""
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    SED_SUFFIX=" ''"
+  fi
   if [[ "$(uname -s)" == "Darwin" ]]; then
     sed -i '' "/$MARKER_START/,/$MARKER_END/d" "$rc_file"
   else
     sed -i "/$MARKER_START/,/$MARKER_END/d" "$rc_file"
   fi
+  # Clean up consecutive blank lines left after removal
+  sed -i${SED_SUFFIX} '/^$/N;/^\n$/d' "$rc_file" 2>/dev/null || true
   echo "  ✓ Removed nvim alias from $(basename "$rc_file")"
 }
 
@@ -72,7 +77,8 @@ cmd_status() {
 
   # Check shell aliases
   local nix_is_default=false
-  for rc_file in $(get_rc_files); do
+  get_rc_files
+  for rc_file in "${RC_FILES[@]}"; do
     if has_alias_block "$rc_file"; then
       echo "  $(basename "$rc_file"): nvim → nvim-nix (nixCats is default)"
       nix_is_default=true
@@ -99,7 +105,8 @@ cmd_status() {
 
 cmd_nix() {
   echo "Switching default nvim → nixCats (nvim-nix)..."
-  for rc_file in $(get_rc_files); do
+  get_rc_files
+  for rc_file in "${RC_FILES[@]}"; do
     add_alias_block "$rc_file"
   done
   echo ""
@@ -110,7 +117,8 @@ cmd_nix() {
 
 cmd_original() {
   echo "Switching default nvim → original..."
-  for rc_file in $(get_rc_files); do
+  get_rc_files
+  for rc_file in "${RC_FILES[@]}"; do
     remove_alias_block "$rc_file"
   done
   echo ""

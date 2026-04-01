@@ -20,9 +20,9 @@ PASS=0
 FAIL=0
 WARN=0
 
-pass() { echo "  ✅ PASS: $1"; ((PASS++)); }
-fail() { echo "  ❌ FAIL: $1"; ((FAIL++)); }
-warn() { echo "  ⚠️  WARN: $1"; ((WARN++)); }
+pass() { echo "  ✅ PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "  ❌ FAIL: $1"; FAIL=$((FAIL + 1)); }
+warn() { echo "  ⚠️  WARN: $1"; WARN=$((WARN + 1)); }
 
 check_dir_isolation() {
   local label="$1"
@@ -110,40 +110,32 @@ check_plugin_isolation() {
 }
 
 check_stdpath() {
-  echo ""
-  echo "--- stdpath('data') Runtime Check ---"
-
   local nvim_bin="${1:-nvim}"
   local nvim_nix_bin="${2:-nvim-nix}"
 
-  # Check original nvim
+  echo ""
+  echo "Checking runtime stdpath..."
+
   if command -v "$nvim_bin" &>/dev/null; then
-    local stdpath_orig
-    stdpath_orig=$("$nvim_bin" --headless -c 'echo stdpath("data")' -c 'qa!' 2>&1 | tail -1) || true
-    echo "  Original stdpath('data'): $stdpath_orig"
+    stdpath_orig=$("$nvim_bin" --headless -c 'lua print(vim.fn.stdpath("data"))' -c 'qa!' 2>/dev/null) || true
+    echo "  Original nvim data: $stdpath_orig"
   else
-    echo "  Original nvim: not found in PATH"
-    stdpath_orig=""
+    warn "Original nvim ($nvim_bin) not found, skipping stdpath comparison"
+    return
   fi
 
-  # Check nvim-nix (via NVIM_APPNAME)
-  if command -v "$nvim_bin" &>/dev/null; then
-    local stdpath_nix
-    stdpath_nix=$(NVIM_APPNAME=nvim-nix "$nvim_bin" --headless -c 'echo stdpath("data")' -c 'qa!' 2>&1 | tail -1) || true
-    echo "  NixCats stdpath('data'):  $stdpath_nix"
+  if command -v "$nvim_nix_bin" &>/dev/null; then
+    stdpath_nix=$("$nvim_nix_bin" --headless -c 'lua print(vim.fn.stdpath("data"))' -c 'qa!' 2>/dev/null) || true
+    echo "  NixCats nvim data: $stdpath_nix"
   else
-    echo "  nvim-nix: not found in PATH"
-    stdpath_nix=""
+    warn "NixCats nvim ($nvim_nix_bin) not found, skipping stdpath comparison"
+    return
   fi
 
-  if [ -n "$stdpath_orig" ] && [ -n "$stdpath_nix" ]; then
-    if [ "$stdpath_orig" != "$stdpath_nix" ]; then
-      pass "stdpath('data') returns different paths for each version"
-    else
-      fail "stdpath('data') returns the SAME path for both versions!"
-    fi
+  if [ -n "$stdpath_orig" ] && [ -n "$stdpath_nix" ] && [ "$stdpath_orig" != "$stdpath_nix" ]; then
+    pass "Runtime stdpath('data') differs between versions"
   else
-    warn "Could not compare stdpath('data') — one or both nvim binaries not found"
+    fail "Runtime stdpath('data') is the same or empty"
   fi
 }
 
