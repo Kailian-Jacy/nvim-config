@@ -16,70 +16,39 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixCats.url = "github:BirdeeHub/nixCats-nvim";
 
-    # Plugins not in nixpkgs — use plugins-<name> convention
-    # so utils.standardPluginOverlay picks them up automatically.
-    "plugins-auto-indent-nvim" = {
-      url = "github:vidocqh/auto-indent.nvim";
+    # ── Plugins not in nixpkgs ──────────────────────────────────────────
+    # Convention: "plugins-<name>" so utils.standardPluginOverlay picks
+    # them up as pkgs.neovimPlugins.<name> automatically.
+
+    # Forks (must use specific repos, NOT nixpkgs versions)
+    "plugins-terminal-nvim" = {
+      url = "github:Kailian-Jacy/terminal.nvim";
       flake = false;
     };
-    "plugins-auto-save-nvim" = {
-      url = "github:okuuva/auto-save.nvim";
+    "plugins-persistent-breakpoints-nvim" = {
+      url = "github:Kailian-Jacy/persistent-breakpoints.nvim";
       flake = false;
     };
     "plugins-bookmarks-nvim" = {
       url = "github:LintaoAmons/bookmarks.nvim";
       flake = false;
     };
-    "plugins-bufjump-nvim" = {
-      url = "github:kwkarlwang/bufjump.nvim";
+
+    # Plugins genuinely absent from nixpkgs
+    "plugins-auto-indent-nvim" = {
+      url = "github:vidocqh/auto-indent.nvim";
       flake = false;
     };
     "plugins-cmp-async-path" = {
       url = "github:FelipeLema/cmp-async-path";
       flake = false;
     };
-    "plugins-cmp-cmdline-history" = {
-      url = "github:dmitmel/cmp-cmdline-history";
-      flake = false;
-    };
-    "plugins-cmp-under-comparator" = {
-      url = "github:lukas-reineke/cmp-under-comparator";
-      flake = false;
-    };
-    "plugins-cmp_yanky" = {
-      url = "github:chrisgrieser/cmp_yanky";
-      flake = false;
-    };
     "plugins-gp-nvim" = {
       url = "github:Robitx/gp.nvim";
       flake = false;
     };
-    "plugins-guihua-lua" = {
-      url = "github:ray-x/guihua.lua";
-      flake = false;
-    };
-    "plugins-leetcode-nvim" = {
-      url = "github:kawre/leetcode.nvim";
-      flake = false;
-    };
-    "plugins-lexima-vim" = {
-      url = "github:cohama/lexima.vim";
-      flake = false;
-    };
     "plugins-local-highlight-nvim" = {
       url = "github:tzachar/local-highlight.nvim";
-      flake = false;
-    };
-    "plugins-nvim-dap-view" = {
-      url = "github:igorlfs/nvim-dap-view";
-      flake = false;
-    };
-    "plugins-nvim-scrollbar" = {
-      url = "github:petertriho/nvim-scrollbar";
-      flake = false;
-    };
-    "plugins-terminal-nvim" = {
-      url = "github:Kailian-Jacy/terminal.nvim";
       flake = false;
     };
     "plugins-vimade" = {
@@ -88,22 +57,6 @@
     };
     "plugins-visual-surround-nvim" = {
       url = "github:NStefan002/visual-surround.nvim";
-      flake = false;
-    };
-    "plugins-bigfile-nvim" = {
-      url = "github:LunarVim/bigfile.nvim";
-      flake = false;
-    };
-    "plugins-snacks-nvim" = {
-      url = "github:folke/snacks.nvim";
-      flake = false;
-    };
-    "plugins-render-markdown-nvim" = {
-      url = "github:MeanderingProgrammer/render-markdown.nvim";
-      flake = false;
-    };
-    "plugins-persistent-breakpoints-nvim" = {
-      url = "github:Kailian-Jacy/persistent-breakpoints.nvim";
       flake = false;
     };
   };
@@ -121,14 +74,21 @@
     # Overlays
     # ---------------------------------------------------------------------------
     dependencyOverlays = [
-      # Auto-converts all inputs-"plugins-<name>" into pkgs.neovimPlugins.<name>
+      # Auto-converts all "plugins-<name>" inputs → pkgs.neovimPlugins.<name>
       (utils.standardPluginOverlay inputs)
     ];
 
     # ---------------------------------------------------------------------------
     # Category Definitions
     # ---------------------------------------------------------------------------
-    categoryDefinitions = { pkgs, settings, categories, extra, name, mkPlugin, ... }@packageDef: {
+    categoryDefinitions = { pkgs, settings, categories, extra, name, mkPlugin, ... }@packageDef: let
+      # ── Local plugin: nvim-runner ───────────────────────────────────────
+      nvim-runner = pkgs.vimUtils.buildVimPlugin {
+        pname = "nvim-runner";
+        version = "local";
+        src = ./nvim-runner;
+      };
+    in {
 
       # ── Runtime dependencies (on PATH inside Neovim) ────────────────────
       lspsAndRuntimeDeps = {
@@ -138,12 +98,13 @@
           fzf
           git
           curl
-          gcc
+          gcc           # needed for treesitter grammar compilation (fallback)
           gnumake
           tree-sitter
+          sqlite        # sqlite.lua runtime dependency
         ];
         ai = with pkgs; [
-          nodejs  # for copilot, avante, etc.
+          nodejs        # for copilot.vim, avante.nvim, etc.
         ];
         lsp = with pkgs; [
           lua-language-server
@@ -186,14 +147,15 @@
       };
 
       # ── Startup plugins (always loaded) ─────────────────────────────────
-      # Since we keep lazy.nvim for lazy-loading, all plugins go into
-      # startupPlugins so they are on the rtp; lazy.nvim manages actual load timing.
+      # All plugins go into startupPlugins so they sit on the rtp.
+      # lazy.nvim (also on rtp) still orchestrates lazy-loading, config()
+      # calls, and event/cmd/keys triggers from the Lua specs.
       startupPlugins = {
         core = with pkgs.vimPlugins; [
-          # Plugin manager (kept for lazy-loading orchestration)
+          # ── Plugin manager (kept for lazy-loading orchestration) ──────
           lazy-nvim
 
-          # Completion framework
+          # ── Completion framework ─────────────────────────────────────
           nvim-cmp
           cmp-nvim-lsp
           cmp-nvim-lsp-signature-help
@@ -202,20 +164,24 @@
           cmp-cmdline
           cmp-git
           cmp_luasnip
+          cmp-cmdline-history      # was flake input, exists in nixpkgs
+          cmp-under-comparator     # was flake input, exists in nixpkgs
+          cmp_yanky                # was flake input, exists in nixpkgs
           luasnip
           friendly-snippets
           lspkind-nvim
 
-          # LSP
+          # ── LSP ──────────────────────────────────────────────────────
           nvim-lspconfig
           lazydev-nvim
           inc-rename-nvim
 
-          # Treesitter
+          # ── Treesitter ───────────────────────────────────────────────
+          # withAllGrammars bundles pre-compiled grammars → no cc needed
           (nvim-treesitter.withAllGrammars)
           nvim-treesitter-textobjects
 
-          # UI
+          # ── UI ───────────────────────────────────────────────────────
           lualine-nvim
           nvim-web-devicons
           noice-nvim
@@ -226,14 +192,18 @@
           dracula-nvim
           rainbow-delimiters-nvim
           nvim-hlslens
+          snacks-nvim              # was flake input, exists in nixpkgs
+          render-markdown-nvim     # was flake input, exists in nixpkgs
+          nvim-scrollbar           # was flake input, exists in nixpkgs
+          bigfile-nvim             # was flake input, exists in nixpkgs
 
-          # Git
+          # ── Git ──────────────────────────────────────────────────────
           gitsigns-nvim
           diffview-nvim
           gitlinker-nvim
           vim-signify
 
-          # Editing
+          # ── Editing ─────────────────────────────────────────────────
           conform-nvim
           nvim-lint
           nvim-ufo
@@ -242,55 +212,56 @@
           copilot-vim
           plenary-nvim
           sqlite-lua
+          lexima-vim               # was flake input, exists in nixpkgs
+          auto-save-nvim           # was flake input, exists in nixpkgs
+          bufjump-nvim             # was flake input, exists in nixpkgs
+          guihua-lua               # was flake input, exists in nixpkgs
 
-          # DAP / Debugging
+          # ── DAP / Debugging ─────────────────────────────────────────
           nvim-dap
           nvim-dap-python
           nvim-dap-virtual-text
+          nvim-dap-view            # was flake input, exists in nixpkgs
           nvim-nio
           one-small-step-for-vimkind
 
-          # Language-specific
+          # ── Language-specific ────────────────────────────────────────
           rustaceanvim
           go-nvim
           crates-nvim
           venv-selector-nvim
+          leetcode-nvim            # was flake input, exists in nixpkgs
+          avante-nvim
 
-          # Task / Runner
+          # ── Task / Runner ────────────────────────────────────────────
           overseer-nvim
           vim-startuptime
 
-          # Misc
+          # ── Misc ────────────────────────────────────────────────────
           obsidian-nvim
           aerial-nvim
-          avante-nvim
-          mason-nvim
+          mason-nvim               # kept for non-Nix fallback awareness
         ];
 
-        # Plugins from flake inputs (not in nixpkgs)
+        # ── Plugins from flake inputs (forks / not in nixpkgs) ────────
         fromInputs = with pkgs.neovimPlugins; [
+          # Forks
+          terminal-nvim                # Kailian-Jacy/terminal.nvim
+          persistent-breakpoints-nvim  # Kailian-Jacy/persistent-breakpoints.nvim
+          bookmarks-nvim               # LintaoAmons/bookmarks.nvim
+
+          # Not in nixpkgs
           auto-indent-nvim
-          auto-save-nvim
-          bookmarks-nvim
-          bufjump-nvim
           cmp-async-path
-          cmp-cmdline-history
-          cmp-under-comparator
-          cmp_yanky
           gp-nvim
-          guihua-lua
-          leetcode-nvim
-          lexima-vim
           local-highlight-nvim
-          nvim-dap-view
-          nvim-scrollbar
-          terminal-nvim
           vimade
           visual-surround-nvim
-          bigfile-nvim
-          snacks-nvim
-          render-markdown-nvim
-          persistent-breakpoints-nvim
+        ];
+
+        # ── Local plugins ─────────────────────────────────────────────
+        localPlugins = [
+          nvim-runner
         ];
       };
 
@@ -300,8 +271,7 @@
       # ── Shared libraries ────────────────────────────────────────────────
       sharedLibraries = {
         general = with pkgs; [
-          # sqlite-lua may need this
-          sqlite
+          sqlite  # sqlite.lua needs libsqlite3.so
         ];
       };
 
@@ -315,6 +285,7 @@
       };
 
       # ── Extra Lua packages ──────────────────────────────────────────────
+      # leetcode.nvim needs lua-curl, mimetypes, xml2lua
       extraLuaPackages = {
         general = [ (lp: with lp; [ lua-curl mimetypes xml2lua ]) ];
       };
@@ -343,6 +314,7 @@
           ai = true;
           core = true;
           fromInputs = true;
+          localPlugins = true;
         };
       };
     };

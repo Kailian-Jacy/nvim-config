@@ -11,13 +11,28 @@ local is_nix = vim.g.nixCats ~= nil
 
 if is_nix then
   -- ── Nix environment (nixCats) ──────────────────────────────────────────
-  -- nixCats already puts all startupPlugins on the runtimepath.
-  -- lazy.nvim is used only as an event scheduler / lazy-loader.
-  -- It does NOT manage plugin paths or installation.
+  --
+  -- How it works:
+  --   1. nixCats places ALL startupPlugins on &rtp before init.lua runs.
+  --   2. lazy.nvim is itself a startupPlugin, so require("lazy") succeeds.
+  --   3. lazy.setup({ spec = { import = "plugins" } }) scans lua/plugins/*.lua,
+  --      discovers each plugin spec, and matches them to already-loaded rtp
+  --      entries (by plugin name). Because install.missing=false it won't try
+  --      to clone anything.
+  --   4. lazy.nvim still calls each spec's `config` function, honours `event`,
+  --      `ft`, `cmd`, `keys` triggers, and processes `dependencies`.
+  --   5. `reset_packpath = false` and `rtp.reset = false` prevent lazy.nvim
+  --      from clobbering the paths nixCats set up.
+  --
+  -- Known considerations (see PR description for full details):
+  --   - Plugins may appear "not installed" in :Lazy UI (cosmetic only).
+  --   - Load order is: nixCats rtp order first, then lazy.nvim's scheduling.
+  --     In practice this works because lazy.nvim defers to rtp for already-
+  --     loaded plugins and only intervenes for lazy-loaded ones.
+  --   - after/plugin/ scripts run via normal Vim rtp mechanics, unaffected.
 
-  -- lazy.nvim itself is provided by nixCats as a startupPlugin (on rtp)
   if not pcall(require, "lazy") then
-    vim.notify("[nixCats] lazy.nvim not available in Nix environment", vim.log.levels.WARN)
+    vim.notify("[nixCats] lazy.nvim not found on rtp — check flake.nix startupPlugins", vim.log.levels.ERROR)
     return
   end
 
@@ -29,13 +44,13 @@ if is_nix then
       lazy = false,
       version = false,
     },
-    install = { missing = false }, -- Nix provides everything
-    checker = { enabled = false }, -- No update checks
+    install = { missing = false },   -- Nix provides everything; never git-clone
+    checker = { enabled = false },   -- No update checks
     change_detection = { enabled = false },
     performance = {
-      reset_packpath = false, -- Don't reset nixCats-managed packpath
+      reset_packpath = false,        -- Keep nixCats-managed packpath intact
       rtp = {
-        reset = false, -- Don't reset nixCats-managed rtp
+        reset = false,               -- Keep nixCats-managed rtp intact
         disabled_plugins = {
           "gzip",
           "tarPlugin",
