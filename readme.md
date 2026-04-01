@@ -59,6 +59,45 @@ nvim --server localhost:9099 --remote-ui
 - Neovim 0.11+ (installed automatically by setup.sh)
 - zsh (used as default shell)
 
+## Nix Installation
+
+This config is also available as a Nix flake via [nixCats](https://github.com/BirdeeHub/nixCats-nvim), providing a fully reproducible, declarative Neovim setup.
+
+### Quick Start
+
+```bash
+# Try without installing:
+nix run github:Kailian-Jacy/nvim-config#nvim-nix
+
+# Install permanently:
+nix profile install github:Kailian-Jacy/nvim-config#nvim-nix
+
+# Now available as:
+nvim-nix
+```
+
+### Dual-Version Coexistence
+
+The nixCats version installs as `nvim-nix` and uses `NVIM_APPNAME="nvim-nix"` for **complete isolation** from your existing Neovim:
+
+- `nvim` → your original setup (lazy.nvim, Mason, unchanged)
+- `nvim-nix` → nixCats-managed version (Nix store plugins, declarative config)
+
+Both can run simultaneously with zero conflicts. No files are shared.
+
+```bash
+# Check isolation status:
+./nix/verify-isolation.sh
+
+# Make nixCats the default `nvim`:
+./nix/switch-nvim.sh nix
+
+# Restore original:
+./nix/switch-nvim.sh original
+```
+
+📖 See [docs/dual-version.md](docs/dual-version.md) for the full guide on installation, switching, cleanup, and cross-platform notes.
+
 ## Configuration
 
 Local customization goes in `config.nvim/lua/config/local.lua` (not tracked by git).
