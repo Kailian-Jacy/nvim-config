@@ -27,7 +27,7 @@
       flake = false;
     };
     "plugins-bookmarks-nvim" = {
-      url = "github:tomasky/bookmarks.nvim";
+      url = "github:LintaoAmons/bookmarks.nvim";
       flake = false;
     };
     "plugins-bufjump-nvim" = {
@@ -79,7 +79,7 @@
       flake = false;
     };
     "plugins-terminal-nvim" = {
-      url = "github:rebelot/terminal.nvim";
+      url = "github:Kailian-Jacy/terminal.nvim";
       flake = false;
     };
     "plugins-vimade" = {
@@ -100,6 +100,10 @@
     };
     "plugins-render-markdown-nvim" = {
       url = "github:MeanderingProgrammer/render-markdown.nvim";
+      flake = false;
+    };
+    "plugins-persistent-breakpoints-nvim" = {
+      url = "github:Kailian-Jacy/persistent-breakpoints.nvim";
       flake = false;
     };
   };
@@ -137,7 +141,9 @@
           gcc
           gnumake
           tree-sitter
-          nodejs  # for copilot
+        ];
+        ai = with pkgs; [
+          nodejs  # for copilot, avante, etc.
         ];
         lsp = with pkgs; [
           lua-language-server
@@ -227,6 +233,7 @@
           nvim-dap
           nvim-dap-python
           nvim-dap-virtual-text
+          nvim-nio
           one-small-step-for-vimkind
 
           # Language-specific
@@ -243,7 +250,6 @@
           obsidian-nvim
           aerial-nvim
           avante-nvim
-          persistent-breakpoints-nvim
           mason-nvim
         ];
 
@@ -270,6 +276,7 @@
           bigfile-nvim
           snacks-nvim
           render-markdown-nvim
+          persistent-breakpoints-nvim
         ];
       };
 
@@ -289,7 +296,7 @@
 
       # ── Extra Lua packages ──────────────────────────────────────────────
       extraLuaPackages = {
-        general = [ (lp: with lp; [ lua-curl nvim-nio mimetypes xml2lua ]) ];
+        general = [ (lp: with lp; [ lua-curl mimetypes xml2lua ]) ];
       };
     };
 
@@ -312,6 +319,7 @@
           lsp = true;
           formatters = true;
           debug = true;
+          ai = true;
           core = true;
           fromInputs = true;
         };

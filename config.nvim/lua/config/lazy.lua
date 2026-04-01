@@ -1,25 +1,23 @@
--- nixCats integration: detect Nix environment
--- When built via nixCats, vim.g.nixCats is set automatically.
--- We use the lazyCat-style approach: lazy.nvim stays as the lazy-loader,
--- but plugins are provided by Nix (dev mode), and install/update is disabled.
-local is_nix = vim.g["nixCats-special-rtp-entry-nixCats"] ~= nil
+-- nixCats utilities: provides nixCats() function for category queries
+-- In non-Nix environments, nixCatsUtils.setup provides a fallback
+local ok, nixCatsUtils = pcall(require, "nixCatsUtils")
+if ok then
+  nixCatsUtils.setup({
+    non_nix_value = true, -- In non-Nix env, nixCats("category") returns true
+  })
+end
+
+local is_nix = vim.g.nixCats ~= nil
 
 if is_nix then
   -- ── Nix environment (nixCats) ──────────────────────────────────────────
-  -- Plugins are already on the runtimepath via nixCats.
-  -- lazy.nvim is used only for lazy-loading orchestration, NOT for downloading.
+  -- nixCats already puts all startupPlugins on the runtimepath.
+  -- lazy.nvim is used only as an event scheduler / lazy-loader.
+  -- It does NOT manage plugin paths or installation.
 
-  local nixCats = require("nixCats")
-  local myNeovimPackages = nixCats.vimPackDir .. "/pack/myNeovimPackages"
-
-  -- lazy.nvim is provided by Nix as a startupPlugin; find it
-  local lazypath = myNeovimPackages .. "/start/lazy.nvim"
-  if not vim.uv.fs_stat(lazypath) then
-    -- Fallback: maybe it was put in opt
-    lazypath = myNeovimPackages .. "/opt/lazy.nvim"
-  end
-  if not vim.uv.fs_stat(lazypath) then
-    vim.notify("[nixCats] lazy.nvim not found in Nix-provided plugins", vim.log.levels.WARN)
+  -- lazy.nvim itself is provided by nixCats as a startupPlugin (on rtp)
+  if not pcall(require, "lazy") then
+    vim.notify("[nixCats] lazy.nvim not available in Nix environment", vim.log.levels.WARN)
     return
   end
 
@@ -34,23 +32,10 @@ if is_nix then
     install = { missing = false }, -- Nix provides everything
     checker = { enabled = false }, -- No update checks
     change_detection = { enabled = false },
-    -- Tell lazy.nvim to treat ALL plugins as "dev" (local) dependencies
-    dev = {
-      path = function(plugin)
-        if vim.fn.isdirectory(myNeovimPackages .. "/start/" .. plugin.name) == 1 then
-          return myNeovimPackages .. "/start/" .. plugin.name
-        elseif vim.fn.isdirectory(myNeovimPackages .. "/opt/" .. plugin.name) == 1 then
-          return myNeovimPackages .. "/opt/" .. plugin.name
-        end
-        -- Fallback for plugins whose Nix pname differs from lazy spec name
-        return "~/projects/" .. plugin.name
-      end,
-      patterns = { "" }, -- Mark ALL plugins as dev so lazy uses Nix paths
-      fallback = true, -- Allow lazy to download if not found (safety net)
-    },
     performance = {
+      reset_packpath = false, -- Don't reset nixCats-managed packpath
       rtp = {
-        reset = false, -- Don't reset rtp — Nix already set it up
+        reset = false, -- Don't reset nixCats-managed rtp
         disabled_plugins = {
           "gzip",
           "tarPlugin",
@@ -59,7 +44,6 @@ if is_nix then
           "zipPlugin",
         },
       },
-      reset_packpath = false,
     },
   })
 else
