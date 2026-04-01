@@ -20,4 +20,5 @@ config.nvim/plugin/packer_compiled.lua
 
 # Nix
 result
+result-*
 .direnv
