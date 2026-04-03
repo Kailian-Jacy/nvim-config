@@ -602,6 +602,293 @@ do
 end
 
 -- ============================================
+-- Section 12: CRLF line endings
+-- ============================================
+
+io.write("\n--- CRLF line endings ---\n\n")
+
+do
+  local req, err = http.parse_request("GET https://httpbin.org/get HTTP/1.1\r\nAccept: application/json\r\n")
+  assert_true(req ~= nil, "CRLF: parses successfully")
+  if req then
+    assert_eq(req.method, "GET", "CRLF: method parsed")
+    assert_eq(req.url, "https://httpbin.org/get", "CRLF: url parsed")
+    assert_eq(req.http_version, "HTTP/1.1", "CRLF: version parsed (no trailing CR)")
+    assert_eq(req.headers["Accept"], "application/json", "CRLF: header value clean (no trailing CR)")
+  end
+end
+
+do
+  local req, err = http.parse_request("POST https://httpbin.org/post\r\nContent-Type: application/json\r\n\r\n{\"key\": \"value\"}\r\n")
+  assert_true(req ~= nil, "CRLF POST: parses successfully")
+  if req then
+    assert_eq(req.method, "POST", "CRLF POST: method")
+    assert_eq(req.headers["Content-Type"], "application/json", "CRLF POST: header clean")
+    assert_eq(req.body, '{"key": "value"}', "CRLF POST: body clean")
+  end
+end
+
+do
+  -- Mixed CRLF and LF
+  local req, err = http.parse_request("GET https://example.com\r\nAccept: text/html\nX-Other: foo\r\n")
+  assert_true(req ~= nil, "mixed CRLF/LF: parses successfully")
+  if req then
+    assert_eq(req.headers["Accept"], "text/html", "mixed CRLF/LF: CRLF header clean")
+    assert_eq(req.headers["X-Other"], "foo", "mixed CRLF/LF: LF header clean")
+  end
+end
+
+-- ============================================
+-- Section 13: Boundary / crash tests
+-- ============================================
+
+io.write("\n--- boundary / crash tests ---\n\n")
+
+do
+  -- Empty buffer (empty lines array)
+  local text = http.extract_request_at_cursor({}, 1)
+  assert_eq(text, "", "crash: empty buffer returns empty string")
+end
+
+do
+  -- Cursor beyond buffer bounds
+  local lines = { "GET https://httpbin.org/get" }
+  local text = http.extract_request_at_cursor(lines, 999)
+  assert_true(text ~= nil, "crash: cursor past end does not crash")
+  assert_match(text, "GET", "crash: cursor past end returns content (clamped)")
+end
+
+do
+  -- Cursor at zero (below valid range)
+  local lines = { "GET https://httpbin.org/get" }
+  local text = http.extract_request_at_cursor(lines, 0)
+  assert_true(text ~= nil, "crash: cursor=0 does not crash")
+end
+
+do
+  -- Cursor negative
+  local lines = { "GET https://httpbin.org/get" }
+  local text = http.extract_request_at_cursor(lines, -5)
+  assert_true(text ~= nil, "crash: negative cursor does not crash")
+end
+
+do
+  -- nil lines
+  local text = http.extract_request_at_cursor(nil, 1)
+  assert_eq(text, "", "crash: nil lines returns empty string")
+end
+
+do
+  -- Single empty line buffer
+  local text = http.extract_request_at_cursor({ "" }, 1)
+  assert_eq(text, "", "crash: single empty line returns empty string")
+end
+
+-- ============================================
+-- Section 14: Empty header values
+-- ============================================
+
+io.write("\n--- empty header values ---\n\n")
+
+do
+  local req, err = http.parse_request("GET https://example.com\nX-Custom:\n")
+  assert_true(req ~= nil, "empty header value: parses successfully")
+  if req then
+    assert_true(req.headers["X-Custom"] ~= nil, "empty header value: header key exists")
+    assert_eq(req.headers["X-Custom"], "", "empty header value: value is empty string")
+  end
+end
+
+do
+  local req, err = http.parse_request("GET https://example.com\nX-Empty:\nX-Full: has-value\n")
+  assert_true(req ~= nil, "mixed empty/full headers: parses successfully")
+  if req then
+    assert_eq(req.headers["X-Empty"], "", "mixed headers: empty value is empty string")
+    assert_eq(req.headers["X-Full"], "has-value", "mixed headers: full value preserved")
+  end
+end
+
+-- ============================================
+-- Section 15: Duplicate headers
+-- ============================================
+
+io.write("\n--- duplicate headers ---\n\n")
+
+do
+  -- Last value wins (simple Lua table semantics)
+  local req, err = http.parse_request("GET https://example.com\nX-Dup: first\nX-Dup: second\n")
+  assert_true(req ~= nil, "duplicate headers: parses successfully")
+  if req then
+    assert_eq(req.headers["X-Dup"], "second", "duplicate headers: last value wins")
+  end
+end
+
+-- ============================================
+-- Section 16: Garbage lines in header section
+-- ============================================
+
+io.write("\n--- garbage in header section ---\n\n")
+
+do
+  -- Garbage line before blank separator should stop header parsing
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: application/json\nthis is garbage\nX-After-Garbage: should-not-be-header\n\nactual body\n")
+  assert_true(req ~= nil, "garbage in headers: parses successfully")
+  if req then
+    assert_eq(req.headers["Content-Type"], "application/json", "garbage in headers: header before garbage preserved")
+    -- X-After-Garbage should NOT be parsed as a header — garbage stops header parsing
+    assert_nil(req.headers["X-After-Garbage"], "garbage in headers: header after garbage NOT parsed")
+    -- The garbage line and everything after become body
+    assert_true(req.body ~= nil, "garbage in headers: body exists")
+    assert_match(req.body, "this is garbage", "garbage in headers: garbage line is in body")
+  end
+end
+
+-- ============================================
+-- Section 17: HTTP version validation
+-- ============================================
+
+io.write("\n--- HTTP version validation ---\n\n")
+
+do
+  local req, err = http.parse_request("GET https://example.com HTTP/1.1\n")
+  assert_true(req ~= nil, "valid version HTTP/1.1: parses")
+  if req then
+    assert_eq(req.http_version, "HTTP/1.1", "valid version HTTP/1.1: correct")
+  end
+end
+
+do
+  local req, err = http.parse_request("GET https://example.com HTTP/2\n")
+  assert_true(req ~= nil, "valid version HTTP/2: parses")
+  if req then
+    assert_eq(req.http_version, "HTTP/2", "valid version HTTP/2: correct")
+  end
+end
+
+do
+  local req, err = http.parse_request("GET https://example.com BOGUS\n")
+  assert_nil(req, "invalid version BOGUS: returns nil")
+  assert_true(err ~= nil, "invalid version BOGUS: returns error")
+  assert_match(err, "invalid HTTP version", "invalid version BOGUS: error message mentions version")
+end
+
+do
+  local req, err = http.parse_request("GET https://example.com ftp://lol\n")
+  assert_nil(req, "invalid version ftp://lol: returns nil")
+end
+
+-- ============================================
+-- Section 18: Body containing ### literal
+-- ============================================
+
+io.write("\n--- body containing ### literal ---\n\n")
+
+do
+  -- ### in the body should be treated as body text, not a separator
+  -- (parse_request receives a single block, so ### in body is fine)
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: text/plain\n\nLine 1\n### This is NOT a separator\nLine 3\n")
+  assert_true(req ~= nil, "### in body: parses successfully")
+  if req then
+    assert_match(req.body, "### This is NOT a separator", "### in body: literal ### preserved")
+    assert_match(req.body, "Line 1", "### in body: content before ### preserved")
+    assert_match(req.body, "Line 3", "### in body: content after ### preserved")
+  end
+end
+
+do
+  -- extract_request_at_cursor should split on ### even if body would contain it
+  -- This tests the multi-request splitting behavior
+  local lines = {
+    "POST https://example.com",
+    "Content-Type: text/plain",
+    "",
+    "body text",
+    "###",
+    "GET https://other.com",
+  }
+  local text = http.extract_request_at_cursor(lines, 2)
+  assert_true(not text:match("GET https://other.com"), "### split: second request not in first block")
+  -- Body "body text" should be in the block
+  assert_match(text, "body text", "### split: body text in first block")
+end
+
+-- ============================================
+-- Section 19: Proxy with whitespace
+-- ============================================
+
+io.write("\n--- proxy with whitespace ---\n\n")
+
+do
+  -- Proxy URL with trailing whitespace in metadata
+  local req, err = http.parse_request("# @proxy   http://127.0.0.1:7891  \nGET https://example.com\n")
+  assert_true(req ~= nil, "proxy whitespace: parses successfully")
+  if req then
+    -- The metadata regex captures with .+, so leading spaces after @proxy are consumed by %s+
+    -- but trailing spaces may remain. Let's verify it doesn't break.
+    assert_true(req.proxy ~= nil, "proxy whitespace: proxy is set")
+    assert_match(req.proxy, "127.0.0.1:7891", "proxy whitespace: proxy URL contains expected host")
+  end
+end
+
+-- ============================================
+-- Section 20: Shell injection tests (headers, body, proxy)
+-- ============================================
+
+io.write("\n--- shell injection (extended) ---\n\n")
+
+do
+  -- Injection in header value
+  local cmd = build_cmd_from_text("GET https://example.com\nX-Evil: $(whoami)\n")
+  assert_true(cmd ~= nil, "injection header: command built")
+  if cmd then
+    -- The header value must be shell-escaped
+    assert_match(cmd, "%-H", "injection header: has -H flag")
+    -- shellescape wraps in single quotes
+    assert_match(cmd, "'X%-Evil: %$%(whoami%)'", "injection header: header value is shell-escaped")
+  end
+end
+
+do
+  -- Injection in body with semicolon and command
+  local cmd = build_cmd_from_text("POST https://example.com\nContent-Type: text/plain\n\n; rm -rf /\n")
+  assert_true(cmd ~= nil, "injection body semicolon: command built")
+  if cmd then
+    assert_match(cmd, "%-d", "injection body semicolon: has -d flag")
+    -- The body must be shell-escaped so the semicolon doesn't break out
+    -- shellescape wraps in single quotes
+    assert_match(cmd, "'; rm %-rf /'", "injection body semicolon: body is shell-escaped")
+  end
+end
+
+do
+  -- Injection in proxy URL
+  local cmd = build_cmd_from_text("# @proxy http://evil.com; whoami\nGET https://example.com\n")
+  assert_true(cmd ~= nil, "injection proxy: command built")
+  if cmd then
+    assert_match(cmd, "%-x", "injection proxy: has -x flag")
+    -- Proxy URL must be shell-escaped
+    assert_match(cmd, "'http://evil.com; whoami'", "injection proxy: proxy is shell-escaped")
+  end
+end
+
+do
+  -- Injection with backticks in body
+  local cmd = build_cmd_from_text("POST https://example.com\nContent-Type: text/plain\n\n`cat /etc/passwd`\n")
+  assert_true(cmd ~= nil, "injection backtick body: command built")
+  if cmd then
+    -- Single-quoted strings prevent backtick expansion
+    assert_match(cmd, "'`cat /etc/passwd`'", "injection backtick body: body shell-escaped")
+  end
+end
+
+do
+  -- Injection with single quotes in URL (tricky for shellescape)
+  local cmd = build_cmd_from_text("GET https://example.com/path'with'quotes\n")
+  assert_true(cmd ~= nil, "injection single quote URL: command built")
+  -- shellescape handles single quotes by ending the quote, escaping, and restarting
+end
+
+-- ============================================
 -- Summary
 -- ============================================
 

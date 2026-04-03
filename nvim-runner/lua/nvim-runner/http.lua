@@ -42,6 +42,21 @@ local function parse_metadata(lines)
   return meta, start
 end
 
+--- Validate HTTP version string (e.g. "HTTP/1.1", "HTTP/2").
+---@param version string
+---@return boolean
+local function is_valid_http_version(version)
+  return version:match("^HTTP/%d") ~= nil
+end
+
+--- Strip \r from end of line (handle CRLF)
+---@param line string
+---@return string
+local function strip_cr(line)
+  local result = line:gsub("\r$", "")
+  return result
+end
+
 --- Parse a single HTTP request from text.
 ---@param text string  raw text of one request block
 ---@return HttpRequest? parsed request, or nil on error
@@ -53,7 +68,7 @@ function M.parse_request(text)
 
   local lines = {}
   for line in (text .. "\n"):gmatch("(.-)\n") do
-    table.insert(lines, line)
+    table.insert(lines, strip_cr(line))
   end
 
   -- Extract metadata from leading comments
@@ -72,6 +87,10 @@ function M.parse_request(text)
           http_version = nil
         elseif http_version then
           http_version = http_version:match("^%s*(.-)%s*$")
+          -- Validate HTTP version format
+          if not is_valid_http_version(http_version) then
+            return nil, "invalid HTTP version: " .. http_version
+          end
         end
         request_line_idx = i
         break
@@ -85,7 +104,8 @@ function M.parse_request(text)
     return nil, "no request line found"
   end
 
-  -- Parse headers: lines after request line until first blank line
+  -- Parse headers: lines after request line until first blank line.
+  -- Stop header parsing at the first non-header line (garbage = end of headers).
   local headers = {}
   local body_start = nil
   for i = request_line_idx + 1, #lines do
@@ -94,13 +114,17 @@ function M.parse_request(text)
       body_start = i + 1
       break
     end
-    -- Header: Name: Value
-    local hname, hvalue = trimmed:match("^(%S+):%s*(.+)$")
-    if hname and hvalue then
+    -- Header: Name: Value (value may be empty)
+    local hname, hvalue = trimmed:match("^(%S+):%s*(.*)$")
+    if hname then
       headers[hname] = hvalue
+    else
+      -- Non-header line before blank separator — treat as start of body.
+      -- This prevents garbage lines from being silently skipped while
+      -- headers after them continue to be parsed.
+      body_start = i
+      break
     end
-    -- If no header match and no blank line, it could be a continuation
-    -- or malformed — for MVP, skip non-header lines silently
   end
 
   -- Parse body: everything after the blank line separator
@@ -138,6 +162,17 @@ end
 ---@param cursor_line number  1-indexed cursor line
 ---@return string  the text of the request block containing the cursor
 function M.extract_request_at_cursor(lines, cursor_line)
+  -- Defensive: handle empty buffer or out-of-bounds cursor
+  if not lines or #lines == 0 then
+    return ""
+  end
+  -- Clamp cursor_line to valid range
+  if cursor_line < 1 then
+    cursor_line = 1
+  elseif cursor_line > #lines then
+    cursor_line = #lines
+  end
+
   -- Find the ### boundaries around cursor_line
   local block_start = 1
   local block_end = #lines
@@ -174,9 +209,9 @@ function M.extract_request_at_cursor(lines, cursor_line)
     end
   end
 
-  -- Clamp
+  -- Clamp: if start > end after separator logic, return empty
   if block_start > block_end then
-    block_start = block_end
+    return ""
   end
 
   local block = {}
