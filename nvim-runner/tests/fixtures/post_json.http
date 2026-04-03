@@ -1,0 +1,9 @@
+# @name create-user
+POST https://httpbin.org/post
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "test",
+  "value": 42
+}
