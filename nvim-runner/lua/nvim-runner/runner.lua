@@ -216,6 +216,17 @@ function M.run()
           return_text = return_text .. obj.stderr .. "\n"
         end
 
+        -- Enhance error reporting when command fails
+        if obj.code ~= 0 then
+          local error_header = string.format("--- ERROR (exit code %d) ---\n", obj.code)
+          local cmd_line = "Command: " .. template_literal .. "\n"
+          if #return_text <= 1 then
+            return_text = "\n" .. error_header .. cmd_line .. "(no output)\n"
+          else
+            return_text = "\n" .. error_header .. cmd_line .. return_text
+          end
+        end
+
         if #return_text <= 1 then
           vim.notify("script_runner ends with nothing: " .. tostring(obj.code))
           return

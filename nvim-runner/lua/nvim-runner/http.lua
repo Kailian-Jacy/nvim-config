@@ -264,8 +264,10 @@ function M.build_curl_command(runner, text)
   -- Build curl command parts
   local parts = {}
   table.insert(parts, vim.fn.shellescape(runner))
-  table.insert(parts, "-s")
+  table.insert(parts, "-sS")
   table.insert(parts, "-i")
+  table.insert(parts, "-w")
+  table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
   table.insert(parts, "-X")
   table.insert(parts, vim.fn.shellescape(request.method))
 
