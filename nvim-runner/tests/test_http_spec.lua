@@ -1152,6 +1152,121 @@ do
   vim.api.nvim_buf_delete(buf, { force = true })
 end
 
+do
+  -- XML body starting with < should NOT be treated as file reference
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: application/xml\n\n<root><item>hello</item></root>\n")
+  assert_true(req ~= nil, "xml body: parses successfully")
+  if req then
+    assert_match(req.body, "<root>", "xml body: body preserved as XML")
+  end
+
+  -- Also verify via build_curl_command integration (no file resolution attempted)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com",
+    "Content-Type: application/xml",
+    "",
+    "<root><item>hello</item></root>",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "xml body integration: build_curl_command succeeds (not treated as file ref)")
+  if cmd then
+    assert_match(cmd, "<root>", "xml body integration: XML body in curl command")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Absolute path: < /tmp/test_abs_body.json
+  local abs_path = "/tmp/test_abs_body_" .. os.time() .. ".json"
+  vim.fn.writefile({ '{"abs": true}' }, abs_path)
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, "/some/other/dir/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< " .. abs_path,
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "absolute path: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, '"abs": true', "absolute path: file contents used as body")
+  end
+
+  vim.fn.delete(abs_path)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Tilde path: < ~/test_tilde_body.json
+  local home = vim.fn.expand("~")
+  local tilde_file = home .. "/test_tilde_body_" .. os.time() .. ".json"
+  vim.fn.writefile({ '{"tilde": true}' }, tilde_file)
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, "/some/other/dir/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< ~/" .. vim.fn.fnamemodify(tilde_file, ":t"),
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "tilde path: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, '"tilde": true', "tilde path: file contents used as body (~ expanded)")
+  end
+
+  vim.fn.delete(tilde_file)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Multiline body starting with "< " should NOT be treated as file ref
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: text/plain\n\n< this is not a file\nsecond line\n")
+  assert_true(req ~= nil, "multiline < body: parses successfully")
+  if req then
+    assert_match(req.body, "< this is not a file", "multiline < body: first line preserved")
+    assert_match(req.body, "second line", "multiline < body: second line preserved")
+  end
+
+  -- Integration: should use the literal body, not try to resolve as file
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com",
+    "Content-Type: text/plain",
+    "",
+    "< this is not a file",
+    "second line",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "multiline < body integration: build_curl_command succeeds")
+  if cmd then
+    assert_match(cmd, "this is not a file", "multiline < body integration: literal body used")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
 -- ============================================
 -- Section 26: Snippet files validation
 -- ============================================

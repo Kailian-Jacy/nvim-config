@@ -269,18 +269,26 @@ function M.build_curl_command(runner, text)
   end
 
   -- File body support: `< filepath` reads file contents as body
+  -- Only single-line bodies can be file references
   if request.body then
-    local filepath = request.body:match("^<%s+(.+)$")
-    if filepath then
-      -- Resolve relative to the current buffer's directory
-      local buf_dir = vim.fn.expand("%:p:h")
-      local resolved = buf_dir .. "/" .. filepath
-      if vim.fn.filereadable(resolved) == 1 then
-        local file_lines = vim.fn.readfile(resolved)
-        request.body = table.concat(file_lines, "\n")
-      else
-        vim.notify("HTTP file body: file not found: " .. resolved, vim.log.levels.ERROR)
-        return nil
+    local trimmed_body = request.body:match("^(.-)%s*$")
+    if not trimmed_body:find("\n") then
+      local filepath = trimmed_body:match("^<%s+(.+)$")
+      if filepath then
+        filepath = filepath:match("^(.-)%s*$") -- trim trailing spaces from path
+        filepath = vim.fn.expand(filepath) -- expand ~ and $HOME
+        if not filepath:match("^/") then
+          -- Relative path: resolve against buffer directory
+          local buf_dir = vim.fn.expand("%:p:h")
+          filepath = buf_dir .. "/" .. filepath
+        end
+        if vim.fn.filereadable(filepath) == 1 then
+          local file_lines = vim.fn.readfile(filepath)
+          request.body = table.concat(file_lines, "\n")
+        else
+          vim.notify("HTTP file body: file not found: " .. filepath, vim.log.levels.ERROR)
+          return nil
+        end
       end
     end
   end
