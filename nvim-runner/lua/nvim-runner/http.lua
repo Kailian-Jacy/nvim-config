@@ -267,6 +267,23 @@ function M.build_curl_command(runner, text)
     return nil
   end
 
+  -- File body support: `< filepath` reads file contents as body
+  if request.body then
+    local filepath = request.body:match("^<%s+(.+)$")
+    if filepath then
+      -- Resolve relative to the current buffer's directory
+      local buf_dir = vim.fn.expand("%:p:h")
+      local resolved = buf_dir .. "/" .. filepath
+      if vim.fn.filereadable(resolved) == 1 then
+        local file_lines = vim.fn.readfile(resolved)
+        request.body = table.concat(file_lines, "\n")
+      else
+        vim.notify("HTTP file body: file not found: " .. resolved, vim.log.levels.ERROR)
+        return nil
+      end
+    end
+  end
+
   -- Build curl command parts
   local parts = {}
   table.insert(parts, vim.fn.shellescape(runner))
