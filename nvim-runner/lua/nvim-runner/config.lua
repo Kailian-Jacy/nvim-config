@@ -58,6 +58,7 @@ M.defaults = {
         return require("nvim-runner.http").build_curl_command(runner, text)
       end,
       timeout = 30000, -- HTTP requests may take longer
+      output = "split", -- render response in a split buffer
     },
   },
   timeout = 3000, -- default timeout in ms
