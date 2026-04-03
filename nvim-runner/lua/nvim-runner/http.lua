@@ -31,6 +31,11 @@ local function parse_metadata(lines)
       local key, value = trimmed:match("^#%s*@(%S+)%s+(.+)$")
       meta[key] = value
       start = i + 1
+    -- metadata flag: # @key (no value, treated as boolean true)
+    elseif trimmed:match("^#%s*@(%S+)%s*$") then
+      local key = trimmed:match("^#%s*@(%S+)%s*$")
+      meta[key] = true
+      start = i + 1
     -- regular comment: # ... or // ...
     elseif trimmed:match("^#") or trimmed:match("^//") then
       start = i + 1
@@ -151,6 +156,8 @@ function M.parse_request(text)
     body = body,
     proxy = meta.proxy or nil,
     name = meta.name or nil,
+    debug = meta.debug or nil,
+    timeout = meta.timeout or nil,
   }
 
   return request, nil
@@ -261,11 +268,49 @@ function M.build_curl_command(runner, text)
     return nil
   end
 
+  -- File body support: `< filepath` reads file contents as body
+  -- Only single-line bodies can be file references
+  if request.body then
+    local trimmed_body = request.body:match("^(.-)%s*$")
+    if not trimmed_body:find("\n") then
+      local filepath = trimmed_body:match("^<%s+(.+)$")
+      if filepath then
+        filepath = filepath:match("^(.-)%s*$") -- trim trailing spaces from path
+        filepath = vim.fn.expand(filepath) -- expand ~ and $HOME
+        if not filepath:match("^/") then
+          -- Relative path: resolve against buffer directory
+          local buf_dir = vim.fn.expand("%:p:h")
+          filepath = buf_dir .. "/" .. filepath
+        end
+        if vim.fn.filereadable(filepath) == 1 then
+          local file_lines = vim.fn.readfile(filepath)
+          request.body = table.concat(file_lines, "\n")
+        else
+          vim.notify("HTTP file body: file not found: " .. filepath, vim.log.levels.ERROR)
+          return nil
+        end
+      end
+    end
+  end
+
   -- Build curl command parts
   local parts = {}
   table.insert(parts, vim.fn.shellescape(runner))
-  table.insert(parts, "-s")
+  table.insert(parts, "-sS")
   table.insert(parts, "-i")
+  table.insert(parts, "-w")
+  table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
+
+  -- @timeout: set curl --max-time and buffer-local runner timeout
+  if request.timeout then
+    local timeout_s = tonumber(request.timeout)
+    if timeout_s and timeout_s > 0 then
+      vim.b.runner_timeout = math.floor(timeout_s * 1000)
+      table.insert(parts, "--max-time")
+      table.insert(parts, tostring(timeout_s))
+    end
+  end
+
   table.insert(parts, "-X")
   table.insert(parts, vim.fn.shellescape(request.method))
 
@@ -290,6 +335,14 @@ function M.build_curl_command(runner, text)
 
   -- URL (last)
   table.insert(parts, vim.fn.shellescape(request.url))
+
+  -- Debug mode: add verbose flag and notify the command
+  if request.debug then
+    table.insert(parts, "-v")
+    local cmd = table.concat(parts, " ")
+    vim.notify("DEBUG curl command:\n" .. cmd, vim.log.levels.INFO)
+    return cmd
+  end
 
   return table.concat(parts, " ")
 end

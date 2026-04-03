@@ -351,8 +351,10 @@ local function build_cmd_from_text(text, runner)
 
   local parts = {}
   table.insert(parts, vim.fn.shellescape(runner))
-  table.insert(parts, "-s")
+  table.insert(parts, "-sS")
   table.insert(parts, "-i")
+  table.insert(parts, "-w")
+  table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
   table.insert(parts, "-X")
   table.insert(parts, vim.fn.shellescape(request.method))
 
@@ -373,13 +375,66 @@ local function build_cmd_from_text(text, runner)
 
   table.insert(parts, vim.fn.shellescape(request.url))
 
+  if request.debug then
+    table.insert(parts, "-v")
+  end
+
+  return table.concat(parts, " ")
+end
+
+local function build_cmd_from_text_with_timeout(text, runner)
+  runner = runner or "curl"
+  local request, err = http.parse_request(text)
+  if not request then
+    return nil, err
+  end
+
+  local parts = {}
+  table.insert(parts, vim.fn.shellescape(runner))
+  table.insert(parts, "-sS")
+  table.insert(parts, "-i")
+  table.insert(parts, "-w")
+  table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
+
+  if request.timeout then
+    local timeout_s = tonumber(request.timeout)
+    if timeout_s and timeout_s > 0 then
+      table.insert(parts, "--max-time")
+      table.insert(parts, tostring(timeout_s))
+    end
+  end
+
+  table.insert(parts, "-X")
+  table.insert(parts, vim.fn.shellescape(request.method))
+
+  for name, value in pairs(request.headers) do
+    table.insert(parts, "-H")
+    table.insert(parts, vim.fn.shellescape(name .. ": " .. value))
+  end
+
+  if request.body then
+    table.insert(parts, "-d")
+    table.insert(parts, vim.fn.shellescape(request.body))
+  end
+
+  if request.proxy then
+    table.insert(parts, "-x")
+    table.insert(parts, vim.fn.shellescape(request.proxy))
+  end
+
+  table.insert(parts, vim.fn.shellescape(request.url))
+
+  if request.debug then
+    table.insert(parts, "-v")
+  end
+
   return table.concat(parts, " ")
 end
 
 do
   local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
   assert_match(cmd, "curl", "curl cmd: contains curl")
-  assert_match(cmd, "%-s", "curl cmd: contains -s (silent)")
+  assert_match(cmd, "%-sS", "curl cmd: contains -sS (silent + show errors)")
   assert_match(cmd, "%-i", "curl cmd: contains -i (include headers)")
   assert_match(cmd, "%-X", "curl cmd: contains -X")
   assert_match(cmd, "GET", "curl cmd: contains GET method")
@@ -597,7 +652,7 @@ do
   if http_runner then
     assert_eq(http_runner.runner, "curl", "config: http runner uses curl")
     assert_eq(type(http_runner.template), "function", "config: http template is a function")
-    assert_eq(http_runner.timeout, 30000, "config: http timeout is 30000ms")
+    assert_eq(http_runner.timeout, 10000, "config: http timeout is 10000ms")
   end
 end
 
@@ -886,6 +941,518 @@ do
   local cmd = build_cmd_from_text("GET https://example.com/path'with'quotes\n")
   assert_true(cmd ~= nil, "injection single quote URL: command built")
   -- shellescape handles single quotes by ending the quote, escaping, and restarting
+end
+
+-- ============================================
+-- Section 21: Timer (-w flag) in curl command
+-- ============================================
+
+io.write("\n--- timer (-w flag) ---\n\n")
+
+do
+  local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
+  assert_match(cmd, "%-w", "timer: curl cmd contains -w flag")
+  assert_match(cmd, "http_code", "timer: curl cmd contains http_code in write-out")
+  assert_match(cmd, "time_total", "timer: curl cmd contains time_total in write-out")
+end
+
+do
+  -- Integration test: build_curl_command also produces -w
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "GET https://httpbin.org/get" })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "timer integration: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, "%-w", "timer integration: command contains -w flag")
+    assert_match(cmd, "time_total", "timer integration: command contains time_total")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+-- ============================================
+-- Section 22: Error reporting (exit code in output)
+-- ============================================
+
+io.write("\n--- error reporting ---\n\n")
+
+do
+  -- The error reporting logic is in runner.lua callback, hard to unit test fully.
+  -- But we can verify the -sS flag is present (show errors in silent mode).
+  local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
+  assert_match(cmd, "%-sS", "error reporting: curl cmd uses -sS (show errors)")
+  -- Verify -s alone is NOT used (no plain -s without S)
+  -- -sS should be present, not just -s
+  assert_true(cmd:match("%-sS") ~= nil, "error reporting: -sS flag present")
+end
+
+-- ============================================
+-- Section 23: Output buffer config
+-- ============================================
+
+io.write("\n--- output buffer config ---\n\n")
+
+do
+  local config = require("nvim-runner.config")
+  -- Reload defaults to pick up the new output field
+  config.setup({})
+  local http_runner = config.options.runners.http
+  assert_true(http_runner ~= nil, "output config: http runner exists")
+  if http_runner then
+    assert_eq(http_runner.output, "split", "output config: http runner defaults to split output")
+  end
+
+  -- Other runners should not have output set (defaults to nil = inline)
+  local py_runner = config.options.runners.python
+  assert_true(py_runner ~= nil, "output config: python runner exists")
+  if py_runner then
+    assert_nil(py_runner.output, "output config: python runner has no output setting (inline default)")
+  end
+end
+
+-- ============================================
+-- Section 24: @debug support
+-- ============================================
+
+io.write("\n--- @debug support ---\n\n")
+
+do
+  -- @debug flag should be parsed as boolean true
+  local req, err = http.parse_request("# @debug\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@debug: request parses successfully")
+  if req then
+    assert_eq(req.debug, true, "@debug: debug flag is true")
+    assert_eq(req.method, "GET", "@debug: method still parsed correctly")
+  end
+end
+
+do
+  -- @debug with @name together
+  local req, err = http.parse_request("# @name test-req\n# @debug\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@debug+name: request parses successfully")
+  if req then
+    assert_eq(req.debug, true, "@debug+name: debug is true")
+    assert_eq(req.name, "test-req", "@debug+name: name is correct")
+  end
+end
+
+do
+  -- @debug should add -v flag in curl command
+  local cmd = build_cmd_from_text("# @debug\nGET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "@debug cmd: command built successfully")
+  if cmd then
+    assert_match(cmd, "%-v", "@debug cmd: contains -v (verbose) flag")
+  end
+end
+
+do
+  -- Without @debug, no -v flag
+  local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "no @debug cmd: command built successfully")
+  if cmd then
+    assert_true(not cmd:match("%-v"), "no @debug cmd: does not contain -v flag")
+  end
+end
+
+do
+  -- Integration test: build_curl_command with @debug
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# @debug",
+    "GET https://httpbin.org/get",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "@debug integration: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, "%-v", "@debug integration: command contains -v flag")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+-- ============================================
+-- Section 25: File body support (< filepath)
+-- ============================================
+
+io.write("\n--- file body support ---\n\n")
+
+do
+  -- Test parse_request with `< filepath` body — parse should preserve literal body
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: application/json\n\n< ./payload.json\n")
+  assert_true(req ~= nil, "file body parse: request parses successfully")
+  if req then
+    assert_eq(req.body, "< ./payload.json", "file body parse: body is literal '< ./payload.json'")
+  end
+end
+
+do
+  -- Create a temp file to test file body resolution in build_curl_command
+  local tmpdir = vim.fn.tempname()
+  vim.fn.mkdir(tmpdir, "p")
+  local payload_path = tmpdir .. "/payload.json"
+  vim.fn.writefile({ '{"name": "from-file"}' }, payload_path)
+
+  -- Create a buffer "in" the same directory
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, tmpdir .. "/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< ./payload.json",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "file body integration: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, "from%-file", "file body integration: file contents used as body")
+    -- Should NOT contain the literal `< ./payload.json`
+    assert_true(not cmd:match("< %./payload"), "file body integration: literal < not in command")
+  end
+
+  -- Clean up
+  vim.fn.delete(payload_path)
+  vim.fn.delete(tmpdir, "d")
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Test with non-existent file — should return nil
+  local tmpdir = vim.fn.tempname()
+  vim.fn.mkdir(tmpdir, "p")
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, tmpdir .. "/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< ./nonexistent.json",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_nil(cmd, "file body missing: build_curl_command returns nil for missing file")
+
+  -- Clean up
+  vim.fn.delete(tmpdir, "d")
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- XML body starting with < should NOT be treated as file reference
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: application/xml\n\n<root><item>hello</item></root>\n")
+  assert_true(req ~= nil, "xml body: parses successfully")
+  if req then
+    assert_match(req.body, "<root>", "xml body: body preserved as XML")
+  end
+
+  -- Also verify via build_curl_command integration (no file resolution attempted)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com",
+    "Content-Type: application/xml",
+    "",
+    "<root><item>hello</item></root>",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "xml body integration: build_curl_command succeeds (not treated as file ref)")
+  if cmd then
+    assert_match(cmd, "<root>", "xml body integration: XML body in curl command")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Absolute path: < /tmp/test_abs_body.json
+  local abs_path = "/tmp/test_abs_body_" .. os.time() .. ".json"
+  vim.fn.writefile({ '{"abs": true}' }, abs_path)
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, "/some/other/dir/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< " .. abs_path,
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "absolute path: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, '"abs": true', "absolute path: file contents used as body")
+  end
+
+  vim.fn.delete(abs_path)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Tilde path: < ~/test_tilde_body.json
+  local home = vim.fn.expand("~")
+  local tilde_file = home .. "/test_tilde_body_" .. os.time() .. ".json"
+  vim.fn.writefile({ '{"tilde": true}' }, tilde_file)
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, "/some/other/dir/test.http")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com/api",
+    "Content-Type: application/json",
+    "",
+    "< ~/" .. vim.fn.fnamemodify(tilde_file, ":t"),
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "tilde path: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, '"tilde": true', "tilde path: file contents used as body (~ expanded)")
+  end
+
+  vim.fn.delete(tilde_file)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Multiline body starting with "< " should NOT be treated as file ref
+  local req, err = http.parse_request("POST https://example.com\nContent-Type: text/plain\n\n< this is not a file\nsecond line\n")
+  assert_true(req ~= nil, "multiline < body: parses successfully")
+  if req then
+    assert_match(req.body, "< this is not a file", "multiline < body: first line preserved")
+    assert_match(req.body, "second line", "multiline < body: second line preserved")
+  end
+
+  -- Integration: should use the literal body, not try to resolve as file
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://example.com",
+    "Content-Type: text/plain",
+    "",
+    "< this is not a file",
+    "second line",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "multiline < body integration: build_curl_command succeeds")
+  if cmd then
+    assert_match(cmd, "this is not a file", "multiline < body integration: literal body used")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+-- ============================================
+-- Section 26: Snippet files validation
+-- ============================================
+
+io.write("\n--- snippet files validation ---\n\n")
+
+do
+  -- Verify http.json is valid JSON
+  local snip_path = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h") .. "/../../config.nvim/snip/http.json"
+  -- Try alternate path resolution
+  local alt_path = "/tmp/nvim-config/config.nvim/snip/http.json"
+  local path = vim.fn.filereadable(snip_path) == 1 and snip_path or alt_path
+  assert_true(vim.fn.filereadable(path) == 1, "snippets: http.json file exists")
+
+  if vim.fn.filereadable(path) == 1 then
+    local content = table.concat(vim.fn.readfile(path), "\n")
+    local ok, parsed = pcall(vim.json.decode, content)
+    assert_true(ok, "snippets: http.json is valid JSON")
+    if ok and parsed then
+      assert_true(parsed["HTTP GET Request"] ~= nil, "snippets: httpget snippet exists")
+      assert_true(parsed["HTTP POST Request"] ~= nil, "snippets: httppost snippet exists")
+      assert_true(parsed["HTTP PUT Request"] ~= nil, "snippets: httpput snippet exists")
+      assert_true(parsed["HTTP DELETE Request"] ~= nil, "snippets: httpdel snippet exists")
+      assert_true(parsed["HTTP Separator"] ~= nil, "snippets: httpsep snippet exists")
+
+      -- Verify prefixes
+      assert_eq(parsed["HTTP GET Request"].prefix, "httpget", "snippets: httpget prefix correct")
+      assert_eq(parsed["HTTP POST Request"].prefix, "httppost", "snippets: httppost prefix correct")
+      assert_eq(parsed["HTTP PUT Request"].prefix, "httpput", "snippets: httpput prefix correct")
+      assert_eq(parsed["HTTP DELETE Request"].prefix, "httpdel", "snippets: httpdel prefix correct")
+      assert_eq(parsed["HTTP Separator"].prefix, "httpsep", "snippets: httpsep prefix correct")
+    end
+  end
+end
+
+do
+  -- Verify package.json references http.json
+  local pkg_path = "/tmp/nvim-config/config.nvim/snip/package.json"
+  assert_true(vim.fn.filereadable(pkg_path) == 1, "snippets: package.json exists")
+
+  if vim.fn.filereadable(pkg_path) == 1 then
+    local content = table.concat(vim.fn.readfile(pkg_path), "\n")
+    local ok, parsed = pcall(vim.json.decode, content)
+    assert_true(ok, "snippets: package.json is valid JSON")
+    if ok and parsed then
+      local snippets = parsed.contributes and parsed.contributes.snippets
+      assert_true(snippets ~= nil, "snippets: package.json has contributes.snippets")
+      if snippets then
+        local found_http = false
+        for _, entry in ipairs(snippets) do
+          if entry.path == "./http.json" then
+            found_http = true
+            -- Check language includes "http"
+            local has_http_lang = false
+            if type(entry.language) == "table" then
+              for _, lang in ipairs(entry.language) do
+                if lang == "http" then
+                  has_http_lang = true
+                  break
+                end
+              end
+            end
+            assert_true(has_http_lang, "snippets: package.json http entry has http language")
+          end
+        end
+        assert_true(found_http, "snippets: package.json references http.json")
+      end
+    end
+  end
+end
+
+-- ============================================
+-- Section 27: Value-less metadata flags
+-- ============================================
+
+io.write("\n--- value-less metadata flags ---\n\n")
+
+do
+  -- Test that value-less flags work for arbitrary keys
+  local req, err = http.parse_request("# @no-redirect\n# @name my-req\nGET https://example.com\n")
+  assert_true(req ~= nil, "value-less meta: parses successfully")
+  -- Note: only @name, @proxy, @debug are mapped to request fields currently
+  -- But parse_metadata should handle them
+  assert_eq(req.name, "my-req", "value-less meta: @name still works")
+end
+
+-- ============================================
+-- Section 28: @timeout metadata support
+-- ============================================
+
+io.write("\n--- @timeout support ---\n\n")
+
+do
+  -- @timeout parsed as metadata with numeric value
+  local req, err = http.parse_request("# @timeout 60\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@timeout: request parses successfully")
+  if req then
+    assert_eq(req.timeout, "60", "@timeout: timeout value is '60'")
+    assert_eq(req.method, "GET", "@timeout: method still parsed correctly")
+  end
+end
+
+do
+  -- @timeout with @name and @debug together
+  local req, err = http.parse_request("# @name test-req\n# @timeout 30\n# @debug\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@timeout+meta: request parses successfully")
+  if req then
+    assert_eq(req.timeout, "30", "@timeout+meta: timeout is 30")
+    assert_eq(req.name, "test-req", "@timeout+meta: name is correct")
+    assert_eq(req.debug, true, "@timeout+meta: debug is true")
+  end
+end
+
+do
+  -- @timeout should add --max-time in curl command
+  local cmd = build_cmd_from_text_with_timeout("# @timeout 60\nGET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "@timeout cmd: command built successfully")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout cmd: contains --max-time flag")
+    assert_match(cmd, "60", "@timeout cmd: contains timeout value 60")
+  end
+end
+
+do
+  -- Without @timeout, no --max-time flag
+  local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "no @timeout cmd: command built successfully")
+  if cmd then
+    assert_true(not cmd:match("%-%-max%-time"), "no @timeout cmd: does not contain --max-time flag")
+  end
+end
+
+do
+  -- @timeout sets vim.b.runner_timeout via build_curl_command integration
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# @timeout 5",
+    "GET https://httpbin.org/get",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  -- Clear any existing runner_timeout
+  vim.b[buf].runner_timeout = nil
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "@timeout integration: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout integration: command contains --max-time")
+    assert_match(cmd, "5", "@timeout integration: command contains timeout value")
+    -- Check vim.b.runner_timeout was set
+    assert_eq(vim.b[buf].runner_timeout, 5000, "@timeout integration: vim.b.runner_timeout set to 5000ms")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Default timeout is 10000ms for HTTP runner
+  local config = require("nvim-runner.config")
+  config.setup({})
+  local http_runner = config.options.runners.http
+  assert_true(http_runner ~= nil, "@timeout default: http runner exists")
+  if http_runner then
+    assert_eq(http_runner.timeout, 10000, "@timeout default: HTTP runner default timeout is 10000ms")
+  end
+end
+
+do
+  -- @timeout with decimal value
+  local req, err = http.parse_request("# @timeout 2.5\nGET https://example.com\n")
+  assert_true(req ~= nil, "@timeout decimal: parses successfully")
+  if req then
+    assert_eq(req.timeout, "2.5", "@timeout decimal: timeout value is '2.5'")
+  end
+end
+
+do
+  -- @timeout decimal in curl command
+  local cmd = build_cmd_from_text_with_timeout("# @timeout 2.5\nGET https://example.com\n")
+  assert_true(cmd ~= nil, "@timeout decimal cmd: command built successfully")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout decimal cmd: contains --max-time")
+    assert_match(cmd, "2.5", "@timeout decimal cmd: contains timeout value 2.5")
+  end
 end
 
 -- ============================================

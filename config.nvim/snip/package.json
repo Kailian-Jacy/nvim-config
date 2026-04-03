@@ -7,6 +7,12 @@
 					"all"
 				],
 				"path": "./all.json"
+			},
+			{
+				"language": [
+					"http"
+				],
+				"path": "./http.json"
 			}
 		]
 	}

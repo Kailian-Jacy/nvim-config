@@ -216,6 +216,17 @@ function M.run()
           return_text = return_text .. obj.stderr .. "\n"
         end
 
+        -- Enhance error reporting when command fails
+        if obj.code ~= 0 then
+          local error_header = string.format("--- ERROR (exit code %d) ---\n", obj.code)
+          local cmd_line = "Command: " .. template_literal .. "\n"
+          if #return_text <= 1 then
+            return_text = "\n" .. error_header .. cmd_line .. "(no output)\n"
+          else
+            return_text = "\n" .. error_header .. cmd_line .. return_text
+          end
+        end
+
         if #return_text <= 1 then
           vim.notify("script_runner ends with nothing: " .. tostring(obj.code))
           return
@@ -223,7 +234,60 @@ function M.run()
         return_text = string.gsub(return_text, "\n+$", "") .. "\n"
 
         if opts.insert_result then
-          -- Check buffer/window validity before writing results
+          -- Determine output mode from runner definition
+          local output_mode = runner.output or "inline"
+
+          if output_mode == "split" then
+            -- Create or reuse a scratch buffer for this filetype
+            local ft = vim.bo[bufid].filetype or "output"
+            local scratch_name = "[nvim-runner: " .. ft .. "]"
+
+            -- Look for existing scratch buffer with this name
+            local scratch_bufnr = nil
+            for _, b in ipairs(vim.api.nvim_list_bufs()) do
+              if vim.api.nvim_buf_is_valid(b) and vim.api.nvim_buf_get_name(b) == scratch_name then
+                scratch_bufnr = b
+                break
+              end
+            end
+
+            if not scratch_bufnr then
+              scratch_bufnr = vim.api.nvim_create_buf(false, true)
+              vim.api.nvim_buf_set_name(scratch_bufnr, scratch_name)
+            end
+
+            -- Set buffer options
+            vim.bo[scratch_bufnr].buftype = "nofile"
+            vim.bo[scratch_bufnr].swapfile = false
+            vim.bo[scratch_bufnr].buflisted = false
+
+            -- Clear and write content
+            vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, vim.split(return_text, "\n"))
+
+            -- Ensure the buffer is visible in a split
+            local scratch_win = nil
+            for _, w in ipairs(vim.api.nvim_list_wins()) do
+              if vim.api.nvim_win_get_buf(w) == scratch_bufnr then
+                scratch_win = w
+                break
+              end
+            end
+
+            if not scratch_win then
+              vim.cmd("botright vsplit")
+              scratch_win = vim.api.nvim_get_current_win()
+              vim.api.nvim_win_set_buf(scratch_win, scratch_bufnr)
+            end
+
+            -- Move cursor to top of the response
+            vim.api.nvim_win_set_cursor(scratch_win, { 1, 0 })
+
+            -- Return focus to the original window
+            if vim.api.nvim_win_is_valid(winid) then
+              vim.api.nvim_set_current_win(winid)
+            end
+          else
+          -- Inline output mode (original behavior)
           local target_bufid = bufid
           local target_winid = winid
           local buf_valid = vim.api.nvim_buf_is_valid(target_bufid)
@@ -263,6 +327,7 @@ function M.run()
             end
           end
           vim.api.nvim_buf_set_lines(target_bufid, pos[1], pos[1], false, vim.split(return_text, "\n"))
+          end -- split/inline output mode
         end
       end)
     )
