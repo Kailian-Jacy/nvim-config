@@ -1,0 +1,87 @@
+{
+  "HTTP GET Request": {
+    "prefix": "httpget",
+    "body": [
+      "# @name ${1:request-name}",
+      "# # @proxy http://127.0.0.1:7891",
+      "# # @debug",
+      "",
+      "GET ${2:https://example.com/api/endpoint} HTTP/1.1",
+      "# Accept: application/json",
+      "# Authorization: Bearer ${3:token}",
+      "# Cookie: ${4:session=abc123}",
+      "# Cache-Control: no-cache",
+      "",
+      "$0"
+    ],
+    "description": "HTTP GET request with common headers as comments"
+  },
+  "HTTP POST Request": {
+    "prefix": "httppost",
+    "body": [
+      "# @name ${1:request-name}",
+      "# # @proxy http://127.0.0.1:7891",
+      "# # @debug",
+      "",
+      "POST ${2:https://example.com/api/endpoint} HTTP/1.1",
+      "Content-Type: ${3:application/json}",
+      "# Authorization: Bearer ${4:token}",
+      "# Cookie: ${5:session=abc123}",
+      "# Accept: application/json",
+      "",
+      "{",
+      "  \"${6:key}\": \"${7:value}\"",
+      "}",
+      "",
+      "$0"
+    ],
+    "description": "HTTP POST request with JSON body and common headers"
+  },
+  "HTTP PUT Request": {
+    "prefix": "httpput",
+    "body": [
+      "# @name ${1:request-name}",
+      "# # @proxy http://127.0.0.1:7891",
+      "# # @debug",
+      "",
+      "PUT ${2:https://example.com/api/endpoint} HTTP/1.1",
+      "Content-Type: ${3:application/json}",
+      "# Authorization: Bearer ${4:token}",
+      "# Cookie: ${5:session=abc123}",
+      "# Accept: application/json",
+      "",
+      "{",
+      "  \"${6:key}\": \"${7:value}\"",
+      "}",
+      "",
+      "$0"
+    ],
+    "description": "HTTP PUT request with JSON body and common headers"
+  },
+  "HTTP DELETE Request": {
+    "prefix": "httpdel",
+    "body": [
+      "# @name ${1:request-name}",
+      "# # @proxy http://127.0.0.1:7891",
+      "# # @debug",
+      "",
+      "DELETE ${2:https://example.com/api/endpoint} HTTP/1.1",
+      "# Authorization: Bearer ${3:token}",
+      "# Cookie: ${4:session=abc123}",
+      "# Accept: application/json",
+      "",
+      "$0"
+    ],
+    "description": "HTTP DELETE request with common headers as comments"
+  },
+  "HTTP Separator": {
+    "prefix": "httpsep",
+    "body": [
+      "",
+      "###",
+      "",
+      "$0"
+    ],
+    "description": "HTTP request separator (###)"
+  }
+}

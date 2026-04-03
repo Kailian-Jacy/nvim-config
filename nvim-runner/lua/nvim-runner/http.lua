@@ -31,6 +31,11 @@ local function parse_metadata(lines)
       local key, value = trimmed:match("^#%s*@(%S+)%s+(.+)$")
       meta[key] = value
       start = i + 1
+    -- metadata flag: # @key (no value, treated as boolean true)
+    elseif trimmed:match("^#%s*@(%S+)%s*$") then
+      local key = trimmed:match("^#%s*@(%S+)%s*$")
+      meta[key] = true
+      start = i + 1
     -- regular comment: # ... or // ...
     elseif trimmed:match("^#") or trimmed:match("^//") then
       start = i + 1
@@ -151,6 +156,7 @@ function M.parse_request(text)
     body = body,
     proxy = meta.proxy or nil,
     name = meta.name or nil,
+    debug = meta.debug or nil,
   }
 
   return request, nil
@@ -292,6 +298,14 @@ function M.build_curl_command(runner, text)
 
   -- URL (last)
   table.insert(parts, vim.fn.shellescape(request.url))
+
+  -- Debug mode: add verbose flag and notify the command
+  if request.debug then
+    table.insert(parts, "-v")
+    local cmd = table.concat(parts, " ")
+    vim.notify("DEBUG curl command:\n" .. cmd, vim.log.levels.INFO)
+    return cmd
+  end
 
   return table.concat(parts, " ")
 end
