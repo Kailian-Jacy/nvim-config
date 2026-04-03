@@ -157,6 +157,7 @@ function M.parse_request(text)
     proxy = meta.proxy or nil,
     name = meta.name or nil,
     debug = meta.debug or nil,
+    timeout = meta.timeout or nil,
   }
 
   return request, nil
@@ -291,6 +292,17 @@ function M.build_curl_command(runner, text)
   table.insert(parts, "-i")
   table.insert(parts, "-w")
   table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
+
+  -- @timeout: set curl --max-time and buffer-local runner timeout
+  if request.timeout then
+    local timeout_s = tonumber(request.timeout)
+    if timeout_s and timeout_s > 0 then
+      vim.b.runner_timeout = math.floor(timeout_s * 1000)
+      table.insert(parts, "--max-time")
+      table.insert(parts, tostring(timeout_s))
+    end
+  end
+
   table.insert(parts, "-X")
   table.insert(parts, vim.fn.shellescape(request.method))
 

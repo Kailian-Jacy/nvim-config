@@ -382,6 +382,55 @@ local function build_cmd_from_text(text, runner)
   return table.concat(parts, " ")
 end
 
+local function build_cmd_from_text_with_timeout(text, runner)
+  runner = runner or "curl"
+  local request, err = http.parse_request(text)
+  if not request then
+    return nil, err
+  end
+
+  local parts = {}
+  table.insert(parts, vim.fn.shellescape(runner))
+  table.insert(parts, "-sS")
+  table.insert(parts, "-i")
+  table.insert(parts, "-w")
+  table.insert(parts, vim.fn.shellescape("\n--- %{http_code} | %{time_total}s ---"))
+
+  if request.timeout then
+    local timeout_s = tonumber(request.timeout)
+    if timeout_s and timeout_s > 0 then
+      table.insert(parts, "--max-time")
+      table.insert(parts, tostring(timeout_s))
+    end
+  end
+
+  table.insert(parts, "-X")
+  table.insert(parts, vim.fn.shellescape(request.method))
+
+  for name, value in pairs(request.headers) do
+    table.insert(parts, "-H")
+    table.insert(parts, vim.fn.shellescape(name .. ": " .. value))
+  end
+
+  if request.body then
+    table.insert(parts, "-d")
+    table.insert(parts, vim.fn.shellescape(request.body))
+  end
+
+  if request.proxy then
+    table.insert(parts, "-x")
+    table.insert(parts, vim.fn.shellescape(request.proxy))
+  end
+
+  table.insert(parts, vim.fn.shellescape(request.url))
+
+  if request.debug then
+    table.insert(parts, "-v")
+  end
+
+  return table.concat(parts, " ")
+end
+
 do
   local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
   assert_match(cmd, "curl", "curl cmd: contains curl")
@@ -603,7 +652,7 @@ do
   if http_runner then
     assert_eq(http_runner.runner, "curl", "config: http runner uses curl")
     assert_eq(type(http_runner.template), "function", "config: http template is a function")
-    assert_eq(http_runner.timeout, 30000, "config: http timeout is 30000ms")
+    assert_eq(http_runner.timeout, 10000, "config: http timeout is 10000ms")
   end
 end
 
@@ -1187,6 +1236,108 @@ do
   -- Note: only @name, @proxy, @debug are mapped to request fields currently
   -- But parse_metadata should handle them
   assert_eq(req.name, "my-req", "value-less meta: @name still works")
+end
+
+-- ============================================
+-- Section 28: @timeout metadata support
+-- ============================================
+
+io.write("\n--- @timeout support ---\n\n")
+
+do
+  -- @timeout parsed as metadata with numeric value
+  local req, err = http.parse_request("# @timeout 60\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@timeout: request parses successfully")
+  if req then
+    assert_eq(req.timeout, "60", "@timeout: timeout value is '60'")
+    assert_eq(req.method, "GET", "@timeout: method still parsed correctly")
+  end
+end
+
+do
+  -- @timeout with @name and @debug together
+  local req, err = http.parse_request("# @name test-req\n# @timeout 30\n# @debug\nGET https://httpbin.org/get\n")
+  assert_true(req ~= nil, "@timeout+meta: request parses successfully")
+  if req then
+    assert_eq(req.timeout, "30", "@timeout+meta: timeout is 30")
+    assert_eq(req.name, "test-req", "@timeout+meta: name is correct")
+    assert_eq(req.debug, true, "@timeout+meta: debug is true")
+  end
+end
+
+do
+  -- @timeout should add --max-time in curl command
+  local cmd = build_cmd_from_text_with_timeout("# @timeout 60\nGET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "@timeout cmd: command built successfully")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout cmd: contains --max-time flag")
+    assert_match(cmd, "60", "@timeout cmd: contains timeout value 60")
+  end
+end
+
+do
+  -- Without @timeout, no --max-time flag
+  local cmd = build_cmd_from_text("GET https://httpbin.org/get\n")
+  assert_true(cmd ~= nil, "no @timeout cmd: command built successfully")
+  if cmd then
+    assert_true(not cmd:match("%-%-max%-time"), "no @timeout cmd: does not contain --max-time flag")
+  end
+end
+
+do
+  -- @timeout sets vim.b.runner_timeout via build_curl_command integration
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# @timeout 5",
+    "GET https://httpbin.org/get",
+  })
+  vim.bo[buf].filetype = "http"
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+  -- Clear any existing runner_timeout
+  vim.b[buf].runner_timeout = nil
+
+  local cmd = http.build_curl_command("curl", "")
+  assert_true(cmd ~= nil, "@timeout integration: build_curl_command returns a command")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout integration: command contains --max-time")
+    assert_match(cmd, "5", "@timeout integration: command contains timeout value")
+    -- Check vim.b.runner_timeout was set
+    assert_eq(vim.b[buf].runner_timeout, 5000, "@timeout integration: vim.b.runner_timeout set to 5000ms")
+  end
+
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+do
+  -- Default timeout is 10000ms for HTTP runner
+  local config = require("nvim-runner.config")
+  config.setup({})
+  local http_runner = config.options.runners.http
+  assert_true(http_runner ~= nil, "@timeout default: http runner exists")
+  if http_runner then
+    assert_eq(http_runner.timeout, 10000, "@timeout default: HTTP runner default timeout is 10000ms")
+  end
+end
+
+do
+  -- @timeout with decimal value
+  local req, err = http.parse_request("# @timeout 2.5\nGET https://example.com\n")
+  assert_true(req ~= nil, "@timeout decimal: parses successfully")
+  if req then
+    assert_eq(req.timeout, "2.5", "@timeout decimal: timeout value is '2.5'")
+  end
+end
+
+do
+  -- @timeout decimal in curl command
+  local cmd = build_cmd_from_text_with_timeout("# @timeout 2.5\nGET https://example.com\n")
+  assert_true(cmd ~= nil, "@timeout decimal cmd: command built successfully")
+  if cmd then
+    assert_match(cmd, "%-%-max%-time", "@timeout decimal cmd: contains --max-time")
+    assert_match(cmd, "2.5", "@timeout decimal cmd: contains timeout value 2.5")
+  end
 end
 
 -- ============================================

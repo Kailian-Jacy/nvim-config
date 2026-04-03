@@ -4,6 +4,7 @@
     "body": [
       "# @name ${1:request-name}",
       "# # @proxy http://127.0.0.1:7891",
+      "# # @timeout 10",
       "# # @debug",
       "",
       "GET ${2:https://example.com/api/endpoint} HTTP/1.1",
@@ -21,6 +22,7 @@
     "body": [
       "# @name ${1:request-name}",
       "# # @proxy http://127.0.0.1:7891",
+      "# # @timeout 10",
       "# # @debug",
       "",
       "POST ${2:https://example.com/api/endpoint} HTTP/1.1",
@@ -42,6 +44,7 @@
     "body": [
       "# @name ${1:request-name}",
       "# # @proxy http://127.0.0.1:7891",
+      "# # @timeout 10",
       "# # @debug",
       "",
       "PUT ${2:https://example.com/api/endpoint} HTTP/1.1",
@@ -63,6 +66,7 @@
     "body": [
       "# @name ${1:request-name}",
       "# # @proxy http://127.0.0.1:7891",
+      "# # @timeout 10",
       "# # @debug",
       "",
       "DELETE ${2:https://example.com/api/endpoint} HTTP/1.1",
