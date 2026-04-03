@@ -289,6 +289,82 @@ vim.b.runner_timeout = 8000
 :RunnerTimeout! 10000
 ```
 
+## HTTP Request Runner
+
+Run HTTP requests directly from `.http` / `.rest` files using the [VS Code REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) / [JetBrains HTTP Client](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html) format. Powered by `curl`.
+
+### File Format
+
+```http
+# @name example-request
+GET https://httpbin.org/get HTTP/1.1
+Accept: application/json
+
+###
+
+# @proxy http://127.0.0.1:7891
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "name": "test",
+  "value": 42
+}
+```
+
+**Format rules:**
+- **Request line:** `METHOD URL [HTTP-Version]` (HTTP-Version optional)
+- **Headers:** `Name: Value` immediately after the request line
+- **Body:** separated from headers by one blank line
+- **Request separator:** `###` separates multiple requests in one file
+- **Comments:** lines starting with `#` or `//`
+- **Metadata:** `# @name request-name`, `# @proxy http://...`
+
+### Usage
+
+1. Open or create a `.http` / `.rest` file
+2. Place your cursor on the request you want to run
+3. Press `<Ctrl-Shift-Enter>` (or your configured keymap)
+4. The curl response (headers + body) is inserted below the cursor
+
+In files with multiple requests separated by `###`, only the request under the cursor is executed.
+
+### Proxy Configuration
+
+Proxy resolution follows a cascade (highest priority first):
+
+1. **In-file metadata:** `# @proxy http://127.0.0.1:7891` (per-request)
+2. **Neovim global:** `vim.g.http_proxy = "http://127.0.0.1:7891"` (session-wide)
+3. **Environment variables:** `$http_proxy` / `$https_proxy` / `$ALL_PROXY` (system-wide, curl reads these automatically)
+
+### Syntax Highlighting (Tree-sitter)
+
+For syntax highlighting, install the `http` tree-sitter parser:
+
+```vim
+:TSInstall http
+```
+
+The `http` parser is maintained by [rest-nvim/tree-sitter-http](https://github.com/rest-nvim/tree-sitter-http) and provides highlights and folds.
+
+### Configuration
+
+The HTTP runner is included in defaults with a 30-second timeout. To customize:
+
+```lua
+require("nvim-runner").setup({
+  runners = {
+    http = {
+      runner = "curl",
+      template = function(runner, text)
+        return require("nvim-runner.http").build_curl_command(runner, text)
+      end,
+      timeout = 60000,  -- 60 seconds for slow APIs
+    },
+  },
+})
+```
+
 ## Running Tests
 
 ```sh
@@ -302,6 +378,9 @@ nvim --headless -u tests/minimal_init.lua -c "luafile tests/test_fixes_spec.lua"
 
 # String.gsub special character tests
 nvim --headless -u tests/minimal_init.lua -c "luafile tests/test_gsub_special_chars.lua"
+
+# HTTP runner tests
+nvim --headless -u tests/minimal_init.lua -c "luafile tests/test_http_spec.lua"
 ```
 
 ## License

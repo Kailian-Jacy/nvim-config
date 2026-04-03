@@ -7,3 +7,11 @@ if vim.g.loaded_nvim_runner then
   return
 end
 vim.g.loaded_nvim_runner = true
+
+-- Register .http and .rest file extensions as filetype "http"
+vim.filetype.add({
+  extension = {
+    http = "http",
+    rest = "http",
+  },
+})

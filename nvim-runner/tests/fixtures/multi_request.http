@@ -1,0 +1,16 @@
+# First request
+GET https://httpbin.org/get
+Accept: application/json
+
+###
+
+# Second request
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{"key": "value"}
+
+###
+
+# Third request
+DELETE https://httpbin.org/delete

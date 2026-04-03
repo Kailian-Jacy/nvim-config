@@ -52,6 +52,13 @@ M.defaults = {
       runner = "zsh",
       template = "${text}",
     },
+    http = {
+      runner = "curl",
+      template = function(runner, text)
+        return require("nvim-runner.http").build_curl_command(runner, text)
+      end,
+      timeout = 30000, -- HTTP requests may take longer
+    },
   },
   timeout = 3000, -- default timeout in ms
   insert_result = true, -- insert result at cursor position
