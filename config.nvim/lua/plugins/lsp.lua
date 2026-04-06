@@ -135,9 +135,9 @@ return {
         tex = {
           -- "texlab",
         },
-        yaml = {
-          "yaml-language-server",
-        },
+        -- yaml = {
+        --   "yaml-language-server",  -- Handled by LazyVim extra
+        -- },
         xml = {
           "lemminx",
           "xmlformatter",
@@ -234,8 +234,8 @@ return {
       -- docker/docker-compose
       lspconfig.docker_compose_language_service.setup({})
       lspconfig.dockerls.setup({})
-      -- yaml
-      lspconfig.yamlls.setup({})
+      -- yaml: Handled by LazyVim extra (lazyvim.plugins.extras.lang.yaml)
+      -- Do NOT call lspconfig.yamlls.setup() here - it conflicts with LazyVim's config
       -- rust
       -- lspconfig.rust_analyzer.setup({}) -- Rust analyzer configured by rustaceanvim. If enabled, there will be two lsps.
       -- python
