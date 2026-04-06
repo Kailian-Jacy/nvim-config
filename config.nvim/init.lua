@@ -6,9 +6,6 @@ if success and local_funcs.before_all and type(local_funcs.before_all) == "funct
   local_funcs.before_all()
 end
 
-local vimrc = vim.fn.stdpath("config") .. "/vimrc.vim"
-vim.cmd.source(vimrc)
-
 -- load options.
 require("config.options")
 if success and local_funcs.after_options and type(local_funcs.after_options) == "function" then

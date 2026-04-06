@@ -418,6 +418,31 @@ vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 0
 vim.opt.expandtab = true
+vim.opt.smarttab = true
+vim.opt.autoindent = true
+
+-- Search settings (migrated from vimrc.vim)
+vim.opt.incsearch = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.hlsearch = true
+
+-- Wildmenu settings
+vim.opt.wildmode = "longest,list,full"
+vim.opt.wildmenu = true
+
+-- Display settings
+vim.opt.showbreak = "↪\\"
+vim.opt.list = true
+vim.opt.listchars = "tab:→ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨"
+vim.opt.wrap = true
+vim.opt.breakindent = true
+vim.opt.textwidth = 0
+vim.opt.hidden = true
+vim.opt.title = true
+vim.opt.linebreak = true
+vim.opt.smoothscroll = true
+vim.opt.termguicolors = true
 
 -- [ These are the Options needs to be set when migration to new machine. ]
 

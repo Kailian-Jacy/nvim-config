@@ -889,3 +889,19 @@ for _, mapping in ipairs(cmd_mappings) do
     vim.api.nvim_feedkeys(refined_keymap, "m", false)
   end, { desc = mapping.description })
 end
+
+vim.keymap.set({ "n", "v" }, "k", function()
+  return vim.v.count == 0 and "gk" or "k"
+end, { expr = true })
+
+vim.keymap.set({ "n", "v" }, "j", function()
+  return vim.v.count == 0 and "gj" or "j"
+end, { expr = true })
+
+vim.keymap.set("n", "<leader>le", "<cmd>Telescope diagnostics severity=1<cr>", { desc = "List errors" })
+vim.keymap.set("n", "<leader>lw", "<cmd>Telescope diagnostics severity=2<cr>", { desc = "List warnings" })
+
+vim.keymap.set("n", "<leader>sd", "<cmd>Telescope dap commands<cr>", { desc = "DAP commands" })
+vim.keymap.set("n", "<leader>df", "<cmd>Telescope dap configurations<cr>", { desc = "DAP configurations" })
+vim.keymap.set("n", "<leader>db", "<cmd>Telescope dap list_breakpoints<cr>", { desc = "DAP breakpoints" })
+vim.keymap.set("n", "<leader>dv", "<cmd>Telescope dap variables<cr>", { desc = "DAP variables" })

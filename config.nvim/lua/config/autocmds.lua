@@ -1695,3 +1695,70 @@ vim.api.nvim_create_user_command("NeovideTransparentToggle", function()
     end
   end
 end, {})
+
+vim.api.nvim_create_autocmd("VimLeave", {
+  pattern = "*",
+  command = "set guicursor=a:ver10-blinkon1",
+})
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  pattern = "*",
+  command = "highlight CursorLineNr cterm=bold term=bold gui=bold",
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "html", "css", "xml", "json" },
+  callback = function()
+    vim.bo.shiftwidth = 2
+    vim.bo.tabstop = 2
+    vim.bo.softtabstop = 2
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.bo.shiftwidth = 4
+    vim.bo.tabstop = 4
+    vim.bo.softtabstop = 4
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "journal",
+  callback = function()
+    vim.bo.shiftwidth = 2
+    vim.bo.tabstop = 2
+    vim.bo.softtabstop = 2
+  end,
+})
+
+vim.g.QFdelete = function(bufnr, firstline, lastline)
+  local qfl = vim.fn.getqflist()
+  for i = lastline, firstline, -1 do
+    table.remove(qfl, i)
+  end
+  vim.fn.setqflist({}, "r", { items = qfl })
+  vim.fn.setpos(".", { bufnr, firstline, 1, 0 })
+end
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  pattern = "quickfix",
+  callback = function()
+    if vim.bo.buftype == "quickfix" then
+      local bufnr = vim.fn.bufnr()
+      vim.keymap.set("n", "dd", function()
+        local line = vim.fn.line(".")
+        vim.g.QFdelete(bufnr, line, line)
+      end, { buffer = true, silent = true })
+      vim.keymap.set("x", "d", function()
+        local firstline = vim.fn.line("v")
+        local lastline = vim.fn.line(".")
+        if firstline > lastline then
+          firstline, lastline = lastline, firstline
+        end
+        vim.g.QFdelete(bufnr, firstline, lastline)
+      end, { buffer = true, silent = true })
+    end
+  end,
+})
