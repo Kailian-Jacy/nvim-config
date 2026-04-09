@@ -594,8 +594,10 @@ vim.api.nvim_create_autocmd("FileType", {
       -- Neovim 0.12: :TSBufEnable was removed; use built-in API.
       -- Enable vim regex highlighting alongside treesitter to preserve
       -- the previous additional_vim_regex_highlighting = true behavior.
-      pcall(vim.treesitter.start)
-      vim.bo.syntax = "on"
+      local ok = pcall(vim.treesitter.start)
+      if ok then
+        vim.bo.syntax = "on"
+      end
     else
       vim.bo.syntax = "on"
     end

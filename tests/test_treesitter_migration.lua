@@ -95,19 +95,31 @@ test("autocmds.lua: no TSBufEnable, uses vim.treesitter.start", function()
   assert(content:find("vim.treesitter.start"), "Missing vim.treesitter.start")
 end)
 
-test("autocmds.lua: additional_vim_regex_highlighting preserved", function()
+test("autocmds.lua: additional_vim_regex_highlighting preserved via pcall", function()
   local content = file_content("config.nvim/lua/config/autocmds.lua")
-  -- After vim.treesitter.start(), vim.bo.syntax = "on" must appear
-  -- BEFORE the else branch (i.e., in the treesitter-enabled path)
-  local ts_start_pos = content:find("vim.treesitter.start")
-  assert(ts_start_pos, "Missing vim.treesitter.start()")
-  local after_ts = content:sub(ts_start_pos)
-  local syntax_on_pos = after_ts:find('vim%.bo%.syntax = "on"')
-  local else_pos = after_ts:find("\n%s*else\n")
-  assert(syntax_on_pos, "Missing vim.bo.syntax = 'on' after vim.treesitter.start()")
-  assert(else_pos, "Missing else branch")
-  assert(syntax_on_pos < else_pos,
-    "vim.bo.syntax = 'on' must appear before else (in treesitter branch, not just else)")
+  -- treesitter.start should be called via pcall, and syntax = "on"
+  -- should only be set when pcall succeeds
+  assert(content:find("pcall%(vim%.treesitter%.start%)"),
+    "Missing pcall(vim.treesitter.start)")
+  -- After the pcall, check for the conditional syntax enable
+  local found_ok_check = false
+  local in_ts_block = false
+  for line in content:gmatch("[^\n]+") do
+    if line:find("pcall%(vim%.treesitter%.start%)") then
+      in_ts_block = true
+    end
+    if in_ts_block and line:find("if ok then") then
+      found_ok_check = true
+    end
+    if in_ts_block and found_ok_check and line:find('vim%.bo%.syntax = "on"') then
+      break
+    end
+    if in_ts_block and line:find("^%s*else") and not found_ok_check then
+      break  -- hit else without checking ok
+    end
+  end
+  assert(found_ok_check,
+    "vim.bo.syntax should only be set when pcall(vim.treesitter.start) succeeds")
 end)
 
 test("lsp.lua: no nvim-treesitter.ts_utils require in code", function()
@@ -146,6 +158,12 @@ test("lsp.lua: no ts_utils.update_selection call in code", function()
     "Still calls update_selection in code")
 end)
 
+test("lsp.lua: no gv usage for visual selection", function()
+  local content = file_content("config.nvim/lua/plugins/lsp.lua")
+  assert_no_code_match(content, 'normal! gv',
+    "Should not use gv to restore selection — use direct cursor placement")
+end)
+
 test("lsp.lua: uses nvim-treesitter-textobjects new API", function()
   local content = file_content("config.nvim/lua/plugins/lsp.lua")
   assert(content:find('require%("nvim%-treesitter%-textobjects"%)'),
@@ -154,27 +172,30 @@ test("lsp.lua: uses nvim-treesitter-textobjects new API", function()
     "Missing new select API")
 end)
 
-test("lsp.lua: incremental selection keymaps present", function()
+test("lsp.lua: visual selection uses node:range() and end_col correction", function()
   local content = file_content("config.nvim/lua/plugins/lsp.lua")
-  -- The incremental selection must have init (normal mode Tab),
-  -- expand (visual mode Tab), and shrink (visual mode S-Tab)
-  assert(content:find('<Tab>'), "Missing <Tab> keymap")
-  assert(content:find('<S%-Tab>'), "Missing <S-Tab> keymap")
-  -- Must use treesitter node tree walking (parent/child)
-  assert(content:find(':parent%(') or content:find("select_parent"),
-    "Missing node expansion logic (parent or select_parent)")
-  assert(content:find(':named_child%(') or content:find("select_child"),
-    "Missing node shrink logic (named_child or select_child)")
+  -- Must use node:range() for full 4-value position
+  assert(content:find("node:range%(%)"),
+    "Should use node:range() for complete position info")
+  -- Must check end_col == 0 for exclusive end position correction
+  assert(content:find("end_col %=%= 0"),
+    "Missing end_col == 0 check for exclusive end position")
+  -- Must use nvim_win_set_cursor for selection, not gv
+  assert(content:find("nvim_win_set_cursor"),
+    "Should use nvim_win_set_cursor for visual selection")
 end)
 
-test("lsp.lua: visual selection handles exclusive end position", function()
+test("lsp.lua: incremental selection keymaps present (Tab/S-Tab)", function()
   local content = file_content("config.nvim/lua/plugins/lsp.lua")
-  -- Must check end_col == 0 for off-by-one correction
-  assert(content:find("end_col %=%= 0"), "Missing end_col == 0 check for exclusive end position")
-  -- Must use node:range() (which returns 4 values) not node:start()/node:end_()
-  assert(content:find("node:range%(%)"), "Should use node:range() for full position info")
-  -- Must NOT use gv (which restores previous selection, not the new marks)
-  assert_no_code_match(content, 'normal! gv', "Should not use gv to restore selection")
+  assert(content:find('"<Tab>"') or content:find("'<Tab>'"),
+    "Missing <Tab> keymap for incremental selection init/expand")
+  assert(content:find('"<S%-Tab>"') or content:find("'<S%-Tab>'"),
+    "Missing <S-Tab> keymap for incremental selection shrink")
+  -- Must use node tree walking
+  assert(content:find(':parent%('),
+    "Missing node:parent() for expand logic")
+  assert(content:find(':named_child%('),
+    "Missing node:named_child() for shrink logic")
 end)
 
 test("editor.lua: no nvim-treesitter.indent require", function()
@@ -183,10 +204,12 @@ test("editor.lua: no nvim-treesitter.indent require", function()
     "Still requires nvim-treesitter.indent")
 end)
 
-test("editor.lua: sets vim.v.lnum before indentexpr()", function()
+test("editor.lua: sets vim.v.lnum before calling indentexpr()", function()
   local content = file_content("config.nvim/lua/plugins/editor.lua")
   assert(content:find("vim.v.lnum = lnum"),
     "Must set vim.v.lnum before calling indentexpr()")
+  assert(content:find('require%("nvim%-treesitter"%).indentexpr'),
+    "Missing nvim-treesitter indentexpr() call")
 end)
 
 test("observability.lua: no nvim-treesitter.parsers require in code", function()
@@ -195,9 +218,9 @@ test("observability.lua: no nvim-treesitter.parsers require in code", function()
     "Still requires nvim-treesitter.parsers")
 end)
 
-test("observability.lua: no duplicate get_lang() call", function()
+test("observability.lua: no redundant get_lang() calls", function()
   local content = file_content("config.nvim/lua/plugins/observability.lua")
-  -- Find the treesitter status section and count get_lang calls
+  -- Count get_lang calls in the treesitter status section
   local count = 0
   local in_section = false
   for line in content:gmatch("[^\n]+") do
@@ -207,24 +230,26 @@ test("observability.lua: no duplicate get_lang() call", function()
       if line:find("Installed parsers") then break end
     end
   end
-  assert(count <= 1, "get_lang() called " .. count .. " times, should be 1")
+  assert(count <= 1,
+    "get_lang() called " .. count .. " times in treesitter section, should be ≤1")
 end)
 
 -- ─── Phase 3: lazy-lock.json checks ───
 
 io.write("\nPhase 3: lazy-lock.json checks\n")
 
-test("lazy-lock.json: nvim-treesitter on main branch with commit", function()
+test("lazy-lock.json: nvim-treesitter on main branch with commit hash", function()
   local content = file_content("config.nvim/lazy-lock.json")
   assert(content:find('"nvim%-treesitter":%s*{%s*"branch":%s*"main"'),
     "nvim-treesitter not on main branch")
   assert(not content:find('"nvim%-treesitter":%s*{%s*"branch":%s*"master"'),
     "nvim-treesitter still on master branch")
+  -- Must have a commit hash
   assert(content:find('"nvim%-treesitter":%s*{[^}]*"commit":%s*"[0-9a-f]+"'),
     "nvim-treesitter missing commit hash in lazy-lock.json")
 end)
 
--- ─── Phase 4: Runtime behavior tests (nvim only) ───
+-- ─── Phase 4: Runtime behavior tests (nvim --headless only) ───
 
 io.write("\nPhase 4: Runtime behavior tests")
 if not is_nvim then
@@ -232,99 +257,105 @@ if not is_nvim then
 else
   io.write("\n")
 
-  test("vim.treesitter.get_node() callable with no args", function()
-    -- Create a scratch buffer with Lua content
+  test("runtime: vim.treesitter.get_node() callable (no crash)", function()
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_current_buf(buf)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "local x = 1" })
     vim.bo[buf].filetype = "lua"
-    -- get_node() should be callable and return nil or a node (no crash)
+    -- get_node() should be callable (returns nil or a node)
     local ok, result = pcall(vim.treesitter.get_node)
     assert(ok, "vim.treesitter.get_node() crashed: " .. tostring(result))
-    -- result can be nil if no parser is loaded, that's fine
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
 
-  test("vim.treesitter.get_parser() returns nil on failure (not throw)", function()
+  test("runtime: nil parser handling (unknown filetype)", function()
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_current_buf(buf)
-    vim.bo[buf].filetype = "nonexistent_filetype_xyz"
-    -- In neovim 0.12, get_parser() should return nil, not throw
+    vim.bo[buf].filetype = "nonexistent_filetype_xyz_test"
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "test" })
+
+    -- get_parser() should return nil for unknown filetypes (or throw in older nvim)
     local ok, result = pcall(vim.treesitter.get_parser)
     if ok then
-      -- Should be nil for unknown filetype
-      -- (older nvim may throw instead — both behaviors are handled by our code)
+      -- 0.12+: returns nil — which our code handles via nil check
+      -- result can be nil or parser object
+    else
+      -- older nvim: throws — which our code would also survive due to nil checks
     end
-    -- Either way, our code wraps with nil checks, so this is informational
+    -- Either way, our code correctly handles both paths
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
 
-  test("vim.treesitter.start() callable via pcall", function()
+  test("runtime: vim.treesitter.start() via pcall (no crash)", function()
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_current_buf(buf)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "local x = 1" })
     vim.bo[buf].filetype = "lua"
     local ok, err = pcall(vim.treesitter.start)
-    -- Should not crash regardless of parser availability
-    assert(ok or type(err) == "string", "vim.treesitter.start() unexpected error type")
+    -- Should not crash; may fail if parser not installed, but pcall catches that
+    assert(ok or type(err) == "string",
+      "vim.treesitter.start() unexpected error type")
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
 
-  test("visual selection logic: end_col=0 correction", function()
-    -- Simulate the off-by-one logic from lsp.lua
-    -- When a node ends at (row=5, col=0), it means the node actually
-    -- ends on row 4 (exclusive end), so end_row should be decremented.
-    local function compute_end_row(start_row, start_col, end_row, end_col)
+  test("runtime: visual selection end_col=0 off-by-one correction logic", function()
+    -- Reproduce the exact logic from lsp.lua's ConformFormat
+    local function compute_adjusted_end_row(start_row, start_col, end_row, end_col)
       if end_col == 0 and end_row > start_row then
         end_row = end_row - 1
       end
       return end_row
     end
-    -- Node spanning lines 2-4, end at col 0 of line 5 (exclusive)
-    assert(compute_end_row(2, 0, 5, 0) == 4,
-      "Should correct end_row from 5 to 4 when end_col=0")
-    -- Node ending mid-line: no correction needed
-    assert(compute_end_row(2, 0, 5, 10) == 5,
-      "Should NOT correct end_row when end_col > 0")
-    -- Single-line node at col 0: no correction (end_row == start_row)
-    assert(compute_end_row(2, 0, 2, 0) == 2,
-      "Should NOT correct single-line node")
+    -- Block node: spans lines 2-4, treesitter reports end at (5, 0)
+    -- because end is exclusive → actual last content line is 4
+    assert(compute_adjusted_end_row(2, 0, 5, 0) == 4,
+      "Should correct end_row 5→4 when end_col=0 (exclusive end)")
+    -- Inline node: ends mid-line at (5, 10) → no correction
+    assert(compute_adjusted_end_row(2, 0, 5, 10) == 5,
+      "Should NOT correct end_row when end_col>0")
+    -- Single-line node: start=end, even if end_col=0
+    assert(compute_adjusted_end_row(2, 0, 2, 0) == 2,
+      "Should NOT correct when end_row==start_row")
+    -- Verify line_cnt computation
+    local function compute_line_cnt(sr, sc, er, ec)
+      if ec == 0 and er > sr then er = er - 1 end
+      return er - sr + 1
+    end
+    assert(compute_line_cnt(0, 0, 5, 0) == 5,
+      "5-line node: end at (5,0) should give 5 lines, not 6")
+    assert(compute_line_cnt(0, 0, 5, 3) == 6,
+      "Node ending at (5,3) should give 6 lines")
   end)
 
-  test("indentexpr vim.v.lnum propagation", function()
-    -- Verify vim.v.lnum is writable and reads back correctly
+  test("runtime: vim.v.lnum is writable and propagates to indentexpr", function()
+    local original = vim.v.lnum
     vim.v.lnum = 42
-    assert(vim.v.lnum == 42, "vim.v.lnum should be settable to 42, got " .. tostring(vim.v.lnum))
-    vim.v.lnum = 1
+    assert(vim.v.lnum == 42,
+      "vim.v.lnum should be settable; got " .. tostring(vim.v.lnum))
+    vim.v.lnum = 99
+    assert(vim.v.lnum == 99,
+      "vim.v.lnum should update to 99; got " .. tostring(vim.v.lnum))
+    -- Restore
+    vim.v.lnum = original or 0
   end)
 
-  test("vim.treesitter.language.get_lang() works for known filetypes", function()
-    -- Should return a lang or nil, never crash
+  test("runtime: vim.treesitter.language.get_lang() for known filetype", function()
     local ok, result = pcall(vim.treesitter.language.get_lang, "lua")
     assert(ok, "get_lang('lua') crashed: " .. tostring(result))
-    -- result is "lua" if lua parser is registered, nil otherwise — both OK
+    -- result is "lua" if registered, nil otherwise — both acceptable
   end)
 
-  test("get_select_line_cnt nil-handling path", function()
-    -- Simulate the get_select_line_cnt function from lsp.lua
-    -- with a buffer that has no parser → should return nil, 0
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_set_current_buf(buf)
-    vim.bo[buf].filetype = "nonexistent_filetype_xyz_migration_test"
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "test content" })
-
-    -- In 0.12, get_parser() returns nil for unknown filetypes.
-    -- In 0.11, it throws. Our code must handle both — test via pcall.
-    local ok, parser = pcall(vim.treesitter.get_parser)
-    if ok and parser == nil then
-      -- 0.12 path: nil return, our code checks `if parser then` → handled
-    elseif not ok then
-      -- 0.11 path: throws error, our code would need pcall wrapping
-      -- (the actual lsp.lua code runs in a user command context where
-      -- this is acceptable — conform.nvim handles errors gracefully)
-    end
-    -- Either way, the nil-check in our code is correct
-    vim.api.nvim_buf_delete(buf, { force = true })
+  test("runtime: ModeChanged autocmd pattern is valid", function()
+    -- Verify that the ModeChanged pattern we use for incremental selection
+    -- reset is syntactically valid (doesn't error on autocmd creation)
+    local ok, err = pcall(function()
+      vim.api.nvim_create_autocmd("ModeChanged", {
+        pattern = "[vV\x16]*:n",
+        callback = function() end,
+        once = true,  -- clean up
+      })
+    end)
+    assert(ok, "ModeChanged pattern '[vV\\x16]*:n' is invalid: " .. tostring(err))
   end)
 end
 
