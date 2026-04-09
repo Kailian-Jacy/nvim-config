@@ -164,6 +164,59 @@ return {
       vim.keymap.set({ "x", "o" }, "ic", function()
         select_textobject("@class.inner", "textobjects")
       end, { desc = "Select inner class" })
+
+      -- Incremental selection (Tab/Shift-Tab) — replaces the removed
+      -- nvim-treesitter incremental_selection module.
+      -- Uses built-in vim.treesitter API to walk the node tree.
+      local _inc_sel_node = nil  -- tracks current node for incremental expansion
+
+      -- Helper: select a treesitter node in linewise visual mode
+      local function select_node(node)
+        if not node then return end
+        local start_row, _, end_row, end_col = node:range()
+        if end_col == 0 and end_row > start_row then
+          end_row = end_row - 1
+        end
+        vim.api.nvim_win_set_cursor(0, { start_row + 1, 0 })
+        vim.cmd("normal! V")
+        vim.api.nvim_win_set_cursor(0, { end_row + 1, 0 })
+      end
+
+      -- Init / expand selection (Tab)
+      vim.keymap.set("n", "<Tab>", function()
+        local node = vim.treesitter.get_node()
+        if not node then return end
+        _inc_sel_node = node
+        select_node(node)
+      end, { desc = "Init treesitter incremental selection" })
+
+      vim.keymap.set("x", "<Tab>", function()
+        if not _inc_sel_node then return end
+        local parent = _inc_sel_node:parent()
+        if parent then
+          _inc_sel_node = parent
+          select_node(parent)
+        end
+      end, { desc = "Expand treesitter selection to parent node" })
+
+      -- Shrink selection (Shift-Tab)
+      vim.keymap.set("x", "<S-Tab>", function()
+        if not _inc_sel_node then return end
+        -- Find the first named child to shrink to
+        local child = _inc_sel_node:named_child(0)
+        if child then
+          _inc_sel_node = child
+          select_node(child)
+        end
+      end, { desc = "Shrink treesitter selection to child node" })
+
+      -- Reset tracked node when leaving visual mode
+      vim.api.nvim_create_autocmd("ModeChanged", {
+        pattern = "[vV\x16]*:n",
+        callback = function()
+          _inc_sel_node = nil
+        end,
+      })
     end,
   },
   {
@@ -355,10 +408,16 @@ return {
             return nil, 0
           end
 
-          local start = node:start()
-          local ends = node:end_()
+          -- Use full range to handle exclusive end positions correctly
+          local start_row, start_col, end_row, end_col = node:range()
+          -- Treesitter uses exclusive end: when end_col == 0, the node
+          -- actually ends on the previous line (common for block-level nodes)
+          if end_col == 0 and end_row > start_row then
+            end_row = end_row - 1
+          end
 
-          return node, ends - start + 1
+          local line_cnt = end_row - start_row + 1
+          return node, line_cnt
         end
 
         -- Restrict mode selection size.
@@ -370,13 +429,16 @@ return {
             return
           else
             -- Neovim 0.12: ts_utils.update_selection() was removed;
-            -- manually set visual selection to the node's line range
-            local bufnr = vim.api.nvim_get_current_buf()
-            local start_row = node:start()
-            local end_row = node:end_()
-            vim.api.nvim_buf_set_mark(bufnr, "<", start_row + 1, 0, {})
-            vim.api.nvim_buf_set_mark(bufnr, ">", end_row + 1, 0, {})
-            vim.cmd("normal! gvV")
+            -- select the node's line range using linewise visual mode
+            local start_row, _, end_row, end_col = node:range()
+            -- Adjust for exclusive end position
+            if end_col == 0 and end_row > start_row then
+              end_row = end_row - 1
+            end
+            -- Enter linewise visual mode covering the node's range
+            vim.api.nvim_win_set_cursor(0, { start_row + 1, 0 })
+            vim.cmd("normal! V")
+            vim.api.nvim_win_set_cursor(0, { end_row + 1, 0 })
           end
         end
         require("conform").format({ async = true, lsp_format = "fallback" }, function(err)

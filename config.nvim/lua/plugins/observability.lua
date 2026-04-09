@@ -120,8 +120,8 @@ return {
         -- Neovim 0.12: nvim-treesitter.parsers was removed;
         -- use built-in vim.treesitter API instead
         local current_ft = vim.bo.filetype
-        local has_parser = vim.treesitter.language.get_lang(current_ft) ~= nil
-            and pcall(vim.treesitter.language.inspect, vim.treesitter.language.get_lang(current_ft))
+        local lang = vim.treesitter.language.get_lang(current_ft)
+        local has_parser = lang ~= nil and pcall(vim.treesitter.language.inspect, lang)
         add(string.format("🌲 Treesitter: parser for '%s': %s", current_ft, has_parser and "✓" or "✗"))
 
         -- List installed parsers count
