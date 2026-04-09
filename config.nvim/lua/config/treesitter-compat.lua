@@ -21,14 +21,15 @@
 
 local M = {}
 
+-- Track which shims are installed (for diagnostics)
+-- Initialise before the version gate so M._installed is never nil.
+M._installed = {}
+
 -- Only install shims on Neovim 0.12+ where the modules were removed
 local version = vim.version()
 if version.major == 0 and version.minor < 12 then
   return M
 end
-
--- Track which shims are installed (for diagnostics)
-M._installed = {}
 
 local function install(mod_name, factory)
   if package.preload[mod_name] then
@@ -167,6 +168,75 @@ install("nvim-treesitter.textobjects", function()
     move = {},
     swap = {},
   }
+end)
+
+-------------------------------------------------------------------------------
+-- nvim-treesitter.query  (used by go.nvim ts/nodes.lua → iter_prepared_matches)
+-------------------------------------------------------------------------------
+install("nvim-treesitter.query", function()
+  local query = {}
+
+  --- Stub for the removed iter_prepared_matches.
+  --- Returns an empty iterator so `for match in ...` loops simply skip.
+  function query.iter_prepared_matches(_parsed_query, _root, _bufnr, _start_row, _end_row)
+    return function() return nil end
+  end
+
+  --- get_query — forward to vim.treesitter.query.get when available
+  function query.get_query(lang, query_name)
+    local ok, result = pcall(vim.treesitter.query.get, lang, query_name)
+    if ok then return result end
+    return nil
+  end
+
+  return setmetatable(query, {
+    __index = function(_, _key)
+      return function() end
+    end,
+  })
+end)
+
+-------------------------------------------------------------------------------
+-- nvim-treesitter.utils  (dead import in go.nvim ts/go.lua — needs empty stub)
+-------------------------------------------------------------------------------
+install("nvim-treesitter.utils", function()
+  return setmetatable({}, {
+    __index = function(_, _key)
+      return function() end
+    end,
+  })
+end)
+
+-------------------------------------------------------------------------------
+-- nvim-treesitter.info  (used by go.nvim health.lua → installed_parsers())
+-------------------------------------------------------------------------------
+install("nvim-treesitter.info", function()
+  local info = {}
+
+  --- Return a list of parser languages that Neovim can load.
+  --- In 0.12+ parsers ship with Neovim itself; we probe
+  --- vim.treesitter.language.inspect to build the list.
+  function info.installed_parsers()
+    local available = {}
+    local candidates = {
+      "bash", "c", "cpp", "css", "go", "gomod", "gosum", "gowork",
+      "html", "java", "javascript", "json", "lua", "markdown",
+      "python", "query", "regex", "rust", "toml", "tsx", "typescript",
+      "vim", "vimdoc", "yaml", "zig",
+    }
+    for _, lang in ipairs(candidates) do
+      if pcall(vim.treesitter.language.inspect, lang) then
+        table.insert(available, lang)
+      end
+    end
+    return available
+  end
+
+  return setmetatable(info, {
+    __index = function(_, _key)
+      return function() return {} end
+    end,
+  })
 end)
 
 -- Log installed shims at DEBUG level for diagnostics

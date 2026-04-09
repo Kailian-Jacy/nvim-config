@@ -1,6 +1,21 @@
 -- Test: treesitter compatibility shims for neovim 0.12+
 -- Run: nvim --headless -u NORC -l tests/test_treesitter_compat_shims.lua
 
+-- ─── Version gate ───────────────────────────────────────────────────────────
+-- The shims are only installed on Neovim 0.12+.  On earlier versions almost
+-- every test would fail because the shim early-returns an empty table and
+-- package.preload entries are never registered.  Skip gracefully.
+local version = vim.version()
+if version.major == 0 and version.minor < 12 then
+  io.write("\n=== Treesitter Compat Shim Tests ===\n")
+  io.write(string.format(
+    "  ⏭  Skipping: Neovim %d.%d (shims only apply to 0.12+)\n\n",
+    version.major, version.minor
+  ))
+  io.write("=== Results: 0 passed, 0 failed (skipped) ===\n\n")
+  os.exit(0)
+end
+
 local passed = 0
 local failed = 0
 local errors = {}
@@ -38,6 +53,9 @@ local shim_modules = {
   "nvim-treesitter.indent",
   "nvim-treesitter.highlight",
   "nvim-treesitter.textobjects",
+  "nvim-treesitter.query",
+  "nvim-treesitter.utils",
+  "nvim-treesitter.info",
 }
 
 -- Load shims first
@@ -122,6 +140,44 @@ test("nvim-treesitter.highlight functions are callable", function()
   hl.detach(0)
 end)
 
+-- ── New tests for missing shim modules (go.nvim compat) ──
+
+test("nvim-treesitter.query.iter_prepared_matches() returns iterator", function()
+  local ts_query = require("nvim-treesitter.query")
+  local iter = ts_query.iter_prepared_matches(nil, nil, 0, 0, 0)
+  assert(type(iter) == "function", "iter_prepared_matches should return a function (iterator)")
+  -- Iterator should immediately return nil (empty)
+  assert(iter() == nil, "empty iterator should return nil on first call")
+end)
+
+test("nvim-treesitter.query unknown function returns no-op", function()
+  local ts_query = require("nvim-treesitter.query")
+  local fn = ts_query.some_nonexistent_function
+  assert(type(fn) == "function", "unknown function should return a function stub")
+  fn() -- should not error
+end)
+
+test("nvim-treesitter.utils is a valid table with fallback", function()
+  local utils = require("nvim-treesitter.utils")
+  assert(type(utils) == "table", "utils should be a table")
+  -- Any unknown key should return a no-op function
+  local fn = utils.some_nonexistent_function
+  assert(type(fn) == "function", "unknown function should return a function stub")
+  fn() -- should not error
+end)
+
+test("nvim-treesitter.info.installed_parsers() returns table", function()
+  local info = require("nvim-treesitter.info")
+  local parsers = info.installed_parsers()
+  assert(type(parsers) == "table", "installed_parsers should return a table")
+end)
+
+test("nvim-treesitter.info unknown function returns stub", function()
+  local info = require("nvim-treesitter.info")
+  local fn = info.some_nonexistent_function
+  assert(type(fn) == "function", "unknown function should return a function stub")
+end)
+
 io.write("\nPhase 4: Config file syntax checks\n")
 
 test("treesitter-compat.lua syntax is valid", function()
@@ -132,6 +188,16 @@ end)
 test("init.lua syntax is valid", function()
   local fn, err = loadfile("config.nvim/init.lua")
   assert(fn, "Syntax error: " .. tostring(err))
+end)
+
+io.write("\nPhase 5: Structural checks\n")
+
+test("M._installed is always initialised (not nil)", function()
+  -- Force a fresh load
+  package.loaded["config.treesitter-compat"] = nil
+  local compat = dofile("config.nvim/lua/config/treesitter-compat.lua")
+  assert(type(compat._installed) == "table",
+    "_installed must be a table, got " .. type(compat._installed))
 end)
 
 -- ─── Summary ───
