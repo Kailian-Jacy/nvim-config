@@ -105,7 +105,7 @@ return {
       providers = {
         deepseek_internal = {
           disable = false,
-          endpoint = os.getenv("DEEPSEEK_INTERNAL_ENDPOINT"),
+          endpoint = os.getenv("DEEPSEEK_INTERNAL_ENDPOINT_EXTENDED"),
           secret = os.getenv("DEEPSEEK_INTERNAL_API_KEY"),
         }
       },

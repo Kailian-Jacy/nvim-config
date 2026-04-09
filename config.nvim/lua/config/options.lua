@@ -106,17 +106,17 @@ vim.g.neovide_cursor_animate_command_line = true
 vim.g.neovide_cursor_trail_size = 0.1
 
 -- appearance
-local alpha = function(transparency)
-  return string.format("%x", math.floor(255 * transparency))
-end
-vim.g.neovide_opacity = 0.99
-vim.g.neovide_normal_opacity = 0.3
+-- local alpha = function(transparency)
+--   return string.format("%x", math.floor(255 * transparency))
+-- end
+vim.g.neovide_opacity = 1
+vim.g.neovide_normal_opacity = 0.95
 
 -- Last location
 vim.g.LAST_WORKING_DIRECTORY = "~"
 
 -- Background color transparency.
-vim.g.neovide_background_color = "#13103d" .. alpha(vim.g.transparency or 0.86)
+vim.g.neovide_background_color = "#13103d"
 
 -- padding surrounding.
 vim.g.neovide_padding_top = 10

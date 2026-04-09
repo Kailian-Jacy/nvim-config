@@ -300,22 +300,7 @@ return {
           lualine_a = {
             { "filename", path = 1 },
           },
-          lualine_b = {
-            -- Git branch and diff stats (Issue #13: scriptlize git info for workflow)
-            { "branch", icon = "" },
-            {
-              "diff",
-              colored = true,
-              symbols = { added = "+", modified = "~", removed = "-" },
-              source = function()
-                -- Use gitsigns data if available (already computed, no extra overhead)
-                local gs = vim.b.gitsigns_status_dict
-                if gs then
-                  return { added = gs.added, modified = gs.changed, removed = gs.removed }
-                end
-              end,
-            },
-          },
+          lualine_b = {},
           lualine_c = {},
           lualine_x = {
             dap_block

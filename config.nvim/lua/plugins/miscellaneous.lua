@@ -91,15 +91,12 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
+    lazy = false,
+    commit = "4916d65",
+    build = ":TSUpdate",
     dependencies = { "HiPhish/rainbow-delimiters.nvim" },
-    opts = function(_, opts)
-      opts.auto_install = true
-      opts.rainbow = {
-        enable = true,
-        query = "rainbow-delimiters",
-        strategy = require("rainbow-delimiters").strategy.global,
-      }
-      opts.ensure_installed = {
+    config = function()
+      require("nvim-treesitter").install({
         "bash",
         "python", -- Pylance does not support highlighting.
 
@@ -136,8 +133,7 @@ return {
         "diff",
         "ssh_config",
         "gitignore"
-      }
-
+      })
       -- zsh does not own its parser. So use bash.
       vim.treesitter.language.register("bash", "zsh")
 
@@ -147,11 +143,21 @@ return {
       -- else 
       --   vim.cmd[[ TSDisable highlight ]]
       -- end
-      opts.indent = {
-        disable = true,
-      }
-      return opts
+      -- opts.indent = {
+      --   disable = true,
+      -- }
     end,
+    -- opts = function(_, opts)
+    --   opts.auto_install = true
+    --   opts.rainbow = {
+    --     enable = true,
+    --     query = "rainbow-delimiters",
+    --     strategy = require("rainbow-delimiters").strategy.global,
+    --   }
+    --
+    --
+    --   return opts
+    -- end,
   },
   {
     "folke/snacks.nvim",
