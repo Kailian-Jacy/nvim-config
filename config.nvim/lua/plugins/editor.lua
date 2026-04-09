@@ -265,7 +265,11 @@ return {
       vim.g._auto_indent_used = true
       require("auto-indent").setup({
         indentexpr = function(lnum)
-          return require("nvim-treesitter.indent").get_indent(lnum)
+          -- Neovim 0.12: nvim-treesitter.indent was removed;
+          -- use the new indentexpr() from nvim-treesitter main branch.
+          -- indentexpr() reads vim.v.lnum internally, so set it first.
+          vim.v.lnum = lnum
+          return require("nvim-treesitter").indentexpr()
         end,
       })
     end,

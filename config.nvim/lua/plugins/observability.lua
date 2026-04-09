@@ -117,14 +117,17 @@ return {
         add("")
 
         -- Treesitter status
-        local ts_ok, ts_parsers = pcall(require, "nvim-treesitter.parsers")
-        if ts_ok then
-          local current_ft = vim.bo.filetype
-          local has_parser = ts_parsers.has_parser(current_ft)
-          add(string.format("🌲 Treesitter: parser for '%s': %s", current_ft, has_parser and "✓" or "✗"))
+        -- Neovim 0.12: nvim-treesitter.parsers was removed;
+        -- use built-in vim.treesitter API instead
+        local current_ft = vim.bo.filetype
+        local lang = vim.treesitter.language.get_lang(current_ft)
+        local has_parser = lang ~= nil and pcall(vim.treesitter.language.inspect, lang)
+        add(string.format("🌲 Treesitter: parser for '%s': %s", current_ft, has_parser and "✓" or "✗"))
 
-          -- List installed parsers count
-          local installed = ts_parsers.available_parsers()
+        -- List installed parsers count
+        local ts_ok, ts_mod = pcall(require, "nvim-treesitter")
+        if ts_ok and ts_mod.get_installed then
+          local installed = ts_mod.get_installed()
           add(string.format("   Installed parsers: %d", #installed))
         end
         add("")
