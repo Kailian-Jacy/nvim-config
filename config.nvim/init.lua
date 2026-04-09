@@ -15,6 +15,11 @@ if success and local_funcs.after_options and type(local_funcs.after_options) == 
   local_funcs.after_options()
 end
 
+-- Neovim 0.12+ compat: inject shims for removed nvim-treesitter submodules
+-- so that third-party plugins referencing the old API don't crash.
+-- Must run BEFORE lazy.nvim loads any plugin.
+require("config.treesitter-compat")
+
 -- load plugins.
 if success and local_funcs.before_plugins_load and type(local_funcs.before_plugins_load) == "function" then
   local_funcs.before_plugins_load()
