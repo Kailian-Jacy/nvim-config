@@ -141,44 +141,29 @@ return {
       { "nvim-treesitter/nvim-treesitter" },
     },
     config = function()
-      -- nvim-treesitter.configs is deprecated in newer treesitter versions;
-      -- use pcall to avoid hard errors and fall back to vim.treesitter built-ins.
-      local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
-      if ok then
-        ts_configs.setup({
-          textobjects = {
-            select = {
-              enable = true,
-              lookahead = true,
-              keymaps = {
-                -- You can use the capture groups defined in textobjects.scm
-                ["af"] = "@function.outer",
-                ["if"] = "@function.inner",
-                ["ac"] = "@class.outer",
-                ["ic"] = "@class.inner",
-              },
-              include_surrounding_whitespace = true,
-            },
-          },
-        })
-        ts_configs.setup({
-          highlight = {
-            enable = true,
-            additional_vim_regex_highlighting = true,
-          },
-          incremental_selection = {
-            enable = true,
-            keymaps = {
-              init_selection = '<Tab>',
-              node_incremental = '<TAB>',
-              node_decremental = '<S-TAB>',
-            }
-          }
-        })
-      else
-        -- Newer treesitter: configure via vim.treesitter directly
-        vim.treesitter.start = vim.treesitter.start or function() end
-      end
+      -- Neovim 0.12 / nvim-treesitter main branch:
+      -- nvim-treesitter.configs is removed; use the new direct API.
+      require("nvim-treesitter-textobjects").setup({
+        select = {
+          lookahead = true,
+          include_surrounding_whitespace = true,
+        },
+      })
+
+      -- Textobject keymaps (previously configured via nvim-treesitter.configs)
+      local select_textobject = require("nvim-treesitter-textobjects.select").select_textobject
+      vim.keymap.set({ "x", "o" }, "af", function()
+        select_textobject("@function.outer", "textobjects")
+      end, { desc = "Select outer function" })
+      vim.keymap.set({ "x", "o" }, "if", function()
+        select_textobject("@function.inner", "textobjects")
+      end, { desc = "Select inner function" })
+      vim.keymap.set({ "x", "o" }, "ac", function()
+        select_textobject("@class.outer", "textobjects")
+      end, { desc = "Select outer class" })
+      vim.keymap.set({ "x", "o" }, "ic", function()
+        select_textobject("@class.inner", "textobjects")
+      end, { desc = "Select inner class" })
     end,
   },
   {
@@ -352,10 +337,9 @@ return {
         end
 
         local get_select_line_cnt = function ()
-          local ts_utils = require "nvim-treesitter.ts_utils"
-          local parsers = require "nvim-treesitter.parsers"
-
-          local parser = parsers.get_parser()
+          -- Neovim 0.12: use built-in vim.treesitter APIs instead of
+          -- removed nvim-treesitter.ts_utils / nvim-treesitter.parsers
+          local parser = vim.treesitter.get_parser()
           if parser then
             parser:parse {
               vim.fn.line "w0" - 1, vim.fn.line "w$"
@@ -365,7 +349,7 @@ return {
             return nil, 0
           end
 
-          local node = ts_utils.get_node_at_cursor()
+          local node = vim.treesitter.get_node()
 
           if node == nil then
             return nil, 0
@@ -385,8 +369,14 @@ return {
           elseif vim.g.max_silent_format_line_cnt and vim.g.max_silent_format_line_cnt > 0 and line_cnt > vim.g.max_silent_format_line_cnt then
             return
           else
-            -- Minimal selection
-            require("nvim-treesitter.ts_utils").update_selection(vim.api.nvim_get_current_buf(), node, "linewise")
+            -- Neovim 0.12: ts_utils.update_selection() was removed;
+            -- manually set visual selection to the node's line range
+            local bufnr = vim.api.nvim_get_current_buf()
+            local start_row = node:start()
+            local end_row = node:end_()
+            vim.api.nvim_buf_set_mark(bufnr, "<", start_row + 1, 0, {})
+            vim.api.nvim_buf_set_mark(bufnr, ">", end_row + 1, 0, {})
+            vim.cmd("normal! gvV")
           end
         end
         require("conform").format({ async = true, lsp_format = "fallback" }, function(err)

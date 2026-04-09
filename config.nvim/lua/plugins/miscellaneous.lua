@@ -92,7 +92,7 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,
-    commit = "4916d65",
+    branch = "main",
     build = ":TSUpdate",
     dependencies = { "HiPhish/rainbow-delimiters.nvim" },
     config = function()
