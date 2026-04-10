@@ -69,7 +69,7 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 
 -- Highlighting Source.
 vim.cmd([[ syntax off ]])                       -- we won't need syntax anytime. Use treesitter at least.
-vim.g.use_treesitter_highlight = { "c", "cpp" }
+vim.g.treesitter_highlight_blacklist = {}
 
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
