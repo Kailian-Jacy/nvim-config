@@ -123,6 +123,9 @@ return {
           "nixfmt",
           "nil",
         },
+        ts = {
+          "typescript-language-server",
+        }
       }
 
       -- Create MasonInstallAll autocmd.
@@ -257,6 +260,8 @@ return {
       lspconfig.pyright.setup({})
       -- nix
       lspconfig.nil_ls.setup({})
+      -- ts
+      lspconfig.ts_ls.setup({})
 
       -- Conditional servers
       if vim.g.modules.cpp and vim.g.modules.cpp.enabled then
