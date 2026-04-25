@@ -71,6 +71,11 @@ vim.cmd([[ set cmdheight=0 noshowmode noruler noshowcmd ]])
 vim.cmd([[ syntax off ]])                       -- we won't need syntax anytime. Use treesitter at least.
 vim.g.treesitter_highlight_blacklist = {}
 
+-- Disable modelines: YAML (and other) files can contain text matching modeline
+-- patterns (e.g. "vim:"), causing Neovim 0.11's sandbox to choke on the
+-- content it tries to parse as options. We don't rely on modelines anywhere.
+vim.opt.modeline = false
+
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
 
