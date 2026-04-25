@@ -705,6 +705,215 @@ return {
                 local tabnr = vim.g.new_tab_at(worktree_path, true, true)
                 vim.fn.settabvar(tabnr, "tabname", item.name)
               end,
+              explore_worktree = function(picker, item)
+                if not item or not item._path then return end
+                local worktree_path = vim.fs.joinpath(item._path, "worktree")
+                if vim.fn.isdirectory(worktree_path) ~= 1 then
+                  vim.print("No worktree for task: " .. (item.name or "?"))
+                  return
+                end
+                picker:close()
+                Snacks.picker.explorer({ cwd = worktree_path })
+              end,
+              pick_mounts = function(picker, item)
+                if not item or not item._path then return end
+                local config_path = vim.fs.joinpath(item._path, "config.toml")
+                local ok, raw_lines = pcall(vim.fn.readfile, config_path)
+                if not ok then
+                  vim.print("Cannot read config for: " .. (item.name or "?"))
+                  return
+                end
+                local raw = table.concat(raw_lines, "\n")
+                local mounts = {}
+                for src, dest in raw:gmatch('%[%[mounts%]%].-source%s*=%s*"([^"]*)".-destination%s*=%s*"([^"]*)"') do
+                  table.insert(mounts, { source = src, destination = dest })
+                end
+                if #mounts == 0 then
+                  vim.print("No mounts for task: " .. (item.name or "?"))
+                  return
+                end
+                local items = {}
+                for _, m in ipairs(mounts) do
+                  table.insert(items, {
+                    text = m.source .. " -> " .. m.destination,
+                    _path = m.source,
+                    file = m.source,
+                    dir = true,
+                  })
+                end
+                picker:close()
+                Snacks.picker.pick({
+                  title = "Mounts: " .. (item.name or "?"),
+                  layout = { preset = "vscode", preview = false },
+                  items = items,
+                  actions = {
+                    explore_mount = function(inner_picker, inner_item)
+                      if not inner_item or not inner_item._path then return end
+                      inner_picker:close()
+                      Snacks.picker.explorer({ cwd = inner_item._path })
+                    end,
+                  },
+                  win = {
+                    input = {
+                      keys = {
+                        ["<c-e>"] = { "explore_mount", mode = { "n", "i" } },
+                        ["<d-e>"] = { "explore_mount", mode = { "n", "i" } },
+                        ["<cr>"] = { "explore_mount", mode = { "n", "i" } },
+                      },
+                    },
+                  },
+                })
+              end,
+              pick_sprints = function(picker, item)
+                if not item or not item._path then return end
+                local config_path = vim.fs.joinpath(item._path, "config.toml")
+                local ok, raw_lines = pcall(vim.fn.readfile, config_path)
+                if not ok then
+                  vim.print("Cannot read config for: " .. (item.name or "?"))
+                  return
+                end
+                local raw = table.concat(raw_lines, "\n")
+                local task_name = item.name or vim.fs.basename(item._path)
+                local items = {}
+                local sprint_section = raw:match('%[sprint%](.-)$')
+                if sprint_section then
+                  local container_id = sprint_section:match('container_id%s*=%s*"([^"]*)"')
+                  local container_name = sprint_section:match('container_name%s*=%s*"([^"]*)"')
+                  local started_at = sprint_section:match('started_at%s*=%s*"([^"]*)"')
+                  table.insert(items, {
+                    text = (container_name or "?") .. "  " .. (started_at or "?"),
+                    name = task_name,
+                    _container_name = container_name,
+                    _container_id = container_id,
+                    _started_at = started_at,
+                    _path = item._path,
+                    _sprint_idx = 1,
+                  })
+                end
+                if #items == 0 then
+                  vim.print("No active sprints for task: " .. task_name)
+                  return
+                end
+                picker:close()
+                local attach_job = nil
+                local term_buf = nil
+                Snacks.picker.pick({
+                  title = task_name,
+                  layout = {
+                    fullscreen = true,
+                    layout = {
+                      box = "horizontal",
+                      {
+                        box = "vertical",
+                        border = true,
+                        width = 0.3,
+                        title = "{title} {live} {flags}",
+                        { win = "input", height = 1, border = "bottom" },
+                        { win = "list", border = "none" },
+                      },
+                      { win = "preview", title = "{preview}", border = true },
+                    },
+                  },
+                  items = items,
+                  preview = function(ctx)
+                    if attach_job then
+                      pcall(vim.fn.jobstop, attach_job)
+                      attach_job = nil
+                    end
+                    if term_buf and vim.api.nvim_buf_is_valid(term_buf) then
+                      pcall(vim.api.nvim_buf_delete, term_buf, { force = true })
+                      term_buf = nil
+                    end
+                    local cid = ctx.item and ctx.item._container_id
+                    if not cid then
+                      ctx.preview:set_lines({ "No container ID" })
+                      return
+                    end
+                    -- Create a separate buffer for the terminal so snacks' scratch_buf stays clean.
+                    -- reset() swaps back to scratch_buf and sets buftype="nofile" on it;
+                    -- if we converted scratch_buf into a terminal that would fail with E474.
+                    term_buf = vim.api.nvim_create_buf(false, true)
+                    vim.bo[term_buf].bufhidden = "wipe"
+                    local attach_job_id
+                    local chan = vim.api.nvim_open_term(term_buf, {
+                      on_input = function(_, _, _, data)
+                        if attach_job_id then
+                          pcall(vim.fn.chansend, attach_job_id, data)
+                        end
+                      end,
+                    })
+                    ctx.preview:set_buf(term_buf)
+                    -- Set <c-h> on the terminal buffer to jump back to the input window.
+                    local input_win = ctx.picker.input.win.win
+                    for _, mode in ipairs({ "n", "t" }) do
+                      vim.keymap.set(mode, "<c-h>", function()
+                        if input_win and vim.api.nvim_win_is_valid(input_win) then
+                          vim.api.nvim_set_current_win(input_win)
+                        end
+                      end, { buffer = term_buf, nowait = true })
+                    end
+                    attach_job = vim.fn.jobstart({ "docker", "attach", cid }, {
+                      pty = true,
+                      on_stdout = function(_, data)
+                        if chan and data then
+                          for _, line in ipairs(data) do
+                            if #line > 0 then
+                              pcall(vim.api.nvim_chan_send, chan, line .. "\r\n")
+                            end
+                          end
+                        end
+                      end,
+                      on_exit = function()
+                        attach_job = nil
+                        attach_job_id = nil
+                      end,
+                    })
+                    attach_job_id = attach_job
+                  end,
+                  on_close = function()
+                    if attach_job then
+                      pcall(vim.fn.jobstop, attach_job)
+                    end
+                    if term_buf and vim.api.nvim_buf_is_valid(term_buf) then
+                      pcall(vim.api.nvim_buf_delete, term_buf, { force = true })
+                    end
+                  end,
+                  actions = {
+                    focus_preview = function(inner_picker)
+                      if inner_picker.preview.win and inner_picker.preview.win:win_valid() then
+                        vim.api.nvim_set_current_win(inner_picker.preview.win.win)
+                      end
+                    end,
+                    tab_attach = function(inner_picker, sprint_item)
+                      if not sprint_item or not sprint_item._container_id then return end
+                      local cid = sprint_item._container_id
+                      local tab_name = sprint_item.name
+                      if #items > 1 then
+                        tab_name = tab_name .. "-" .. sprint_item._sprint_idx
+                      end
+                      inner_picker:close()
+                      vim.cmd("tabnew")
+                      local tabnr = vim.fn.tabpagenr()
+                      vim.fn.settabvar(tabnr, "tabname", tab_name)
+                      vim.fn.termopen({ "docker", "attach", cid })
+                      vim.cmd("startinsert")
+                    end,
+                  },
+                  win = {
+                    input = {
+                      keys = {
+                        ["<c-l>"] = { "focus_preview", mode = { "n", "i" } },
+                        ["<c-cr>"] = { "tab_attach", mode = { "n", "i" } },
+                        ["<d-cr>"] = { "tab_attach", mode = { "n", "i" } },
+                        ["<c-t>"] = { "tab_attach", mode = { "n", "i" } },
+                        ["<d-t>"] = { "tab_attach", mode = { "n", "i" } },
+                        ["t"] = { "tab_attach", mode = { "n" } },
+                        ["<cr>"] = { "tab_attach", mode = { "n", "i" } },
+                      },
+                    },
+                  },
+                })
+              end,
               connect_to_claude_code = function(_, item)
                 if not item or not item.text then return end
                 vim.print("Run: dscc attach " .. item.text)
@@ -744,10 +953,20 @@ return {
                   ["<d-c>"] = { "connect_to_shell", mode = { "n", "i" } },
                   ["c"] = { "connect_to_shell", mode = { "n" } },
 
-                  -- Connect to claude code terminal.
-                  ["<c-s>"] = { "connect_to_claude_code", mode = { "n", "i" } },
-                  ["<d-s>"] = { "connect_to_claude_code", mode = { "n", "i" } },
-                  ["s"] = { "connect_to_claude_code", mode = { "n" } },
+                  -- Explore worktree
+                  ["<c-e>"] = { "explore_worktree", mode = { "n", "i" } },
+                  ["<d-e>"] = { "explore_worktree", mode = { "n", "i" } },
+                  ["e"] = { "explore_worktree", mode = { "n" } },
+
+                  -- Mounts picker
+                  ["<c-m>"] = { "pick_mounts", mode = { "n", "i" } },
+                  ["<d-m>"] = { "pick_mounts", mode = { "n", "i" } },
+                  ["m"] = { "pick_mounts", mode = { "n" } },
+
+                  -- Sprints picker
+                  ["<c-s>"] = { "pick_sprints", mode = { "n", "i" } },
+                  ["<d-s>"] = { "pick_sprints", mode = { "n", "i" } },
+                  ["s"] = { "pick_sprints", mode = { "n" } },
 
                   -- Inspect the status
                   ["<c-p>"] = { "inspect_status", mode = { "n", "i" } },
