@@ -621,101 +621,161 @@ return {
         sources = {
           dscc = {
             supports_live = false,
+            global = false,
+            toggles = { global = "g" },
             layout = { preset = "vscode", preview = false },
-            title = "claude code task",
-            finder = function ()
-              local cwd = vim.fn.getcwd()
-              local project_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true, path = cwd })[1])
-              local dscc_dir = vim.fs.joinpath(project_dir, ".dscc")
-              local tbl = {}
-              -- iterate through all directories
-              for _, task_dir in ipairs(vim.fn.glob(dscc_dir .. "/*", false, true)) do
-                local task_name = vim.fs.basename(task_dir)
-                table.insert(tbl, { name = task_name, text = task_name, _path = task_dir, file = task_dir, dir = true })
+            title = "dscc tasks",
+            finder = function(picker)
+              local dscc_tasks_dir = vim.fs.normalize((vim.env.HOME or "~") .. "/.dscc/tasks")
+              if vim.fn.isdirectory(dscc_tasks_dir) ~= 1 then
+                return {}
               end
-              return tbl
+
+              local cwd = vim.fn.getcwd()
+              local git_root = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true, path = cwd })[1])
+
+              local all = {}
+              local project_only = {}
+              for _, task_dir in ipairs(vim.fn.glob(dscc_tasks_dir .. "/*", false, true)) do
+                local config_path = vim.fs.joinpath(task_dir, "config.toml")
+                if vim.fn.filereadable(config_path) ~= 1 then
+                  goto continue
+                end
+
+                local ok, lines = pcall(vim.fn.readfile, config_path)
+                if not ok then goto continue end
+                local raw = table.concat(lines, "\n")
+
+                -- Minimal TOML parse for the fields we need.
+                local task_name = raw:match('%[task%].-name%s*=%s*"([^"]*)"')
+                local project_dir = raw:match('%[task%].-project_dir%s*=%s*"([^"]*)"')
+                local created_at = raw:match('%[task%].-created_at%s*=%s*"([^"]*)"')
+                local image = raw:match('%[task%].-image%s*=%s*"([^"]*)"')
+                local has_worktree = not raw:match('has_worktree%s*=%s*false')
+
+                if not task_name then
+                  task_name = vim.fs.basename(task_dir)
+                end
+
+                local item = {
+                  text = task_name,
+                  name = task_name,
+                  _path = task_dir,
+                  _project_dir = project_dir,
+                  _created_at = created_at,
+                  _image = image,
+                  _has_worktree = has_worktree,
+                  file = task_dir,
+                  dir = true,
+                }
+                table.insert(all, item)
+
+                -- Check if this task belongs to the current project.
+                if git_root and project_dir then
+                  local norm_proj = vim.fs.normalize(project_dir)
+                  local norm_root = vim.fs.normalize(git_root)
+                  if norm_proj == norm_root then
+                    table.insert(project_only, item)
+                  end
+                end
+                ::continue::
+              end
+
+              -- Show project-level tasks; fall back to all if none match.
+              if picker.global or #project_only == 0 then
+                if picker.opts then picker.opts.global = true end
+                return all
+              end
+              return project_only
             end,
             actions = {
-              new_tab_worktree = function (_, item)
-                if not item.dir or not item._path then
+              toggle_global = function(picker)
+                picker.opts.global = not picker.opts.global
+                picker:find()
+              end,
+              new_tab_worktree = function(_, item)
+                if not item or not item._path then
                   return
                 end
                 local worktree_path = vim.fs.joinpath(item._path, "worktree")
+                if vim.fn.isdirectory(worktree_path) ~= 1 then
+                  vim.print("No worktree for task: " .. (item.name or "?"))
+                  return
+                end
                 local tabnr = vim.g.new_tab_at(worktree_path, true, true)
                 vim.fn.settabvar(tabnr, "tabname", item.name)
               end,
-              connect_to_claude_code = function (_, item)
-                if not item.text then
-                  return
-                end
-                vim.print("not implemented yet.")
-                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --claude")
+              connect_to_claude_code = function(_, item)
+                if not item or not item.text then return end
+                vim.print("Run: dscc attach " .. item.text)
               end,
-              connect_to_shell = function (_, item)
-                if not item.text then
-                  return
-                end
-                vim.print("not implemented yet.")
-                vim.print("Run manually: " .. "dscc.sh attach --name " .. item.text .. " --shell")
+              connect_to_shell = function(_, item)
+                if not item or not item.text then return end
+                vim.print("Run: dscc attach " .. item.text .. " --shell")
               end,
-              inspect_log = function (_, item)
-                if not item.text then
-                  return
-                end
+              inspect_status = function(_, item)
+                if not item or not item.text then return end
                 vim.print("not implemented yet.")
               end,
-              inspect_status = function (_, item)
-                if not item.text then
-                  return
-                end
+              inspect_log = function(_, item)
+                if not item or not item.text then return end
                 vim.print("not implemented yet.")
               end,
               force_remove = function(_, item)
-                if not item.text then
-                  return
-                end
+                if not item or not item.text then return end
                 vim.print("not implemented yet.")
               end,
             },
             win = {
               input = {
                 keys = {
+                  -- Toggle global/project scope
+                  ["<c-g>"] = { "toggle_global", mode = { "n", "i" } },
+                  ["<d-g>"] = { "toggle_global", mode = { "n", "i" } },
+                  ["g"] = { "toggle_global", mode = { "n" } },
+
                   -- New tab at the worktree.
-                  ["<c-t>"] = {"new_tab_worktree", mode={"n", "i"}},
-                  ["<d-t>"] = {"new_tab_worktree", mode={"n", "i"}},
-                  ["t"] = {"new_tab_worktree", mode={"n"}},
+                  ["<c-t>"] = { "new_tab_worktree", mode = { "n", "i" } },
+                  ["<d-t>"] = { "new_tab_worktree", mode = { "n", "i" } },
+                  ["t"] = { "new_tab_worktree", mode = { "n" } },
 
                   -- Connect to claude code
-                  ["<c-c>"] = {"connect_to_shell", mode={"n", "i"}},
-                  ["<d-c>"] = {"connect_to_shell", mode={"n", "i"}},
-                  ["c"] = {"connect_to_shell", mode={"n"}},
+                  ["<c-c>"] = { "connect_to_shell", mode = { "n", "i" } },
+                  ["<d-c>"] = { "connect_to_shell", mode = { "n", "i" } },
+                  ["c"] = { "connect_to_shell", mode = { "n" } },
 
                   -- Connect to claude code terminal.
-                  ["<c-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
-                  ["<d-s>"] = {"connect_to_claude_code", mode={"n", "i"}},
-                  ["s"] = {"connect_to_claude_code", mode={"n"}},
+                  ["<c-s>"] = { "connect_to_claude_code", mode = { "n", "i" } },
+                  ["<d-s>"] = { "connect_to_claude_code", mode = { "n", "i" } },
+                  ["s"] = { "connect_to_claude_code", mode = { "n" } },
 
                   -- Inspect the status
-                  ["<c-p>"] = {"inspect_status", mode={"n", "i"}},
-                  ["<d-p>"] = {"inspect_status", mode={"n", "i"}},
-                  ["p"] = {"inspect_status", mode={"n"}},
+                  ["<c-p>"] = { "inspect_status", mode = { "n", "i" } },
+                  ["<d-p>"] = { "inspect_status", mode = { "n", "i" } },
+                  ["p"] = { "inspect_status", mode = { "n" } },
 
                   -- Inspect log
-                  ["<c-s-p>"] = {"inspect_log", mode={"n", "i"}},
-                  ["<d-s-p>"] = {"inspect_log", mode={"n", "i"}},
-                  ["P"] = {"inspect_log", mode={"n"}},
+                  ["<c-s-p>"] = { "inspect_log", mode = { "n", "i" } },
+                  ["<d-s-p>"] = { "inspect_log", mode = { "n", "i" } },
+                  ["P"] = { "inspect_log", mode = { "n" } },
 
                   -- Force remove
                   ["<c-d>"] = { "force_remove", mode = { "n", "i" } },
-                  ["<d-d>"] = {"force_remove", mode={"n", "i"}},
-                  ["d"] = {"force_remove", mode={"n"}},
+                  ["<d-d>"] = { "force_remove", mode = { "n", "i" } },
+                  ["d"] = { "force_remove", mode = { "n" } },
 
                   -- Search from the directory
-                  ["<c-/>"] = {"search_from_selected", mode={"n", "i"}},
-                  ["<D-/>"] = {"search_from_selected", mode={"n", "i"}},
-                }
-              }
-            }
+                  ["<c-/>"] = { "search_from_selected", mode = { "n", "i" } },
+                  ["<D-/>"] = { "search_from_selected", mode = { "n", "i" } },
+                },
+              },
+              list = {
+                keys = {
+                  ["<c-g>"] = { "toggle_global", mode = { "n", "i" } },
+                  ["<d-g>"] = { "toggle_global", mode = { "n", "i" } },
+                },
+              },
+            },
           },
           git_grep = {
             supports_live = false,
