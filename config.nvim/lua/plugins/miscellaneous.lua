@@ -92,11 +92,18 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,
-    branch = "main",
+    branch = "master",
     build = ":TSUpdate",
     dependencies = { "HiPhish/rainbow-delimiters.nvim" },
-    config = function()
-      require("nvim-treesitter").install({
+    -- 0.11.x
+    opts = function(_, opts)
+      opts.auto_install = true
+      opts.rainbow = {
+        enable = true,
+        query = "rainbow-delimiters",
+        strategy = require("rainbow-delimiters").strategy.global,
+      }
+      opts.ensure_installed = {
         "bash",
         "python", -- Pylance does not support highlighting.
 
@@ -133,7 +140,8 @@ return {
         "diff",
         "ssh_config",
         "gitignore"
-      })
+      }
+
       -- zsh does not own its parser. So use bash.
       vim.treesitter.language.register("bash", "zsh")
 
@@ -143,21 +151,77 @@ return {
       -- else 
       --   vim.cmd[[ TSDisable highlight ]]
       -- end
-      -- opts.indent = {
-      --   disable = true,
-      -- }
+      opts.indent = {
+        disable = true,
+      }
+      return opts
     end,
-    -- opts = function(_, opts)
-    --   opts.auto_install = true
-    --   opts.rainbow = {
-    --     enable = true,
-    --     query = "rainbow-delimiters",
-    --     strategy = require("rainbow-delimiters").strategy.global,
-    --   }
+
+    -- 0.12.x:
     --
+    -- config = function()
+    --   require("nvim-treesitter").install({
+    --     "bash",
+    --     "python", -- Pylance does not support highlighting.
     --
-    --   return opts
+    --     -- Cpp related.
+    --     "cpp", -- clangd provides very barren highlighting. `See https://github.com/clangd/clangd/issues/1115`
+    --     "make",
+    --     "cmake",
+    --
+    --     -- "lua",
+    --     "markdown",
+    --     "markdown_inline",
+    --     "python",
+    --     "query",
+    --     "regex",
+    --
+    --     -- Programming languages.
+    --     "rust",
+    --     "go",
+    --     "gomod",
+    --     "gosum",
+    --
+    --     -- Vim.
+    --     "vim",
+    --     "vimdoc",
+    --
+    --     -- Markup Languages.
+    --     "yaml",
+    --     "toml",
+    --     "json",
+    --     "xml",
+    --     -- "json5",
+    --
+    --     -- Others.
+    --     "diff",
+    --     "ssh_config",
+    --     "gitignore"
+    --   })
+    --   -- zsh does not own its parser. So use bash.
+    --   vim.treesitter.language.register("bash", "zsh")
+    --
+    --   -- Tried to use opts.highlight.enable, but it did not work.
+    --   -- if vim.g.use_treesitter_highlight then
+    --   --   vim.cmd[[ TSEnable highlight ]]
+    --   -- else 
+    --   --   vim.cmd[[ TSDisable highlight ]]
+    --   -- end
+    --   -- opts.indent = {
+    --   --   disable = true,
+    --   -- }
     -- end,
+    -- -- opts = function(_, opts)
+    -- --   opts.auto_install = true
+    -- --   opts.rainbow = {
+    -- --     enable = true,
+    -- --     query = "rainbow-delimiters",
+    -- --     strategy = require("rainbow-delimiters").strategy.global,
+    -- --   }
+    -- --
+    -- --
+    -- --   return opts
+    -- -- end,
   },
   {
     "folke/snacks.nvim",
