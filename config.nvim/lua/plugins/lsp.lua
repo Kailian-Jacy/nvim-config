@@ -353,6 +353,7 @@ return {
         -- lua = { "luacheck" },
         -- markdown = { "markdownlint-cli2" },
         python = { "ruff" },
+        yaml = { "yamllint" },
         sql = { "sqlfluff" },
         -- go = { "gopls" },
       }
