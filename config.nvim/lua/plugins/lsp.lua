@@ -144,29 +144,59 @@ return {
       { "nvim-treesitter/nvim-treesitter" },
     },
     config = function()
-      -- Neovim 0.12 / nvim-treesitter main branch:
-      -- nvim-treesitter.configs is removed; use the new direct API.
-      require("nvim-treesitter-textobjects").setup({
-        select = {
-          lookahead = true,
-          include_surrounding_whitespace = true,
-        },
-      })
+      -- nvim-treesitter-textobjects setup: the new version (851e865+) exposes
+      -- a top-level .setup() function; older versions only work through
+      -- nvim-treesitter.configs.  Guard the call so both paths work and a
+      -- stale install doesn't crash on startup.
+      local ts_textobjects = require("nvim-treesitter-textobjects")
+      if type(ts_textobjects.setup) == "function" then
+        ts_textobjects.setup({
+          select = {
+            lookahead = true,
+            include_surrounding_whitespace = true,
+          },
+        })
+      else
+        -- Fallback for older plugin versions that use the configs module
+        local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
+        if ok then
+          ts_configs.setup({
+            textobjects = {
+              select = {
+                enable = true,
+                lookahead = true,
+                include_surrounding_whitespace = true,
+                keymaps = {
+                  ["af"] = "@function.outer",
+                  ["if"] = "@function.inner",
+                  ["ac"] = "@class.outer",
+                  ["ic"] = "@class.inner",
+                },
+              },
+            },
+          })
+        else
+          vim.notify("nvim-treesitter-textobjects: could not configure (version mismatch)", vim.log.levels.WARN)
+        end
+      end
 
-      -- Textobject keymaps (previously configured via nvim-treesitter.configs)
-      local select_textobject = require("nvim-treesitter-textobjects.select").select_textobject
-      vim.keymap.set({ "x", "o" }, "af", function()
-        select_textobject("@function.outer", "textobjects")
-      end, { desc = "Select outer function" })
-      vim.keymap.set({ "x", "o" }, "if", function()
-        select_textobject("@function.inner", "textobjects")
-      end, { desc = "Select inner function" })
-      vim.keymap.set({ "x", "o" }, "ac", function()
-        select_textobject("@class.outer", "textobjects")
-      end, { desc = "Select outer class" })
-      vim.keymap.set({ "x", "o" }, "ic", function()
-        select_textobject("@class.inner", "textobjects")
-      end, { desc = "Select inner class" })
+      -- Textobject keymaps (for new-style direct API)
+      local sel_ok, sel_mod = pcall(require, "nvim-treesitter-textobjects.select")
+      local select_textobject = sel_ok and sel_mod.select_textobject or nil
+      if select_textobject then
+        vim.keymap.set({ "x", "o" }, "af", function()
+          select_textobject("@function.outer", "textobjects")
+        end, { desc = "Select outer function" })
+        vim.keymap.set({ "x", "o" }, "if", function()
+          select_textobject("@function.inner", "textobjects")
+        end, { desc = "Select inner function" })
+        vim.keymap.set({ "x", "o" }, "ac", function()
+          select_textobject("@class.outer", "textobjects")
+        end, { desc = "Select outer class" })
+        vim.keymap.set({ "x", "o" }, "ic", function()
+          select_textobject("@class.inner", "textobjects")
+        end, { desc = "Select inner class" })
+      end
 
       -- Incremental selection (Tab/Shift-Tab) — replaces the removed
       -- nvim-treesitter incremental_selection module.
