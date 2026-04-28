@@ -589,19 +589,24 @@ end
 -- Highlight related.
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "*" },
-  callback = function()
-    if not vim.tbl_contains(vim.g.treesitter_highlight_blacklist or {}, vim.bo.filetype) then
+  callback = function(ev)
+    local bufnr = ev.buf
+    -- Guard: skip if buffer is not loaded yet (avoids E201 during lazy event chain)
+    if not vim.api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+    if not vim.tbl_contains(vim.g.treesitter_highlight_blacklist or {}, vim.bo[bufnr].filetype) then
       -- Neovim 0.12: :TSBufEnable was removed; use built-in API.
       -- Enable vim regex highlighting alongside treesitter to preserve
       -- the previous additional_vim_regex_highlighting = true behavior.
-      local ok = pcall(vim.treesitter.start)
+      local ok = pcall(vim.treesitter.start, bufnr)
       if ok then
-        vim.bo.syntax = "on"
+        vim.bo[bufnr].syntax = "on"
       else
-        vim.bo.syntax = "on" -- fallback to regex highlight
+        vim.bo[bufnr].syntax = "on" -- fallback to regex highlight
       end
     else
-      vim.bo.syntax = "on" -- blacklisted, use regex only
+      vim.bo[bufnr].syntax = "on" -- blacklisted, use regex only
     end
   end,
 })
