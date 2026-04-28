@@ -90,9 +90,12 @@ return {
 
         -- Detach LSP clients
         vim.schedule(function()
+          if not vim.api.nvim_buf_is_valid(bufnr) then return end
           local clients = vim.lsp.get_clients({ bufnr = bufnr })
           for _, client in ipairs(clients) do
-            pcall(vim.lsp.buf_detach_client, bufnr, client.id)
+            if vim.lsp.buf_is_attached(bufnr, client.id) then
+              pcall(vim.lsp.buf_detach_client, bufnr, client.id)
+            end
           end
         end)
 
