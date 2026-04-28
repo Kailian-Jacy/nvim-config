@@ -304,7 +304,69 @@ return {
       { "<leader>zz", function() Snacks.picker.zoxide({ pattern = vim.g.function_get_selected_content()}) end, desc = "Zoxide cwd navigation", mode = "v"},
     },
     opts = {
-      bigfile = { enabled = true },
+      bigfile = {
+        enabled = true,
+        size = 1024 * 1024, -- 1MB (matches bigfile_size_threshold)
+        ---@param ctx {buf: number, ft: string}
+        setup = function(ctx)
+          -- NoMatchParen MUST be in vim.schedule to avoid E201 (#57).
+          -- The root cause: NoMatchParen uses windo which iterates over Snacks
+          -- picker floating windows, changing curbuf during BufReadPre.
+          vim.schedule(function()
+            if vim.fn.exists(":NoMatchParen") ~= 0 then
+              vim.cmd("NoMatchParen")
+            end
+          end)
+
+          -- Window options (current window only, safe)
+          Snacks.util.wo(0, { foldmethod = "manual", statuscolumn = "", conceallevel = 0 })
+
+          -- Disable various plugins for this buffer
+          vim.b.minianimate_disable = true
+          vim.b.minihipatterns_disable = true
+          vim.b[ctx.buf].copilot_enabled = false
+          vim.b[ctx.buf].autosave_disable = true
+
+          -- Disable nvim-cmp
+          pcall(function()
+            if package.loaded["cmp"] then
+              require("cmp").setup.buffer({ enabled = false })
+            end
+          end)
+
+          -- Disable indent-blankline
+          pcall(function()
+            require("ibl").setup_buffer(ctx.buf, { enabled = false })
+          end)
+
+          -- Disable nvim-ufo
+          pcall(function()
+            require("ufo").detach(ctx.buf)
+          end)
+
+          -- Disable local-highlight
+          pcall(function()
+            require("local-highlight").detach(ctx.buf)
+          end)
+
+          -- Buffer options
+          vim.bo[ctx.buf].swapfile = false
+          vim.bo[ctx.buf].undofile = false
+
+          -- Mark as detected for BigFileInfo command
+          vim.b[ctx.buf].bigfile_detected = true
+          vim.b[ctx.buf].bigfile_reason = "size > 1MB (Snacks bigfile)"
+
+          -- Restore original syntax after bigfile filetype override.
+          -- Snacks sets ft="bigfile" which blocks treesitter/LSP attach,
+          -- but we still want basic syntax highlighting.
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(ctx.buf) then
+              vim.bo[ctx.buf].syntax = ctx.ft
+            end
+          end)
+        end,
+      },
       dashboard = { enabled = false },
       explorer = {
         enabled = true
