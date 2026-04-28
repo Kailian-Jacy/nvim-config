@@ -130,8 +130,10 @@ return {
           end
         end)
 
-        -- Disable matchparen
-        pcall(vim.cmd, "NoMatchParen")
+        -- Disable matchparen (schedule to avoid E201 during BufReadPre)
+        vim.schedule(function()
+          pcall(vim.cmd, "NoMatchParen")
+        end)
 
         -- Disable copilot for this buffer
         vim.b[bufnr].copilot_enabled = false
