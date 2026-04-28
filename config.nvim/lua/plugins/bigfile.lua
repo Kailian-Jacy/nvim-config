@@ -127,8 +127,9 @@ local function disable_expensive_features(bufnr, reason)
   end)
 
   -- Disable matchparen — MUST be in vim.schedule to avoid E201 (#57)
+  -- (windo inside NoMatchParen iterates picker floats → changes curbuf → E201)
   vim.schedule(function()
-    if vim.fn.exists(":NoMatchParen") ~= 0 then
+    if vim.api.nvim_buf_is_valid(bufnr) and vim.fn.exists(":NoMatchParen") ~= 0 then
       vim.cmd("NoMatchParen")
     end
   end)
