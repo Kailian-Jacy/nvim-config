@@ -113,6 +113,8 @@ return {
         },
         yaml = {
           "yaml-language-server",
+          "yamllint",
+          "prettier",
         },
         xml = {
           "lemminx",
