@@ -402,6 +402,7 @@ return {
           golang = { "goimports", "gopls" },
           rust = { "rustfmt", lsp_format = "fallback" },
           json = { "fixjson" },
+          yaml = { "prettier", lsp_format = "fallback" },
           xml = { "xmlformatter" },
           bash = { "shfmt" },
           -- Conform will run the first available formatter
