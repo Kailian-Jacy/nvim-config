@@ -255,7 +255,21 @@ return {
       lspconfig.docker_compose_language_service.setup({})
       lspconfig.dockerls.setup({})
       -- yaml
-      lspconfig.yamlls.setup({})
+      lspconfig.yamlls.setup({
+        capabilities = cmp_nvim_lsp.default_capabilities(),
+        settings = {
+          yaml = {
+            schemaStore = {
+              enable = true,
+              url = "https://www.schemastore.org/api/json/catalog.json",
+            },
+            format = { enable = true },
+            validate = true,
+            hover = true,
+            completion = true,
+          },
+        },
+      })
       -- python
       lspconfig.pyright.setup({})
       -- nix
