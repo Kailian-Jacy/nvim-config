@@ -1,0 +1,37 @@
+nvim-runner fixes test results
+Date: Thu 21 May 2026 07:55:10 PM CST
+Total: 33 passed, 0 failed, 0 skipped
+
+[PASS] keymap-dedup: keymap registered after first setup
+[PASS] keymap-dedup: keymap count unchanged after re-setup
+[PASS] keymap-dedup: keymap count unchanged after third setup
+[PASS] keymap-dedup: old keymaps removed when changing keys
+[PASS] keymap-dedup: _registered_keymaps exists
+[PASS] keymap-dedup: _registered_keymaps has 2 entries
+[PASS] buf-validity: script finished after buffer closed
+[PASS] buf-validity: warned about closed buffer
+[PASS] buf-validity: no crash when buffer deleted during execution
+[PASS] timeout-api: default is 3000
+[PASS] timeout-api: set_timeout changes global timeout
+[PASS] timeout-api: set_timeout rejects negative value
+[PASS] timeout-api: set_timeout rejects zero
+[PASS] timeout-api: set_timeout rejects string
+[PASS] timeout-api: set_buf_timeout sets vim.b.runner_timeout
+[PASS] timeout-api: set_buf_timeout with 0 uses current buffer
+[PASS] timeout-api: set_buf_timeout rejects negative value
+[PASS] timeout-api: vim.b.runner_timeout settable directly
+[PASS] timeout-priority: falls back to global timeout
+[PASS] timeout-priority: runner timeout overrides global
+[PASS] timeout-priority: buffer-local timeout overrides runner timeout
+[PASS] timeout-priority: without buf-local, falls back to runner
+[PASS] timeout-priority: non-number buf-local skipped
+[PASS] timeout-priority: zero buf-local skipped
+[PASS] timeout-priority: negative buf-local skipped
+[PASS] timeout-priority: falls back to default 3000ms
+[PASS] RunnerTimeout: command exists
+[PASS] RunnerTimeout: sets buffer-local timeout
+[PASS] RunnerTimeout!: sets global timeout
+[PASS] RunnerTimeout: error on invalid value
+[PASS] timeout-integration: buffer-local timeout (500ms) overrides global (10s)
+[PASS] safe_replace-integration: Python % formatting works end-to-end
+[PASS] safe_replace-integration: Shell printf with % works
