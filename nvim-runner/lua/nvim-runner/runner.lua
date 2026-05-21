@@ -9,6 +9,9 @@ local M = {}
 -- Track the current running process
 M._current_runner = nil
 
+-- Track scratch buffers by filetype to avoid E95 (buffer name conflict)
+M._scratch_buffers = {}
+
 --- Safe string replacement that avoids gsub pattern/replacement special chars.
 --- Uses plain string.find to locate the pattern, then concatenates.
 --- Only replaces the first occurrence.
@@ -238,28 +241,67 @@ function M.run()
           local output_mode = runner.output or "inline"
 
           if output_mode == "split" then
+            -- JSON prettification options (not yet implemented):
+            -- 1. Pipe through `jq .` if available: cmd .. " | jq ."
+            -- 2. Use vim.json.decode + vim.json.encode(data, {indent=2})
+            -- 3. Set filetype of body portion to 'json' for treesitter highlighting
+            -- 4. Use `python3 -m json.tool` as fallback
+
             -- Create or reuse a scratch buffer for this filetype
             local ft = vim.bo[bufid].filetype or "output"
-            local scratch_name = "[nvim-runner: " .. ft .. "]"
 
-            -- Look for existing scratch buffer with this name
-            local scratch_bufnr = nil
-            for _, b in ipairs(vim.api.nvim_list_bufs()) do
-              if vim.api.nvim_buf_is_valid(b) and vim.api.nvim_buf_get_name(b) == scratch_name then
-                scratch_bufnr = b
-                break
-              end
+            -- Use module-level tracking to avoid E95 buffer name conflict
+            local scratch_bufnr = M._scratch_buffers[ft]
+
+            -- Validate it still exists
+            if scratch_bufnr and not vim.api.nvim_buf_is_valid(scratch_bufnr) then
+              scratch_bufnr = nil
+              M._scratch_buffers[ft] = nil
             end
 
             if not scratch_bufnr then
               scratch_bufnr = vim.api.nvim_create_buf(false, true)
-              vim.api.nvim_buf_set_name(scratch_bufnr, scratch_name)
+              M._scratch_buffers[ft] = scratch_bufnr
             end
 
             -- Set buffer options
             vim.bo[scratch_bufnr].buftype = "nofile"
             vim.bo[scratch_bufnr].swapfile = false
             vim.bo[scratch_bufnr].buflisted = false
+            vim.bo[scratch_bufnr].filetype = "http"
+
+            -- Bind q to close buffer + window
+            vim.api.nvim_buf_set_keymap(scratch_bufnr, 'n', 'q', '<cmd>bdelete<cr>', {
+              noremap = true, silent = true, desc = "Close HTTP response buffer"
+            })
+
+            -- For HTTP split output: move timing footer to prelude
+            if ft == "http" then
+              local lines_list = vim.split(return_text, "\n")
+              local timing_line = nil
+              local timing_idx = nil
+              -- Find the timing line (last line matching pattern)
+              for i = #lines_list, 1, -1 do
+                if lines_list[i]:match("^%-%-%- %d+ |") then
+                  timing_line = lines_list[i]
+                  timing_idx = i
+                  break
+                end
+              end
+              if timing_line and timing_idx then
+                table.remove(lines_list, timing_idx)
+                -- Build prelude: timing + separator + response
+                local prelude = { timing_line, string.rep("-", 40) }
+                -- Remove leading empty lines from response
+                while #lines_list > 0 and lines_list[1] == "" do
+                  table.remove(lines_list, 1)
+                end
+                for i = #prelude, 1, -1 do
+                  table.insert(lines_list, 1, prelude[i])
+                end
+                return_text = table.concat(lines_list, "\n")
+              end
+            end
 
             -- Clear and write content
             vim.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, false, vim.split(return_text, "\n"))

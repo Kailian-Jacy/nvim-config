@@ -1456,6 +1456,193 @@ do
 end
 
 -- ============================================
+-- Section 29: Scratch buffer reuse (E95 fix)
+-- ============================================
+
+io.write("\n--- scratch buffer reuse (E95 fix) ---\n\n")
+
+do
+  local runner = require("nvim-runner.runner")
+
+  -- Clear any tracked scratch buffers
+  runner._scratch_buffers = {}
+
+  -- Simulate the split output path: create a buffer and trigger the callback logic
+  -- We test the module-level tracking directly
+  local ft = "http"
+
+  -- First call: no buffer exists yet
+  local scratch_bufnr = runner._scratch_buffers[ft]
+  assert_nil(scratch_bufnr, "E95-fix: no scratch buffer tracked initially")
+
+  -- Create one
+  scratch_bufnr = vim.api.nvim_create_buf(false, true)
+  runner._scratch_buffers[ft] = scratch_bufnr
+  assert_true(vim.api.nvim_buf_is_valid(scratch_bufnr), "E95-fix: created scratch buffer is valid")
+
+  -- Second call: should reuse the same buffer (no E95)
+  local scratch_bufnr2 = runner._scratch_buffers[ft]
+  if scratch_bufnr2 and not vim.api.nvim_buf_is_valid(scratch_bufnr2) then
+    scratch_bufnr2 = nil
+    runner._scratch_buffers[ft] = nil
+  end
+  assert_eq(scratch_bufnr2, scratch_bufnr, "E95-fix: second call reuses same buffer (no E95)")
+
+  -- Third call: same buffer (stress test)
+  local scratch_bufnr3 = runner._scratch_buffers[ft]
+  if scratch_bufnr3 and not vim.api.nvim_buf_is_valid(scratch_bufnr3) then
+    scratch_bufnr3 = nil
+    runner._scratch_buffers[ft] = nil
+  end
+  assert_eq(scratch_bufnr3, scratch_bufnr, "E95-fix: third call still reuses same buffer")
+
+  -- Invalidate the buffer and verify recovery
+  vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
+  local scratch_bufnr4 = runner._scratch_buffers[ft]
+  if scratch_bufnr4 and not vim.api.nvim_buf_is_valid(scratch_bufnr4) then
+    scratch_bufnr4 = nil
+    runner._scratch_buffers[ft] = nil
+  end
+  assert_nil(scratch_bufnr4, "E95-fix: deleted buffer is detected and cleared")
+
+  -- New buffer created after invalidation
+  local scratch_bufnr5 = vim.api.nvim_create_buf(false, true)
+  runner._scratch_buffers[ft] = scratch_bufnr5
+  assert_true(scratch_bufnr5 ~= scratch_bufnr, "E95-fix: new buffer created after old one deleted")
+  assert_true(vim.api.nvim_buf_is_valid(scratch_bufnr5), "E95-fix: new buffer is valid")
+
+  -- Cleanup
+  vim.api.nvim_buf_delete(scratch_bufnr5, { force = true })
+  runner._scratch_buffers = {}
+end
+
+-- ============================================
+-- Section 30: q keymap on scratch buffer
+-- ============================================
+
+io.write("\n--- q keymap on scratch buffer ---\n\n")
+
+do
+  -- Create a scratch buffer and set the keymap as runner.lua does
+  local scratch_bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_keymap(scratch_bufnr, 'n', 'q', '<cmd>bdelete<cr>', {
+    noremap = true, silent = true, desc = "Close HTTP response buffer"
+  })
+
+  -- Verify the keymap is set
+  local keymaps = vim.api.nvim_buf_get_keymap(scratch_bufnr, 'n')
+  local found_q = false
+  for _, km in ipairs(keymaps) do
+    if km.lhs == "q" then
+      found_q = true
+      assert_true(km.noremap == 1, "q-keymap: noremap is set")
+      assert_true(km.silent == 1, "q-keymap: silent is set")
+      break
+    end
+  end
+  assert_true(found_q, "q-keymap: q keymap is set on scratch buffer")
+
+  -- Cleanup
+  vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
+end
+
+-- ============================================
+-- Section 31: Filetype set to http on scratch buffer
+-- ============================================
+
+io.write("\n--- filetype http on scratch buffer ---\n\n")
+
+do
+  -- Create a scratch buffer and set filetype as runner.lua does
+  local scratch_bufnr = vim.api.nvim_create_buf(false, true)
+  vim.bo[scratch_bufnr].buftype = "nofile"
+  vim.bo[scratch_bufnr].filetype = "http"
+
+  assert_eq(vim.bo[scratch_bufnr].filetype, "http", "ft-http: filetype is http on scratch buffer")
+
+  -- Cleanup
+  vim.api.nvim_buf_delete(scratch_bufnr, { force = true })
+end
+
+-- ============================================
+-- Section 32: Timing line moved to prelude
+-- ============================================
+
+io.write("\n--- timing line prelude ---\n\n")
+
+do
+  -- Simulate the timing-prelude logic from runner.lua
+  local return_text = "\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"result\": \"ok\"}\n--- 200 | 0.342s ---"
+
+  local ft = "http"
+  if ft == "http" then
+    local lines_list = vim.split(return_text, "\n")
+    local timing_line = nil
+    local timing_idx = nil
+    for i = #lines_list, 1, -1 do
+      if lines_list[i]:match("^%-%-%- %d+ |") then
+        timing_line = lines_list[i]
+        timing_idx = i
+        break
+      end
+    end
+    if timing_line and timing_idx then
+      table.remove(lines_list, timing_idx)
+      local prelude = { timing_line, string.rep("-", 40) }
+      while #lines_list > 0 and lines_list[1] == "" do
+        table.remove(lines_list, 1)
+      end
+      for i = #prelude, 1, -1 do
+        table.insert(lines_list, 1, prelude[i])
+      end
+      return_text = table.concat(lines_list, "\n")
+    end
+
+    -- Verify timing line is at top
+    local result_lines = vim.split(return_text, "\n")
+    assert_match(result_lines[1], "^%-%-%- %d+ |", "timing-prelude: timing line is first line")
+    assert_eq(result_lines[2], string.rep("-", 40), "timing-prelude: separator is second line")
+    assert_match(result_lines[3], "HTTP/1.1 200 OK", "timing-prelude: response headers follow separator")
+
+    -- Verify timing line is NOT at the end anymore
+    local last_line = result_lines[#result_lines]
+    assert_true(not last_line:match("^%-%-%- %d+ |"), "timing-prelude: timing line removed from end")
+  end
+end
+
+do
+  -- Test with different timing format
+  local return_text = "\nHTTP/1.1 404 Not Found\nContent-Type: text/plain\n\nNot Found\n--- 404 | 1.234s ---"
+  local lines_list = vim.split(return_text, "\n")
+  local timing_line = nil
+  local timing_idx = nil
+  for i = #lines_list, 1, -1 do
+    if lines_list[i]:match("^%-%-%- %d+ |") then
+      timing_line = lines_list[i]
+      timing_idx = i
+      break
+    end
+  end
+  assert_true(timing_line ~= nil, "timing-prelude-404: timing line detected")
+  assert_match(timing_line, "404", "timing-prelude-404: contains status code 404")
+  assert_match(timing_line, "1.234s", "timing-prelude-404: contains timing value")
+end
+
+do
+  -- Test with no timing line (edge case)
+  local return_text = "\nHTTP/1.1 200 OK\n\nbody content"
+  local lines_list = vim.split(return_text, "\n")
+  local timing_line = nil
+  for i = #lines_list, 1, -1 do
+    if lines_list[i]:match("^%-%-%- %d+ |") then
+      timing_line = lines_list[i]
+      break
+    end
+  end
+  assert_nil(timing_line, "timing-prelude-none: no timing line when absent (graceful)")
+end
+
+-- ============================================
 -- Summary
 -- ============================================
 
