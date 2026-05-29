@@ -92,7 +92,10 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,
+    -- 0.11.x
     branch = "master",
+    -- 0.12.x
+    -- branch = "main",
     build = ":TSUpdate",
     dependencies = { "HiPhish/rainbow-delimiters.nvim" },
     -- 0.11.x
@@ -144,6 +147,7 @@ return {
 
       -- zsh does not own its parser. So use bash.
       vim.treesitter.language.register("bash", "zsh")
+      vim.treesitter.language.register("ts", "tsx")
 
       -- Tried to use opts.highlight.enable, but it did not work.
       -- if vim.g.use_treesitter_highlight then
