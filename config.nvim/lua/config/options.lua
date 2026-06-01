@@ -96,6 +96,13 @@ vim.g.debugging_status = "NoDebug"
 vim.g.recording_status = false
 vim.g.debugging_keymap = false
 
+-- Additional filetypes
+vim.filetype.add({
+  extension = {
+    tsx = "ts"
+  }
+})
+
 -- virtual text truncate size.
 vim.g.debug_virtual_text_truncate_size = 20
 
