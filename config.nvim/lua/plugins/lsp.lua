@@ -387,6 +387,10 @@ return {
         vim.g.format_behavior = vim.g.format_behavior or { default = "restrict" }
 
         local filetype = vim.bo.filetype
+        if not filetype or filetype == "" then
+          -- For those whose filetype not detected, just skip it.
+          return
+        end
         local behavior = vim.g.format_behavior.default
         if vim.g.format_behavior[filetype] then
           behavior = vim.g.format_behavior[filetype]
