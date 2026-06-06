@@ -324,6 +324,10 @@ return {
         "<leader><CR>",
         -- Refreshing.
         function()
+          -- Try load the buffer, if changed outside of the edito.
+          local filename = vim.fn.expand('%')
+          vim.cmd([[ :checktime ]] .. filename)
+
           vim.print_silent("@conform.format")
           vim.cmd [[ ConformFormat ]]
           require("lint").try_lint()
