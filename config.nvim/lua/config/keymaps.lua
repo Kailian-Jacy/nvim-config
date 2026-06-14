@@ -328,8 +328,8 @@ vim.keymap.set("n", "<tab>", "<cmd>FlipPinnedTab<cr>", { noremap = true, silent 
 vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 
 -- Migrate to normal-tabbing switching.
-vim.keymap.set({ "n", "v", "i" }, "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v", "i" }, "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i", "t" }, "<C-tab>", "<cmd>tabnext<CR>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v", "i", "t" }, "<S-C-tab>", "<cmd>tabprev<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>up", function()
   if vim.g.pinned_tab and vim.api.nvim_get_current_tabpage() == vim.g.pinned_tab.id then
     -- Call on the pinned tab. Unpin it.
@@ -939,3 +939,17 @@ vim.keymap.set({ "n", "v", "t" }, "<D-BS>", function()
     vim.api.nvim_feedkeys(keymap, "m", false)
   end
 end, { desc = "Cmd-Del: reset terminal or AI rewrite based on buftype" })
+
+-- <D-o> maximize toggle in terminal mode (can't use feedkeys/<leader> in t mode)
+vim.keymap.set("t", "<D-o>", function()
+  local cmd
+  if vim.t.window_maximized then
+    cmd = "<c-w>="
+    vim.t.window_maximized = false
+  else
+    vim.t.window_maximized = true
+    cmd = "<c-w>_<c-w>|"
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
+  pcall(function() require("lualine").refresh() end)
+end, { desc = "Toggle maximize window (terminal mode)" })
