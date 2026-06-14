@@ -79,19 +79,29 @@ return {
         mode = { "t" },
         desc = "Exit terminal insert mode",
       },
-      -- Tmux vertical split with dscc attach in local terminal
+      -- Tmux vertical split with dscc attach in local terminal.
+      -- Sends the split-window command directly through the -S socket
+      -- instead of typing into the terminal (which was the old bug).
       {
         "<D-D>",
         function()
           if vim.bo.filetype == "termlocal" then
-            vim.fn.chansend(
-              vim.b.terminal_job_id,
-              "tmux split-window -h 'dscc attach --last --shell'\n"
-            )
+            local tmux_mod = require("config.floatterm.tmux")
+            local base = tmux_mod.base_cmd()
+            local shell_cmd = '[ -f "$HOME/.zprofile" ] && . "$HOME/.zprofile"; '
+              .. 'dscc attach --last --shell; '
+              .. 'code=$?; '
+              .. 'if [ $code -ne 0 ]; then '
+              ..   'echo "dscc exited with code $code" >&2; '
+              .. 'fi; '
+              .. 'exit $code'
+            vim.fn.system(vim.list_extend(vim.deepcopy(base), {
+              "split-window", "-v", "zsh", "-ic", shell_cmd,
+            }))
           end
         end,
         mode = { "t" },
-        desc = "Tmux vsplit with dscc attach --last --shell (termlocal only)",
+        desc = "Tmux split with dscc attach --last --shell (termlocal only)",
       },
       -- Lazygit
       {

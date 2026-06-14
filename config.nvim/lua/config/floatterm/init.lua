@@ -416,6 +416,14 @@ function M.setup()
     end,
   })
 
+  -- Kill the dedicated tmux server when neovim exits
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    group = group,
+    callback = function()
+      pcall(tmux.kill_server)
+    end,
+  })
+
   -- Register global function for tmux bell hook RPC callback
   _G.FloatTermBellHook = function(session_name)
     vim.schedule(function()
