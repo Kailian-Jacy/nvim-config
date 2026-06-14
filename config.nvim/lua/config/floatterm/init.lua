@@ -155,9 +155,12 @@ function M.move_to_slot(inst, new_slot, kind)
     winid = state.global.winids and state.global.winids[tab] or inst.winid
   end
 
-  -- Reposition: may need to close+reopen when switching between float/split
-  local new_winid = window.reposition(winid, inst.bufnr, old_slot, new_slot)
-  if new_winid then
+  -- Guard: prevent WinClosed autocmd from marking visible=false during reposition
+  state._repositioning = true
+  local ok, new_winid = pcall(window.reposition, winid, inst.bufnr, old_slot, new_slot)
+  state._repositioning = false
+
+  if ok and new_winid then
     if kind == "global" then
       local tab = vim.api.nvim_get_current_tabpage()
       state.global.winids[tab] = new_winid
@@ -165,6 +168,12 @@ function M.move_to_slot(inst, new_slot, kind)
     else
       inst.winid = new_winid
     end
+    inst.visible = true  -- Restore visible state after reposition
+  elseif not ok then
+    -- Reposition failed; mark as hidden since window state is uncertain
+    inst.visible = false
+    inst.winid = nil
+    vim.notify("[floatterm] reposition failed: " .. tostring(new_winid), vim.log.levels.WARN)
   end
 end
 
@@ -242,11 +251,14 @@ function M.is_terminal_buffer()
   return vim.bo.buftype == "terminal"
 end
 
---- Check if currently focused on a float terminal window
+--- Check if currently focused on a managed terminal window (float or split)
 ---@return boolean
-function M.is_in_float_terminal()
+function M.is_in_terminal()
   return M.get_focused_terminal() ~= nil
 end
+
+--- Backward compat alias
+M.is_in_float_terminal = M.is_in_terminal
 
 --- Setup autocmds for state synchronization
 function M.setup()
@@ -256,6 +268,9 @@ function M.setup()
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
     callback = function(args)
+      -- Skip state updates during programmatic reposition (close+reopen)
+      if state._repositioning then return end
+
       local closed_win = tonumber(args.match)
       if not closed_win then return end
 

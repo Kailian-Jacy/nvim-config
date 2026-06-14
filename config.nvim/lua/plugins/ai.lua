@@ -223,7 +223,7 @@ Output the code with warnings as-is replacement.
     event = "VeryLazy",
     lazy = false, -- lazy loading avante does not work...
     -- commit = "e98fa46", -- set this if you want to always pull the latest change
-    enabled = true,
+    enabled = false, -- disabled: conflicts with floatterm <leader>aa, using gp.nvim instead
     keys = {
       {
         "<leader>ac",

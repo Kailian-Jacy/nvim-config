@@ -9,26 +9,14 @@ return {
       require("config.floatterm").setup()
     end,
     keys = {
-      -- Toggle global terminal
-      {
-        "<D-t>",
-        function() require("config.floatterm").toggle_global() end,
-        mode = { "n", "v", "t" },
-        desc = "Toggle global floating terminal",
-      },
+      -- Toggle global terminal (<leader> mapping; <D-t> is in config/keymaps.lua)
       {
         "<leader>tt",
         function() require("config.floatterm").toggle_global() end,
         mode = { "n" },
         desc = "Toggle global floating terminal",
       },
-      -- Toggle local terminal: <D-A> (shift) for local, <leader>aa for local
-      {
-        "<D-A>",
-        function() require("config.floatterm").toggle_local() end,
-        mode = { "n", "v", "t" },
-        desc = "Toggle local floating terminal",
-      },
+      -- Toggle local terminal (<leader> mapping; <D-A> is in config/keymaps.lua)
       {
         "<leader>aa",
         function() require("config.floatterm").toggle_local() end,

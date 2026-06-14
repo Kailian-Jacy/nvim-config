@@ -715,6 +715,9 @@ end, { desc = "Toggle debugging keymaps mode." })
 local cmd_mappings = {
   -- Ai related.
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
+  -- NOTE: <D-a> (lowercase) = AI rewrite, <D-A> (Cmd+Shift+A) = toggle local terminal.
+  -- Neovim/Neovide distinguishes these as separate key codes.
+  { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "Toggle local terminal" },
   -- Buffer related.
   { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
@@ -911,6 +914,16 @@ for _, mapping in ipairs(cmd_mappings) do
     vim.api.nvim_feedkeys(refined_keymap, "m", false)
   end, { desc = mapping.description })
 end
+
+-- Terminal-mode Cmd mappings: can't use feedkeys/<leader> indirection in "t" mode
+-- because keystrokes would be consumed by the terminal process.
+vim.keymap.set("t", "<D-t>", function()
+  require("config.floatterm").toggle_global()
+end, { desc = "Toggle global floating terminal" })
+
+vim.keymap.set("t", "<D-A>", function()
+  require("config.floatterm").toggle_local()
+end, { desc = "Toggle local floating terminal" })
 
 -- Issue #4: Unified <D-BS> keymap using buftype-based dispatch
 -- In terminal buffers: reset terminal position to centered

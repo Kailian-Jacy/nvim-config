@@ -23,6 +23,9 @@ local State = {
   },
   ---@type table<integer, TerminalInstance>
   locals = {},
+  --- Guard flag: when true, WinClosed should not update visible state
+  --- (used during reposition to distinguish programmatic close from user close)
+  _repositioning = false,
 }
 
 --- Get or create local terminal instance for current tab

@@ -1412,14 +1412,16 @@ vim.api.nvim_create_user_command("ObsOpen", function()
   -- vim.cmd("ObsidianOpen")
 end, {})
 
--- Avante keymaps.
+-- Avante keymaps (only if avante is installed/enabled).
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "Avante" },
   callback = function()
+    local ok, avante_api = pcall(require, "avante.api")
+    if not ok then return end
     vim.keymap.set(
       "n",
       "<c-c>",
-      require("avante.api").stop,
+      avante_api.stop,
       { desc = "Stop avante generation in avante window.", silent = true, buffer = true, noremap = false }
     )
   end,

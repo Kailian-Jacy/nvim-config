@@ -7,17 +7,21 @@ local M = {}
 ---@return table win_config for nvim_open_win
 function M.get_geometry(slot)
   local width = vim.o.columns
-  local height = vim.o.lines - 1 -- account for cmdline
+  -- vim.o.lines = total terminal height (tabline + editor + statusline + cmdline)
+  -- relative="editor" starts below tabline, so available height is:
+  --   vim.o.lines - tabline - cmdheight
+  -- This covers the entire editor area including statusline, leaving no blank lines.
+  local cmdheight = vim.o.cmdheight or 1
   local tabline_height = (vim.o.showtabline == 0) and 0 or 1
 
   if slot == "centered" then
-    -- Fullscreen float, no border
+    -- Fullscreen float, no border — cover entire editor area
     return {
       relative = "editor",
       row = 0,
       col = 0,
       width = width,
-      height = height - tabline_height,
+      height = vim.o.lines - tabline_height - cmdheight,
       border = "none",
       style = "minimal",
     }

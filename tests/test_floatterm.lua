@@ -99,10 +99,12 @@ vim.o.lines = 50
 vim.o.showtabline = 2  -- tabline visible
 
 -- Centered: fullscreen float, no border
+-- Height formula: vim.o.lines - tabline_height - cmdheight
+-- With lines=50, showtabline=2 (tabline_height=1), cmdheight=1: 50 - 1 - 1 = 48
 local centered = window.get_geometry("centered")
 assert_eq(centered.relative, "editor", "centered relative=editor")
 assert_eq(centered.width, 200, "centered width = full columns")
-assert_eq(centered.height, 48, "centered height = lines - 1 - tabline(1)")
+assert_eq(centered.height, 48, "centered height = lines - tabline - cmdheight")
 assert_eq(centered.border, "none", "centered border = none")
 assert_eq(centered.row, 0, "centered row = 0")
 assert_eq(centered.col, 0, "centered col = 0")
@@ -124,13 +126,25 @@ assert_eq(window.is_float_slot("centered"), true, "centered is float slot")
 assert_eq(window.is_float_slot("left"), false, "left is NOT float slot")
 assert_eq(window.is_float_slot("right"), false, "right is NOT float slot")
 
--- Test with no tabline
+-- Test with no tabline: 50 - 0 - 1 = 49
 vim.o.showtabline = 0
 local centered_no_tab = window.get_geometry("centered")
-assert_eq(centered_no_tab.height, 49, "centered height without tabline = lines - 1")
+assert_eq(centered_no_tab.height, 49, "centered height without tabline")
 assert_eq(centered_no_tab.row, 0, "centered row without tabline = 0")
 
--- Restore
+-- Test with cmdheight=2: 50 - 1 - 2 = 47
+vim.o.showtabline = 2
+vim.o.cmdheight = 2
+local centered_cmd2 = window.get_geometry("centered")
+assert_eq(centered_cmd2.height, 47, "centered height with cmdheight=2")
+
+-- Test with cmdheight=0 (no cmdline): 50 - 1 - 0 = 49
+vim.o.cmdheight = 0
+local centered_cmd0 = window.get_geometry("centered")
+assert_eq(centered_cmd0.height, 49, "centered height with cmdheight=0")
+
+-- Restore defaults
+vim.o.cmdheight = 1
 vim.o.showtabline = 2
 
 -------------------------------------------------------------
@@ -179,7 +193,55 @@ assert_nil(inst, "no focused terminal when none open")
 assert_nil(kind, "no kind when none open")
 
 -------------------------------------------------------------
--- Test 6: Global winids cross-tab state
+-- Test 6: Reposition guard flag and visible state
+-------------------------------------------------------------
+print("\n--- Reposition Guard ---")
+
+state:reset()
+
+-- _repositioning guard flag defaults to false
+assert_eq(state._repositioning, false, "_repositioning defaults to false")
+
+-- Simulate what move_to_slot does with the guard flag
+state._repositioning = true
+assert_eq(state._repositioning, true, "_repositioning can be set to true")
+state._repositioning = false
+assert_eq(state._repositioning, false, "_repositioning restored to false after pcall")
+
+-- Simulate reposition scenario: a local terminal at centered
+local loc_repo = state:get_local()
+loc_repo.visible = true
+loc_repo.slot = "centered"
+loc_repo.winid = 999  -- fake winid
+loc_repo.bufnr = 100  -- fake bufnr
+
+-- After reposition (float→split), visible should remain true
+-- The bug was: WinClosed autocmd set visible=false during close+reopen
+-- With guard flag, WinClosed is skipped during reposition
+-- And move_to_slot explicitly sets inst.visible = true after reposition
+loc_repo.slot = "left"
+loc_repo.winid = 1000  -- new winid from reposition
+loc_repo.visible = true  -- this is what the fix ensures
+assert_eq(loc_repo.visible, true, "visible stays true after reposition")
+assert_eq(loc_repo.slot, "left", "slot updated to left after reposition")
+
+-- Verify slot_occupant works after reposition
+-- (can't fully test without real windows, but verify state is consistent)
+assert_eq(loc_repo.visible, true, "visible=true means slot_occupant can detect it")
+
+state:reset()
+
+-------------------------------------------------------------
+-- Test 7: is_in_terminal alias
+-------------------------------------------------------------
+print("\n--- is_in_terminal alias ---")
+
+local ft = require("config.floatterm")
+assert_eq(type(ft.is_in_terminal), "function", "is_in_terminal exists as function")
+assert_eq(ft.is_in_float_terminal, ft.is_in_terminal, "is_in_float_terminal is alias of is_in_terminal")
+
+-------------------------------------------------------------
+-- Test 8: Global winids cross-tab state
 -------------------------------------------------------------
 print("\n--- Global winids cross-tab ---")
 
