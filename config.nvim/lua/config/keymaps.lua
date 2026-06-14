@@ -717,7 +717,8 @@ end, { desc = "Toggle debugging keymaps mode." })
 ---@type table<CmdMapping>
 local cmd_mappings = {
   -- Ai related.
-  { cmdKeymap = "<D-a>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "Toggle local terminal" },
+  { cmdKeymap = "<D-a>", leaderKeymap = "<leader>aa", modes = { "n", "i" }, description = "Toggle local terminal" },
+  { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "v" },      description = "Rewrite selected range" },
   -- Buffer related.
   { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
