@@ -52,7 +52,7 @@ function M.build_cmd(session_name)
     )
     return {
       "tmux", "new-session", "-As", session_name,
-      "sh", "-c", shell_cmd,
+      "zsh", "-ic", shell_cmd,
     }, err_file
   end
   return { "tmux", "new-session", "-As", session_name }, nil
