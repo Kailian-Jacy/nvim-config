@@ -79,6 +79,20 @@ return {
         mode = { "t" },
         desc = "Exit terminal insert mode",
       },
+      -- Tmux vertical split with dscc attach in local terminal
+      {
+        "<D-D>",
+        function()
+          if vim.bo.filetype == "termlocal" then
+            vim.fn.chansend(
+              vim.b.terminal_job_id,
+              "tmux split-window -h 'dscc attach --last --shell'\n"
+            )
+          end
+        end,
+        mode = { "t" },
+        desc = "Tmux vsplit with dscc attach --last --shell (termlocal only)",
+      },
       -- Lazygit
       {
         "<leader>gg",

@@ -131,6 +131,11 @@ function M.spawn(inst, kind)
 
   -- Buffer settings
   vim.bo[bufnr].buflisted = false
+  if kind == "local" then
+    vim.bo[bufnr].filetype = "termlocal"
+  else
+    vim.bo[bufnr].filetype = "termglobal"
+  end
 
   vim.cmd("startinsert")
 end
