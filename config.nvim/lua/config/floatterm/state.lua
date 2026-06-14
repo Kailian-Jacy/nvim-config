@@ -37,7 +37,7 @@ function State:get_local()
       bufnr = nil,
       jobid = nil,
       tmux_session = nil,
-      slot = "centered",
+      slot = "right",
       winid = nil,
       visible = false,
     }

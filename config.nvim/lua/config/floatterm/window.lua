@@ -26,16 +26,18 @@ function M.get_geometry(slot)
       style = "minimal",
     }
   elseif slot == "left" then
-    -- Split window on the left (~40% width)
+    -- Split window on the left
+    local portion = vim.g.terminal_width_left or 0.3
     return {
       split = "left",
-      width = math.floor(width * 0.4),
+      width = math.floor(width * portion),
     }
   elseif slot == "right" then
-    -- Split window on the right (~40% width)
+    -- Split window on the right
+    local portion = vim.g.terminal_width_right or 0.3
     return {
       split = "right",
-      width = math.floor(width * 0.4),
+      width = math.floor(width * portion),
     }
   end
 
