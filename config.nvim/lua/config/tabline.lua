@@ -1,5 +1,10 @@
 -- Tabline implementation extracted from options.lua
 
+-- Terminal bell indicator per tab
+-- Maps tabpage handle → boolean (true = beeping, needs attention)
+---@type table<integer, boolean>
+vim.g._tab_beep = vim.g._tab_beep or {}
+
 -- Customized Tabs
 ---@class PinnedTab
 ---@field id integer
@@ -51,13 +56,17 @@ end
 ---@field index integer
 ---@field name? string
 ---@field prefix? string
+---@field suffix? string
 
 ---@param tab_descriptions table<TabDescriptions>
 function TablineString(tab_descriptions)
   local tabline = ""
   for index = 1, #tab_descriptions do
     local tab_descriptor = tab_descriptions[index]
-    local tab_id, tab_name, tab_prefix = tab_descriptor.index, tab_descriptor.name, (tab_descriptor.prefix or "")
+    local tab_id = tab_descriptor.index
+    local tab_name = tab_descriptor.name
+    local tab_prefix = tab_descriptor.prefix or ""
+    local tab_suffix = tab_descriptor.suffix or ""
 
     if tab_id == vim.fn.tabpagenr() then
       tabline = tabline .. "%#TabLineSel#"
@@ -66,7 +75,7 @@ function TablineString(tab_descriptions)
     end
 
     tabline = tabline .. "%" .. tab_id .. "T"
-    tabline = tabline .. " " .. (tab_prefix .. tab_name) .. " "
+    tabline = tabline .. " " .. (tab_prefix .. tab_name .. tab_suffix) .. " "
   end
   return tabline
 end
@@ -77,17 +86,25 @@ function Tabline()
   ---@type TabDescriptions?
   local pinned_tab = nil
 
+  local beep_set = vim.g._tab_beep or {}
   for index = 1, vim.fn.tabpagenr("$") do
     local name = vim.g.tabname(index)
+    local tabpage = vim.api.nvim_list_tabpages()[index]
 
     tabs[#tabs + 1] = {
       index = index,
       name = name,
       prefix = "",
+      suffix = "",
     }
 
     if index == 1 and vim.g.pinned_tab then
       tabs[#tabs].prefix = vim.g.pinned_tab_marker .. " "
+    end
+
+    -- Show beep indicator for tabs with terminal bell
+    if tabpage and beep_set[tostring(tabpage)] then
+      tabs[#tabs].suffix = " ●"
     end
   end
 
@@ -99,3 +116,23 @@ function Tabline()
 end
 
 vim.go.tabline = "%!v:lua.Tabline()"
+
+-- Bell detection is handled by the floatterm proxy (see floatterm/init.lua M._on_term_bell).
+-- The proxy intercepts \x07 in stdout and calls _on_term_bell which updates vim.g._tab_beep.
+
+-- Clear beep indicator only when the local terminal buffer is focused again
+vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+  group = vim.api.nvim_create_augroup("TablineTermBellClear", { clear = true }),
+  callback = function(args)
+    if vim.bo[args.buf].filetype ~= "termlocal" then
+      return
+    end
+    local current_tab = vim.api.nvim_get_current_tabpage()
+    local beep_set = vim.g._tab_beep or {}
+    if beep_set[tostring(current_tab)] then
+      beep_set[tostring(current_tab)] = nil
+      vim.g._tab_beep = beep_set
+      vim.cmd("redrawtabline")
+    end
+  end,
+})

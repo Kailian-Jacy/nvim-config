@@ -125,26 +125,79 @@ function M.spawn(inst, kind)
     inst.winid = winid
   end
 
-  -- Now termopen in the current window/buffer
+  -- Now open terminal in the current window/buffer
   local cmd, err_file = tmux.build_cmd(inst.tmux_session)
-  inst.jobid = vim.fn.termopen(cmd, {
-    on_exit = function(_, _, _)
-      vim.schedule(function()
-        if err_file and vim.fn.filereadable(err_file) == 1 then
-          local err_msg = vim.fn.readfile(err_file)
-          vim.fn.delete(err_file)
-          vim.notify(
-            string.format(
-              "[floatterm] boot failed: %s\ncmd: %s",
-              table.concat(err_msg, "\n"),
-              table.concat(cmd, " ")
-            ),
-            vim.log.levels.ERROR
-          )
+
+  if kind == "local" then
+    -- Use proxy approach for local terminals to capture bell (\x07)
+    local term_chan = vim.api.nvim_open_term(bufnr, {
+      on_input = function(_, _, _, data)
+        if inst.jobid then
+          vim.api.nvim_chan_send(inst.jobid, data)
         end
-      end)
-    end,
-  })
+      end,
+    })
+    inst.term_chan = term_chan
+
+    inst.jobid = vim.fn.jobstart(cmd, {
+      pty = true,
+      on_stdout = function(_, data)
+        for _, chunk in ipairs(data) do
+          if chunk:find("\x07") then
+            vim.schedule(function()
+              -- Fire the bell handler for this buffer
+              M._on_term_bell(bufnr)
+            end)
+          end
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(bufnr) then
+              -- Strip BEL before forwarding to avoid double-bell
+              local clean = chunk:gsub("\x07", "")
+              if #clean > 0 then
+                vim.api.nvim_chan_send(term_chan, clean)
+              end
+            end
+          end)
+        end
+      end,
+      on_exit = function(_, _, _)
+        vim.schedule(function()
+          if err_file and vim.fn.filereadable(err_file) == 1 then
+            local err_msg = vim.fn.readfile(err_file)
+            vim.fn.delete(err_file)
+            vim.notify(
+              string.format(
+                "[floatterm] boot failed: %s\ncmd: %s",
+                table.concat(err_msg, "\n"),
+                table.concat(cmd, " ")
+              ),
+              vim.log.levels.ERROR
+            )
+          end
+        end)
+      end,
+    })
+  else
+    -- Global terminals use standard termopen (no bell detection needed)
+    inst.jobid = vim.fn.termopen(cmd, {
+      on_exit = function(_, _, _)
+        vim.schedule(function()
+          if err_file and vim.fn.filereadable(err_file) == 1 then
+            local err_msg = vim.fn.readfile(err_file)
+            vim.fn.delete(err_file)
+            vim.notify(
+              string.format(
+                "[floatterm] boot failed: %s\ncmd: %s",
+                table.concat(err_msg, "\n"),
+                table.concat(cmd, " ")
+              ),
+              vim.log.levels.ERROR
+            )
+          end
+        end)
+      end,
+    })
+  end
 
   -- Buffer settings
   vim.bo[bufnr].buflisted = false
@@ -281,6 +334,33 @@ end
 
 --- Backward compat alias
 M.is_in_float_terminal = M.is_in_terminal
+
+--- Handle terminal bell from a local terminal buffer.
+--- Marks the owning tab in _tab_beep and redraws the tabline.
+---@param bufnr integer
+function M._on_term_bell(bufnr)
+  -- Find which tab owns this buffer
+  local owner_tab = nil
+  for tab, inst in pairs(state.locals) do
+    if inst.bufnr == bufnr then
+      owner_tab = tab
+      break
+    end
+  end
+
+  if not owner_tab then return end
+
+  -- Don't mark if the terminal buffer is currently focused
+  if vim.api.nvim_get_current_buf() == bufnr then
+    return
+  end
+
+  -- Mark the tab as beeping
+  local beep_set = vim.g._tab_beep or {}
+  beep_set[tostring(owner_tab)] = true
+  vim.g._tab_beep = beep_set
+  vim.cmd("redrawtabline")
+end
 
 --- Setup autocmds for state synchronization
 function M.setup()
