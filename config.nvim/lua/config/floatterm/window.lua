@@ -76,7 +76,6 @@ function M.open(bufnr, slot)
     vim.wo[winid].relativenumber = false
     vim.wo[winid].signcolumn = "no"
     vim.wo[winid].winfixbuf = true
-    vim.wo[winid].winfixwidth = true
     return winid
   end
 end
