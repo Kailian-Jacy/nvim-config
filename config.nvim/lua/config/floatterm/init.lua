@@ -473,24 +473,31 @@ function M.setup()
     group = group,
     callback = function(args)
       local bufnr = args.buf
-      -- Check if this is our global terminal
-      if state.global.bufnr == bufnr then
-        state.global.bufnr = nil
-        state.global.jobid = nil
-        -- Close all global windows
-        if state.global.winids then
-          for tab, wid in pairs(state.global.winids) do
-            if wid and vim.api.nvim_win_is_valid(wid) then
+
+      -- Helper: set up 'q' keymap on the dead terminal buffer so the user
+      -- can dismiss the window showing [Process exited].
+      local function setup_q_to_close(buf)
+        if not buf or not vim.api.nvim_buf_is_valid(buf) then return end
+        pcall(vim.keymap.set, "n", "q", function()
+          -- Find and close any window displaying this buffer
+          for _, wid in ipairs(vim.api.nvim_list_wins()) do
+            if vim.api.nvim_win_is_valid(wid) and vim.api.nvim_win_get_buf(wid) == buf then
+              pcall(function() vim.wo[wid].winfixbuf = false end)
               pcall(vim.api.nvim_win_close, wid, true)
             end
-            state.global.winids[tab] = nil
           end
-        end
-        if state.global.winid and vim.api.nvim_win_is_valid(state.global.winid) then
-          vim.api.nvim_win_close(state.global.winid, true)
-        end
-        state.global.winid = nil
-        state.global.visible = false
+          -- Delete the buffer
+          if vim.api.nvim_buf_is_valid(buf) then
+            pcall(vim.api.nvim_buf_delete, buf, { force = true })
+          end
+        end, { buffer = buf, nowait = true, silent = true })
+      end
+
+      -- Check if this is our global terminal
+      if state.global.bufnr == bufnr then
+        state.global.jobid = nil
+        -- Leave window open showing [Process exited]; set up q to close
+        setup_q_to_close(bufnr)
       end
       -- Check local terminals
       for _, loc in pairs(state.locals) do
@@ -499,13 +506,9 @@ function M.setup()
           if loc.tmux_session then
             pcall(tmux.remove_bell_hook, loc.tmux_session)
           end
-          loc.bufnr = nil
           loc.jobid = nil
-          if loc.winid and vim.api.nvim_win_is_valid(loc.winid) then
-            vim.api.nvim_win_close(loc.winid, true)
-          end
-          loc.winid = nil
-          loc.visible = false
+          -- Leave window open showing [Process exited]; set up q to close
+          setup_q_to_close(bufnr)
         end
       end
     end,

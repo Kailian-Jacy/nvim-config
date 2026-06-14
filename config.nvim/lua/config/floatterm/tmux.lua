@@ -78,7 +78,7 @@ function M.build_cmd(session_name)
       .. 'if [ $code -ne 0 ]; then '
       ..   'echo "dscc exited with code $code" > %s; '
       .. 'fi; '
-      .. 'exit $code',
+      .. 'exec zsh',
       vim.fn.shellescape(session_name),
       vim.fn.shellescape(err_file)
     )
