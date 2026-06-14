@@ -22,9 +22,9 @@ return {
         mode = { "n" },
         desc = "Toggle global floating terminal",
       },
-      -- Toggle local terminal
+      -- Toggle local terminal: <D-A> (shift) for local, <leader>aa for local
       {
-        "<D-a>",
+        "<D-A>",
         function() require("config.floatterm").toggle_local() end,
         mode = { "n", "v", "t" },
         desc = "Toggle local floating terminal",

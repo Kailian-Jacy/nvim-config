@@ -6,6 +6,7 @@
 ---@field tmux_session string|nil
 ---@field slot SlotPosition
 ---@field winid integer|nil
+---@field winids table<integer, integer>|nil  -- tabpage → winid (global only)
 ---@field visible boolean
 
 ---@class FloatTermState
@@ -17,6 +18,7 @@ local State = {
     tmux_session = nil,
     slot = "centered",
     winid = nil,
+    winids = {},  -- tabpage → winid for cross-tab support
     visible = false,
   },
   ---@type table<integer, TerminalInstance>
@@ -45,10 +47,18 @@ end
 ---@return "global"|"local"|nil
 function State:slot_occupant(slot)
   if self.global.visible and self.global.slot == slot then
-    -- Check if global's winid is in the current tabpage
+    -- Check if global's winid is in the current tabpage via winids table
+    local tab = vim.api.nvim_get_current_tabpage()
+    if self.global.winids then
+      local wid = self.global.winids[tab]
+      if wid and vim.api.nvim_win_is_valid(wid) then
+        return "global"
+      end
+    end
+    -- Legacy fallback
     if self.global.winid and vim.api.nvim_win_is_valid(self.global.winid) then
       local win_tab = vim.api.nvim_win_get_tabpage(self.global.winid)
-      if win_tab == vim.api.nvim_get_current_tabpage() then
+      if win_tab == tab then
         return "global"
       end
     end
@@ -77,6 +87,7 @@ function State:reset()
     tmux_session = nil,
     slot = "centered",
     winid = nil,
+    winids = {},
     visible = false,
   }
   self.locals = {}

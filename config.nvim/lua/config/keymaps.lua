@@ -844,18 +844,7 @@ local cmd_mappings = {
     modes = { "t" },
     description = "Move terminal to bottom split.",
   },
-  {
-    cmdKeymap = "<d-bs>",
-    leaderKeymap = "<c-bs>",
-    modes = { "t" },
-    description = "Reset terminal position to centered.",
-  },
-  {
-    cmdKeymap = "<d-bs>",
-    leaderKeymap = "<leader>ae",
-    modes = { "n", "v" },
-    description = "AI rewrite (non-terminal context)",
-  },
+  -- <D-BS> is handled via a unified keymap below (buftype-based dispatch)
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
   { cmdKeymap = "<D-v>", leaderKeymap = "<leader>ps", modes = { "n", "v" }, description = "Paste from clipboard" },
@@ -922,3 +911,21 @@ for _, mapping in ipairs(cmd_mappings) do
     vim.api.nvim_feedkeys(refined_keymap, "m", false)
   end, { desc = mapping.description })
 end
+
+-- Issue #4: Unified <D-BS> keymap using buftype-based dispatch
+-- In terminal buffers: reset terminal position to centered
+-- In normal buffers: AI rewrite
+vim.keymap.set({ "n", "v", "t" }, "<D-BS>", function()
+  if vim.bo.buftype == "terminal" then
+    -- Reset position to centered
+    local ft = require("config.floatterm")
+    local inst, kind = ft.get_focused_terminal()
+    if inst then
+      ft.move_to_slot(inst, "centered", kind)
+    end
+  else
+    -- AI rewrite (same as <leader>ae)
+    local keymap = vim.api.nvim_replace_termcodes(" ae", true, false, true)
+    vim.api.nvim_feedkeys(keymap, "m", false)
+  end
+end, { desc = "Cmd-Del: reset terminal or AI rewrite based on buftype" })

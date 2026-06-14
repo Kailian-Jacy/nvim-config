@@ -14,16 +14,18 @@ function M.toggle_local()
 end
 
 --- Toggle global terminal (shared buffer across tabs)
+--- Issue #3: global.winid is now table<tabpage, winid> to handle cross-tab properly
 function M.toggle_global()
-  if state.global.visible and state.global.winid and vim.api.nvim_win_is_valid(state.global.winid) then
-    -- Check if the visible window is on this tabpage
-    local win_tab = vim.api.nvim_win_get_tabpage(state.global.winid)
-    if win_tab == vim.api.nvim_get_current_tabpage() then
-      M.hide(state.global)
-      return
-    end
+  local tab = vim.api.nvim_get_current_tabpage()
+  local winid = state.global.winids and state.global.winids[tab]
+
+  if winid and vim.api.nvim_win_is_valid(winid) then
+    -- Visible on this tab, hide it
+    M.hide_global_on_tab(tab)
+    return
   end
-  -- Not visible on this tab, show it
+
+  -- Not visible on this tab, show it (reuse buffer)
   M.show(state.global, "global")
 end
 
@@ -41,9 +43,23 @@ function M.show(inst, kind)
   end
 
   -- Buffer exists, just open a new floating window for it
-  inst.winid = window.open(inst.bufnr, inst.slot)
+  local winid = window.open(inst.bufnr, inst.slot)
+
+  if kind == "global" then
+    local tab = vim.api.nvim_get_current_tabpage()
+    if not state.global.winids then state.global.winids = {} end
+    state.global.winids[tab] = winid
+    -- Keep legacy field for compat with get_focused_terminal
+    state.global.winid = winid
+  else
+    inst.winid = winid
+  end
   inst.visible = true
-  vim.cmd("startinsert")
+
+  -- Issue #9: check job is valid before startinsert
+  if inst.jobid and vim.fn.jobwait({ inst.jobid }, 0)[1] == -1 then
+    vim.cmd("startinsert")
+  end
 end
 
 --- Hide a terminal instance (close window, keep buffer)
@@ -54,6 +70,31 @@ function M.hide(inst)
   end
   inst.winid = nil
   inst.visible = false
+end
+
+--- Hide global terminal on a specific tab
+---@param tab integer
+function M.hide_global_on_tab(tab)
+  if not state.global.winids then return end
+  local winid = state.global.winids[tab]
+  if winid and vim.api.nvim_win_is_valid(winid) then
+    vim.api.nvim_win_close(winid, true)
+  end
+  state.global.winids[tab] = nil
+  -- Update visible: true if any tab still shows it
+  state.global.visible = false
+  if state.global.winids then
+    for _, wid in pairs(state.global.winids) do
+      if wid and vim.api.nvim_win_is_valid(wid) then
+        state.global.visible = true
+        state.global.winid = wid
+        break
+      end
+    end
+  end
+  if not state.global.visible then
+    state.global.winid = nil
+  end
 end
 
 --- Spawn a new terminal buffer with tmux
@@ -72,8 +113,17 @@ function M.spawn(inst, kind)
   inst.bufnr = bufnr
 
   -- Open floating window first (this makes buf current without flash)
-  inst.winid = window.open(bufnr, inst.slot)
+  local winid = window.open(bufnr, inst.slot)
   inst.visible = true
+
+  if kind == "global" then
+    local tab = vim.api.nvim_get_current_tabpage()
+    if not state.global.winids then state.global.winids = {} end
+    state.global.winids[tab] = winid
+    state.global.winid = winid
+  else
+    inst.winid = winid
+  end
 
   -- Now termopen in the current window/buffer
   local cmd = tmux.build_cmd(inst.tmux_session)
@@ -96,8 +146,26 @@ function M.move_to_slot(inst, new_slot, kind)
   -- Resolve conflicts at the new slot
   M.resolve_conflict(new_slot, kind)
 
+  local old_slot = inst.slot
   inst.slot = new_slot
-  window.reposition(inst.winid, new_slot)
+
+  local winid = inst.winid
+  if kind == "global" then
+    local tab = vim.api.nvim_get_current_tabpage()
+    winid = state.global.winids and state.global.winids[tab] or inst.winid
+  end
+
+  -- Reposition: may need to close+reopen when switching between float/split
+  local new_winid = window.reposition(winid, inst.bufnr, old_slot, new_slot)
+  if new_winid then
+    if kind == "global" then
+      local tab = vim.api.nvim_get_current_tabpage()
+      state.global.winids[tab] = new_winid
+      state.global.winid = new_winid
+    else
+      inst.winid = new_winid
+    end
+  end
 end
 
 --- Resolve conflicts: hide any terminal occupying target_slot that isn't the requester
@@ -107,7 +175,8 @@ function M.resolve_conflict(target_slot, requester)
   local occupant = state:slot_occupant(target_slot)
   if occupant and occupant ~= requester then
     if occupant == "global" then
-      M.hide(state.global)
+      local tab = vim.api.nvim_get_current_tabpage()
+      M.hide_global_on_tab(tab)
     else
       M.hide(state:get_local())
     end
@@ -147,9 +216,19 @@ end
 ---@return TerminalInstance|nil, "global"|"local"|nil
 function M.get_focused_terminal()
   local cur_win = vim.api.nvim_get_current_win()
+
+  -- Check global winids for current tab
+  if state.global.winids then
+    local tab = vim.api.nvim_get_current_tabpage()
+    if state.global.winids[tab] == cur_win then
+      return state.global, "global"
+    end
+  end
+  -- Legacy fallback
   if state.global.winid == cur_win then
     return state.global, "global"
   end
+
   local loc = state:get_local()
   if loc and loc.winid == cur_win then
     return loc, "local"
@@ -179,14 +258,78 @@ function M.setup()
     callback = function(args)
       local closed_win = tonumber(args.match)
       if not closed_win then return end
-      if state.global.winid == closed_win then
+
+      -- Check global winids
+      if state.global.winids then
+        for tab, wid in pairs(state.global.winids) do
+          if wid == closed_win then
+            state.global.winids[tab] = nil
+          end
+        end
+        -- Update visible state
+        local any_visible = false
+        for _, wid in pairs(state.global.winids) do
+          if wid and vim.api.nvim_win_is_valid(wid) then
+            any_visible = true
+            state.global.winid = wid
+            break
+          end
+        end
+        if not any_visible then
+          state.global.winid = nil
+          state.global.visible = false
+        end
+      elseif state.global.winid == closed_win then
         state.global.winid = nil
         state.global.visible = false
       end
+
       for _, loc in pairs(state.locals) do
         if loc.winid == closed_win then
           loc.winid = nil
           loc.visible = false
+        end
+      end
+    end,
+  })
+
+  -- Issue #5: TabClosed handler - clean up local terminal state
+  vim.api.nvim_create_autocmd("TabClosed", {
+    group = group,
+    callback = function(args)
+      local closed_tab = tonumber(args.match)
+      if not closed_tab then return end
+      -- Find and clean up the local instance for this tab
+      -- Note: TabClosed fires with the tab number (1-based), but our keys are tabpage handles.
+      -- We need to check which tabpage handles are no longer valid.
+      local valid_tabs = vim.api.nvim_list_tabpages()
+      local valid_set = {}
+      for _, t in ipairs(valid_tabs) do
+        valid_set[t] = true
+      end
+      for tab, loc in pairs(state.locals) do
+        if not valid_set[tab] then
+          -- Kill the job if still running
+          if loc.jobid then
+            pcall(vim.fn.jobstop, loc.jobid)
+          end
+          -- Close buffer
+          if loc.bufnr and vim.api.nvim_buf_is_valid(loc.bufnr) then
+            pcall(vim.api.nvim_buf_delete, loc.bufnr, { force = true })
+          end
+          -- Close window if somehow still valid
+          if loc.winid and vim.api.nvim_win_is_valid(loc.winid) then
+            pcall(vim.api.nvim_win_close, loc.winid, true)
+          end
+          state.locals[tab] = nil
+        end
+      end
+      -- Also clean up global winids for closed tabs
+      if state.global.winids then
+        for tab, _ in pairs(state.global.winids) do
+          if not valid_set[tab] then
+            state.global.winids[tab] = nil
+          end
         end
       end
     end,
@@ -237,6 +380,15 @@ function M.setup()
       if state.global.bufnr == bufnr then
         state.global.bufnr = nil
         state.global.jobid = nil
+        -- Close all global windows
+        if state.global.winids then
+          for tab, wid in pairs(state.global.winids) do
+            if wid and vim.api.nvim_win_is_valid(wid) then
+              pcall(vim.api.nvim_win_close, wid, true)
+            end
+            state.global.winids[tab] = nil
+          end
+        end
         if state.global.winid and vim.api.nvim_win_is_valid(state.global.winid) then
           vim.api.nvim_win_close(state.global.winid, true)
         end

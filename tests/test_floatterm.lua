@@ -56,6 +56,9 @@ assert_nil(state.global.bufnr, "global bufnr initially nil")
 assert_eq(state.global.slot, "centered", "global slot default centered")
 assert_eq(state.global.visible, false, "global not visible initially")
 
+-- Global winids table exists
+assert_eq(type(state.global.winids), "table", "global winids is a table")
+
 -- Local instance creation
 local loc1 = state:get_local()
 assert_eq(loc1.slot, "centered", "local slot default centered")
@@ -93,21 +96,42 @@ local window = require("config.floatterm.window")
 -- Set known dimensions
 vim.o.columns = 200
 vim.o.lines = 50
+vim.o.showtabline = 2  -- tabline visible
 
+-- Centered: fullscreen float, no border
 local centered = window.get_geometry("centered")
 assert_eq(centered.relative, "editor", "centered relative=editor")
-assert_eq(centered.width, math.floor(200 * 0.96), "centered width")
-assert_eq(centered.height, math.floor(49 * 0.92), "centered height")
+assert_eq(centered.width, 200, "centered width = full columns")
+assert_eq(centered.height, 48, "centered height = lines - 1 - tabline(1)")
+assert_eq(centered.border, "none", "centered border = none")
+assert_eq(centered.row, 0, "centered row = 0")
+assert_eq(centered.col, 0, "centered col = 0")
 
+-- Left: split (not float)
 local left = window.get_geometry("left")
-assert_eq(left.relative, "editor", "left relative=editor")
-assert_eq(left.col, 0, "left col=0")
+assert_eq(left.split, "left", "left uses split=left")
 assert_eq(left.width, math.floor(200 * 0.4), "left width 40%")
+assert_nil(left.relative, "left has no relative (not a float)")
 
+-- Right: split (not float)
 local right = window.get_geometry("right")
-assert_eq(right.relative, "editor", "right relative=editor")
+assert_eq(right.split, "right", "right uses split=right")
 assert_eq(right.width, math.floor(200 * 0.4), "right width 40%")
-assert_true(right.col > 0, "right col > 0")
+assert_nil(right.relative, "right has no relative (not a float)")
+
+-- is_float_slot helper
+assert_eq(window.is_float_slot("centered"), true, "centered is float slot")
+assert_eq(window.is_float_slot("left"), false, "left is NOT float slot")
+assert_eq(window.is_float_slot("right"), false, "right is NOT float slot")
+
+-- Test with no tabline
+vim.o.showtabline = 0
+local centered_no_tab = window.get_geometry("centered")
+assert_eq(centered_no_tab.height, 49, "centered height without tabline = lines - 1")
+assert_eq(centered_no_tab.row, 0, "centered row without tabline = 0")
+
+-- Restore
+vim.o.showtabline = 2
 
 -------------------------------------------------------------
 -- Test 4: Tmux session naming
@@ -146,14 +170,34 @@ print("\n--- Toggle Semantics ---")
 state:reset()
 local ft = require("config.floatterm")
 
--- Test is_terminal_buffer
-vim.bo.buftype = ""
+-- Test is_terminal_buffer (default buffer is not terminal)
 assert_eq(ft.is_terminal_buffer(), false, "non-terminal buffer detected")
 
 -- Test get_focused_terminal when nothing is open
 local inst, kind = ft.get_focused_terminal()
 assert_nil(inst, "no focused terminal when none open")
 assert_nil(kind, "no kind when none open")
+
+-------------------------------------------------------------
+-- Test 6: Global winids cross-tab state
+-------------------------------------------------------------
+print("\n--- Global winids cross-tab ---")
+
+state:reset()
+
+-- Simulate winids table behavior
+assert_eq(type(state.global.winids), "table", "global.winids is table after reset")
+
+-- Simulate adding winids for tabs
+state.global.winids[1] = 100  -- fake winid for tab 1
+state.global.winids[2] = 200  -- fake winid for tab 2
+assert_eq(state.global.winids[1], 100, "winid stored for tab 1")
+assert_eq(state.global.winids[2], 200, "winid stored for tab 2")
+
+-- Cleanup removes entry
+state.global.winids[1] = nil
+assert_nil(state.global.winids[1], "winid removed for tab 1")
+assert_eq(state.global.winids[2], 200, "winid still present for tab 2")
 
 -------------------------------------------------------------
 -- Summary
