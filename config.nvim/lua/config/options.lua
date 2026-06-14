@@ -50,6 +50,10 @@ vim.g.read_binary_with_xxd = false
 -- Floating terminal system (floatterm)
 vim.g.floatterm_global_session = "nvim-global"
 vim.g.floatterm_local_prefix = "nvim-local-"
+vim.g.terminal_width_right = 0.3
+vim.g.terminal_width_left = 0.3
+vim.g.terminal_width_bottom = 0.3
+vim.g.terminal_width_top = 0.3
 vim.g.terminal_auto_insert = true
 
 -- Make sure to setup `mapleader` and `maplocalleader` before
