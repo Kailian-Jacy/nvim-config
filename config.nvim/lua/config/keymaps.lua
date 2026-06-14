@@ -128,7 +128,10 @@ end, { noremap = true })
 -- as exiting vim with running jobs seems dangerous, I choose to use :qa! to explicitly do so.
 
 -- Git related
-vim.keymap.set("n", "<leader>G", "<cmd>LazyGit<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>G", "<cmd>Lazygit<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>gg", "<cmd>Lazygit<CR>", { noremap = true, silent = true, desc = "Lazygit (float)" })
+vim.keymap.set("n", "<D-g>", "<cmd>Lazygit<CR>", { noremap = true, silent = true, desc = "Lazygit (float)" })
+vim.keymap.set("n", "<leader>gh", "<cmd>LazygitHere<CR>", { noremap = true, silent = true, desc = "Lazygit (current window)" })
 
 ---@param direction "j"|"k"|"h"|"l" The direction to move the cursor
 ---@param move_around function The callback to be executed after check.

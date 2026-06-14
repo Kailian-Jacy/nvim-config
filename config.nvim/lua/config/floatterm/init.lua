@@ -478,6 +478,32 @@ function M.setup()
       end,
     })
   end, { nargs = "?" })
+
+  -- LazygitHere: open lazygit in the current window (no float)
+  vim.api.nvim_create_user_command("LazygitHere", function(args)
+    local cwd = args.args ~= "" and vim.fn.expand(args.args) or vim.fn.getcwd()
+    local prev_buf = vim.api.nvim_get_current_buf()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(buf)
+    vim.fn.termopen({ "lazygit" }, { cwd = cwd })
+    vim.cmd("startinsert")
+    -- Restore previous buffer when lazygit exits
+    vim.api.nvim_create_autocmd("TermClose", {
+      buffer = buf,
+      once = true,
+      callback = function()
+        vim.schedule(function()
+          local win = vim.api.nvim_get_current_win()
+          if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(prev_buf) then
+            vim.api.nvim_win_set_buf(win, prev_buf)
+          end
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.api.nvim_buf_delete(buf, { force = true })
+          end
+        end)
+      end,
+    })
+  end, { nargs = "?" })
 end
 
 return M
