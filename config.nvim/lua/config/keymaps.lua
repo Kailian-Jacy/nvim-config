@@ -714,10 +714,7 @@ end, { desc = "Toggle debugging keymaps mode." })
 ---@type table<CmdMapping>
 local cmd_mappings = {
   -- Ai related.
-  { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
-  -- NOTE: <D-a> (lowercase) = AI rewrite, <D-A> (Cmd+Shift+A) = toggle local terminal.
-  -- Neovim/Neovide distinguishes these as separate key codes.
-  { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "Toggle local terminal" },
+  { cmdKeymap = "<D-a>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "Toggle local terminal" },
   -- Buffer related.
   { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
@@ -921,7 +918,7 @@ vim.keymap.set("t", "<D-t>", function()
   require("config.floatterm").toggle_global()
 end, { desc = "Toggle global floating terminal" })
 
-vim.keymap.set("t", "<D-A>", function()
+vim.keymap.set("t", "<D-a>", function()
   require("config.floatterm").toggle_local()
 end, { desc = "Toggle local floating terminal" })
 
