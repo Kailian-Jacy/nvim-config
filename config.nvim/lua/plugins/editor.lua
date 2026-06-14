@@ -79,11 +79,23 @@ return {
         mode = { "t" },
         desc = "Exit terminal insert mode",
       },
+      {
+        "<D-D>",
+        -- Delete the current terminal buffer. But do not kill the process.
+        -- This would be useful when cwd changed.
+        function()
+          if vim.bo.filetype == "termlocal" then
+            vim.cmd([[ bdelete! ]])
+          end
+        end,
+        mode = { "t" },
+        desc = "Detach tmux session by delete the buffer",
+      },
       -- Tmux vertical split with dscc attach in local terminal.
       -- Sends the split-window command directly through the -S socket
       -- instead of typing into the terminal (which was the old bug).
       {
-        "<D-D>",
+        "<D-x>",
         function()
           if vim.bo.filetype == "termlocal" then
             local tmux_mod = require("config.floatterm.tmux")
