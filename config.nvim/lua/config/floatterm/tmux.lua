@@ -28,19 +28,34 @@ end
 
 --- Build the tmux command for termopen
 --- For local sessions, runs dscc when creating a new session (not a plain shell).
+--- Sources $HOME/.zprofile to ensure PATH includes dscc.
+--- Writes exit status to a tmpfile so neovim can detect boot failures.
 ---@param session_name string
----@return table cmd
+---@return table cmd, string|nil err_file
 function M.build_cmd(session_name)
   -- Use tmux new-session -A: attaches if exists, creates if not.
-  -- For local sessions, pass the dscc command so new sessions run it instead of a shell.
+  -- For local sessions, wrap in a login shell that sources .zprofile for PATH,
+  -- then execs dscc. On failure, write error to a tmpfile for neovim to read.
   local prefix = vim.g.floatterm_local_prefix or "nvim_local_"
   if vim.startswith(session_name, prefix) then
+    local err_file = vim.fn.tempname() .. ".floatterm_err"
+    local shell_cmd = string.format(
+      '[ -f "$HOME/.zprofile" ] && . "$HOME/.zprofile"; '
+      .. 'dscc run %s --no-worktree --attach -y; '
+      .. 'code=$?; '
+      .. 'if [ $code -ne 0 ]; then '
+      ..   'echo "dscc exited with code $code" > %s; '
+      .. 'fi; '
+      .. 'exit $code',
+      vim.fn.shellescape(session_name),
+      vim.fn.shellescape(err_file)
+    )
     return {
       "tmux", "new-session", "-As", session_name,
-      "dscc", "run", session_name, "--no-worktree", "--attach", "-y",
-    }
+      "sh", "-c", shell_cmd,
+    }, err_file
   end
-  return { "tmux", "new-session", "-As", session_name }
+  return { "tmux", "new-session", "-As", session_name }, nil
 end
 
 return M

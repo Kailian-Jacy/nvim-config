@@ -126,8 +126,25 @@ function M.spawn(inst, kind)
   end
 
   -- Now termopen in the current window/buffer
-  local cmd = tmux.build_cmd(inst.tmux_session)
-  inst.jobid = vim.fn.termopen(cmd)
+  local cmd, err_file = tmux.build_cmd(inst.tmux_session)
+  inst.jobid = vim.fn.termopen(cmd, {
+    on_exit = function(_, _, _)
+      vim.schedule(function()
+        if err_file and vim.fn.filereadable(err_file) == 1 then
+          local err_msg = vim.fn.readfile(err_file)
+          vim.fn.delete(err_file)
+          vim.notify(
+            string.format(
+              "[floatterm] boot failed: %s\ncmd: %s",
+              table.concat(err_msg, "\n"),
+              table.concat(cmd, " ")
+            ),
+            vim.log.levels.ERROR
+          )
+        end
+      end)
+    end,
+  })
 
   -- Buffer settings
   vim.bo[bufnr].buflisted = false
