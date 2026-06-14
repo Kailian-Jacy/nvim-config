@@ -1,157 +1,103 @@
 return {
   {
-    "Kailian-Jacy/terminal.nvim",
-    -- a quick hint to call neovim outside:
-    --os: '[ -z "$NVIM" ] && (nvim -- {{filename}}) || (nvim --server "$NVIM" --remote-send "q" && nvim --server "$NVIM" --remote {{filename}})'
+    -- Floating terminal system (replaces terminal.nvim)
+    -- Pure neovim API: dual terminal (global + local) with slot positioning
+    dir = vim.fn.stdpath("config") .. "/lua/config/floatterm",
+    name = "floatterm",
+    virtual = true,
     config = function()
-      vim.g.__default_terminal_layout = { open_cmd = "float", height = 1, width = 1 }
-      require("terminal").setup({
-        layout = vim.g.__default_terminal_layout,
-        cmd = { "tmux", "new", "-As", vim.g.terminal_default_tmux_session_name or "nvim-attached" },
-        autoclose = true,
-        -- Here we run all of the tasks in the tmux session, so just kill them on vim exits.
-        detach = 0,
-      })
-      -- globally bind customized logic.
-      require("terminal").__customize = {}
-      require("terminal").__customize.is_currently_focusing_on_terminal = function()
-        return require("terminal").current_term_index() ~= nil
-      end
-      require("terminal").__customize.toggle = function()
-        require("terminal").toggle(0, nil, false) -- toggle as last layout.
-      end
-      require("terminal").__customize.reset = function()
-        require("terminal").move(0, vim.g.__default_terminal_layout)
-      end
-      require("terminal").__customize.shift_right = function()
-        vim.cmd("TermMove botright " .. math.ceil(vim.o.columns * vim.g.terminal_width_right) .. " vnew")
-      end
-      require("terminal").__customize.shift_left = function()
-        vim.cmd("TermMove vert " .. math.ceil(vim.o.columns * vim.g.terminal_width_left) .. " vnew")
-      end
-      require("terminal").__customize.shift_up = function()
-        vim.cmd("TermMove top " .. math.ceil(vim.o.lines * vim.g.terminal_width_top) .. " new")
-      end
-      require("terminal").__customize.shift_down = function()
-        vim.cmd("TermMove belowright " .. math.ceil(vim.o.lines * vim.g.terminal_width_bottom) .. " new")
-      end
-      -- lazygit floating buffer
-      local lazygit = require("terminal").terminal:new({
-        layout = { open_cmd = "float", height = 1.0, width = 1.0 },
-        cmd = { "lazygit" },
-        autoclose = true,
-      })
-      -- vim.env["GIT_EDITOR"] = "nvr -cc close -cc split --remote-wait +'set bufhidden=wipe'"
-      vim.api.nvim_create_user_command("Lazygit", function(args)
-        lazygit.cwd = args.args and vim.fn.expand(args.args)
-        lazygit:toggle(nil, true)
-      end, { nargs = "?" })
-      vim.api.nvim_create_autocmd({ "TermOpen" }, {
-        callback = function(args)
-          if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
-            -- Shall not be focused if last page.
-            vim.bo.buflisted = false
-            -- make gf safe in terminal buffer.
-            vim.keymap.set("n", "gf", function()
-              local f = vim.fn.findfile(vim.fn.expand("<cfile>"), "**")
-              if f == "" then
-                vim.print_silent("no file under cursor")
-              else
-                require("terminal").close()
-                vim.cmd("e " .. f)
-              end
-            end, { buffer = true })
-          end
-        end,
-      })
-      if vim.g.terminal_auto_insert then
-        vim.api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "TermOpen" }, {
-          callback = function(args)
-            if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
-              vim.cmd("startinsert")
-            end
-          end,
-        })
-      end
+      require("config.floatterm").setup()
     end,
     keys = {
+      -- Toggle global terminal
       {
         "<D-t>",
-        function()
-          require("terminal").__customize.toggle()
-        end,
-        mode = { "t" },
-        desc = "Tmux floating toggle window terminal.",
+        function() require("config.floatterm").toggle_global() end,
+        mode = { "n", "v", "t" },
+        desc = "Toggle global floating terminal",
       },
       {
         "<leader>tt",
-        function()
-          require("terminal").__customize.toggle()
-        end,
+        function() require("config.floatterm").toggle_global() end,
         mode = { "n" },
-        desc = "Tmux floating toggle window terminal.",
+        desc = "Toggle global floating terminal",
       },
+      -- Toggle local terminal
+      {
+        "<D-a>",
+        function() require("config.floatterm").toggle_local() end,
+        mode = { "n", "v", "t" },
+        desc = "Toggle local floating terminal",
+      },
+      {
+        "<leader>aa",
+        function() require("config.floatterm").toggle_local() end,
+        mode = { "n" },
+        desc = "Toggle local floating terminal",
+      },
+      -- Shift position
+      {
+        "<c-s-h>",
+        function() require("config.floatterm").shift_position("h") end,
+        mode = { "t" },
+        desc = "Shift terminal to left slot",
+      },
+      {
+        "<c-s-l>",
+        function() require("config.floatterm").shift_position("l") end,
+        mode = { "t" },
+        desc = "Shift terminal to right slot",
+      },
+      {
+        "<c-s-j>",
+        function() require("config.floatterm").shift_position("j") end,
+        mode = { "t" },
+        desc = "Shift terminal to centered slot",
+      },
+      {
+        "<c-s-k>",
+        function() require("config.floatterm").shift_position("k") end,
+        mode = { "t" },
+        desc = "Shift terminal to centered slot",
+      },
+      -- Reset position (cmd-del in terminal mode)
+      {
+        "<c-bs>",
+        function() require("config.floatterm").reset_position() end,
+        mode = { "t" },
+        desc = "Reset terminal position to centered",
+      },
+      -- Close floating terminal
+      {
+        "<C-/>",
+        function()
+          local ft = require("config.floatterm")
+          local inst = ft.get_focused_terminal()
+          if inst then ft.hide(inst) end
+        end,
+        mode = { "t" },
+        desc = "Hide floating terminal",
+      },
+      -- Escape terminal mode
+      {
+        "<d-esc>",
+        "<c-\\><c-n>",
+        mode = { "t" },
+        desc = "Exit terminal insert mode",
+      },
+      {
+        "<c-esc>",
+        "<c-\\><c-n>",
+        mode = { "t" },
+        desc = "Exit terminal insert mode",
+      },
+      -- Lazygit
       {
         "<leader>gg",
         "<cmd>Lazygit<cr>",
         mode = { "n" },
         desc = "Lazygit in floating terminal",
       },
-      {
-        "<c-bs>",
-        function()
-          require("terminal").__customize.reset()
-        end,
-        mode = { "t" },
-        desc = "Revert and unrevert the terminal location",
-      },
-      {
-        "<c-s-l>",
-        function()
-          require("terminal").__customize.shift_right()
-        end,
-        mode = { "t" },
-        desc = "Pin the terminal to the right side.",
-      },
-      {
-        "<c-s-h>",
-        function()
-          require("terminal").__customize.shift_left()
-        end,
-        mode = { "t" },
-        desc = "Pin the terminal to the right side.",
-      },
-      {
-        "<c-s-j>",
-        function()
-          require("terminal").__customize.shift_down()
-        end,
-        mode = { "t" },
-        desc = "Pin the terminal to the right side.",
-      },
-      {
-        "<c-s-k>",
-        function()
-          require("terminal").__customize.shift_up()
-        end,
-        mode = { "t" },
-        desc = "Pin the terminal to the right side.",
-      },
-      {
-        "<d-esc>",
-        "<c-\\><c-n>",
-        mode = { "t" },
-        desc = "Tmux floating window terminal.",
-      },
-      {
-        "<c-esc>",
-        "<c-\\><c-n>",
-        mode = { "t" },
-        desc = "Tmux floating window terminal.",
-      },
-    },
-    opts = {
-      layout = { open_cmd = "float" },
     },
   },
   {

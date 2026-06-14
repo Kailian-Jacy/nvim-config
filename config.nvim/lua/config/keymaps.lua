@@ -173,31 +173,35 @@ vim.keymap.set({ "t" }, "<C-K>", move_around_checker("k", keymap_win_move_termin
 
 -- Throw buffer and reveal. Special-cased in terminal mode.
 vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_right()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("l")
   else
     vim.cmd([[ThrowAndReveal l]])
   end
 end, { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_up()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("k")
   else
     vim.cmd([[ThrowAndReveal k]])
   end
 end, { noremap = true, silent = true })
 
 vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_down()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("j")
   else
     vim.cmd([[ThrowAndReveal j]])
   end
 end, { noremap = true, silent = true })
 
 vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_left()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("h")
   else
     vim.cmd([[ThrowAndReveal h]])
   end
@@ -711,7 +715,6 @@ end, { desc = "Toggle debugging keymaps mode." })
 local cmd_mappings = {
   -- Ai related.
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
-  { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "AI panel" },
   -- Buffer related.
   { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
@@ -845,7 +848,13 @@ local cmd_mappings = {
     cmdKeymap = "<d-bs>",
     leaderKeymap = "<c-bs>",
     modes = { "t" },
-    description = "Reset terminal in tmux.",
+    description = "Reset terminal position to centered.",
+  },
+  {
+    cmdKeymap = "<d-bs>",
+    leaderKeymap = "<leader>ae",
+    modes = { "n", "v" },
+    description = "AI rewrite (non-terminal context)",
   },
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
