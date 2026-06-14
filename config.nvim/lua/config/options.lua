@@ -49,7 +49,7 @@ vim.g.read_binary_with_xxd = false
 
 -- Floating terminal system (floatterm)
 vim.g.floatterm_global_session = "nvim-global"
-vim.g.floatterm_local_prefix = "nvim-local-"
+vim.g.floatterm_local_prefix = "nvim_local_"
 vim.g.terminal_width_right = 0.3
 vim.g.terminal_width_left = 0.3
 vim.g.terminal_width_bottom = 0.3
