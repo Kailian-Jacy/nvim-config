@@ -74,13 +74,13 @@ return {
       },
       -- Hazard check: review selected code for potential issues.
       {
-        "<leader>ac",
+        "<leader>aH",
         ":'<,'>HazardCheck<CR>",
         mode = { "v" },
         desc = "AI: Check for hazards/issues",
       },
       {
-        "<leader>ac",
+        "<leader>aH",
         "V:'<,'>HazardCheck<CR>",
         mode = { "n" },
         desc = "AI: Check current line for hazards",
@@ -223,10 +223,10 @@ Output the code with warnings as-is replacement.
     event = "VeryLazy",
     lazy = false, -- lazy loading avante does not work...
     -- commit = "e98fa46", -- set this if you want to always pull the latest change
-    enabled = true,
+    enabled = false, -- disabled: conflicts with floatterm <leader>aa, using gp.nvim instead
     keys = {
       {
-        "<leader>aa",
+        "<leader>ac",
         "<cmd>AvanteChat<CR>",
         mode = { "n" },
         -- mode = { "n", "i" }, -- it could not be insert mode. It's causing space being very slow.

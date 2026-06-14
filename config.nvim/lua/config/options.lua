@@ -47,13 +47,10 @@ vim.g.modules = vim.tbl_deep_extend("keep", (vim.g.modules or {}), default_modul
 -- If reading binary with xxd and show as human-readable text.
 vim.g.read_binary_with_xxd = false
 
--- Terminal
-vim.g.terminal_width_right = 0.3
-vim.g.terminal_width_left = 0.3
-vim.g.terminal_width_bottom = 0.3
-vim.g.terminal_width_top = 0.3
+-- Floating terminal system (floatterm)
+vim.g.floatterm_global_session = "nvim-global"
+vim.g.floatterm_local_prefix = "nvim-local-"
 vim.g.terminal_auto_insert = true
-vim.g.terminal_default_tmux_session_name = "nvim-attached"
 
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.

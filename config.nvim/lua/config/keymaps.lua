@@ -173,31 +173,35 @@ vim.keymap.set({ "t" }, "<C-K>", move_around_checker("k", keymap_win_move_termin
 
 -- Throw buffer and reveal. Special-cased in terminal mode.
 vim.keymap.set({ "n", "v", "i" }, "<C-S-l>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_right()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("l")
   else
     vim.cmd([[ThrowAndReveal l]])
   end
 end, { noremap = true, silent = true })
 vim.keymap.set({ "n", "v", "i" }, "<C-S-k>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_up()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("k")
   else
     vim.cmd([[ThrowAndReveal k]])
   end
 end, { noremap = true, silent = true })
 
 vim.keymap.set({ "n", "v", "i" }, "<C-S-j>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_down()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("j")
   else
     vim.cmd([[ThrowAndReveal j]])
   end
 end, { noremap = true, silent = true })
 
 vim.keymap.set({ "n", "v", "i" }, "<C-S-h>", function()
-  if require("terminal") and require("terminal").__customize.is_currently_focusing_on_terminal() then
-    require("terminal").__customize.shift_left()
+  local ft = require("config.floatterm")
+  if ft.is_in_float_terminal() then
+    ft.shift_position("h")
   else
     vim.cmd([[ThrowAndReveal h]])
   end
@@ -711,7 +715,9 @@ end, { desc = "Toggle debugging keymaps mode." })
 local cmd_mappings = {
   -- Ai related.
   { cmdKeymap = "<D-a>", leaderKeymap = "<leader>ae", modes = { "n", "v" }, description = "Revoke ai to modify" },
-  { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "AI panel" },
+  -- NOTE: <D-a> (lowercase) = AI rewrite, <D-A> (Cmd+Shift+A) = toggle local terminal.
+  -- Neovim/Neovide distinguishes these as separate key codes.
+  { cmdKeymap = "<D-A>", leaderKeymap = "<leader>aa", modes = { "n", "v" }, description = "Toggle local terminal" },
   -- Buffer related.
   { cmdKeymap = "<D-b>", leaderKeymap = "<leader>bb", modes = { "n", "v" }, description = "List all buffers." },
   { cmdKeymap = "<D-B>", leaderKeymap = "<leader>bB", modes = { "n", "v" }, description = "Grep in all buffers." },
@@ -841,12 +847,7 @@ local cmd_mappings = {
     modes = { "t" },
     description = "Move terminal to bottom split.",
   },
-  {
-    cmdKeymap = "<d-bs>",
-    leaderKeymap = "<c-bs>",
-    modes = { "t" },
-    description = "Reset terminal in tmux.",
-  },
+  -- <D-BS> is handled via a unified keymap below (buftype-based dispatch)
   -- Telescope recover.
   { cmdKeymap = "<D-T>", leaderKeymap = "<leader>tT", modes = { "n" }, description = "Reshow the last list" },
   { cmdKeymap = "<D-v>", leaderKeymap = "<leader>ps", modes = { "n", "v" }, description = "Paste from clipboard" },
@@ -913,3 +914,31 @@ for _, mapping in ipairs(cmd_mappings) do
     vim.api.nvim_feedkeys(refined_keymap, "m", false)
   end, { desc = mapping.description })
 end
+
+-- Terminal-mode Cmd mappings: can't use feedkeys/<leader> indirection in "t" mode
+-- because keystrokes would be consumed by the terminal process.
+vim.keymap.set("t", "<D-t>", function()
+  require("config.floatterm").toggle_global()
+end, { desc = "Toggle global floating terminal" })
+
+vim.keymap.set("t", "<D-A>", function()
+  require("config.floatterm").toggle_local()
+end, { desc = "Toggle local floating terminal" })
+
+-- Issue #4: Unified <D-BS> keymap using buftype-based dispatch
+-- In terminal buffers: reset terminal position to centered
+-- In normal buffers: AI rewrite
+vim.keymap.set({ "n", "v", "t" }, "<D-BS>", function()
+  if vim.bo.buftype == "terminal" then
+    -- Reset position to centered
+    local ft = require("config.floatterm")
+    local inst, kind = ft.get_focused_terminal()
+    if inst then
+      ft.move_to_slot(inst, "centered", kind)
+    end
+  else
+    -- AI rewrite (same as <leader>ae)
+    local keymap = vim.api.nvim_replace_termcodes(" ae", true, false, true)
+    vim.api.nvim_feedkeys(keymap, "m", false)
+  end
+end, { desc = "Cmd-Del: reset terminal or AI rewrite based on buftype" })
