@@ -117,8 +117,8 @@ end
 
 vim.go.tabline = "%!v:lua.Tabline()"
 
--- Bell detection is handled by the floatterm proxy (see floatterm/init.lua M._on_term_bell).
--- The proxy intercepts \x07 in stdout and calls _on_term_bell which updates vim.g._tab_beep.
+-- Bell detection is handled via tmux alert-bell hooks (see floatterm/tmux.lua install_bell_hook).
+-- tmux calls FloatTermBellHook() via --remote-expr, which invokes _on_term_bell to update vim.g._tab_beep.
 
 -- Clear beep indicator only when the local terminal buffer is focused again
 vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {

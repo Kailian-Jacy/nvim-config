@@ -58,4 +58,32 @@ function M.build_cmd(session_name)
   return { "tmux", "new-session", "-As", session_name }, nil
 end
 
+--- Install a tmux hook to forward bell events to this Neovim instance.
+--- Uses tmux's `alert-bell` hook to call `nvim --server <addr> --remote-expr`.
+--- Safe to call multiple times; reinstalls the hook idempotently.
+---@param session_name string  the tmux session to monitor
+function M.install_bell_hook(session_name)
+  local addr = vim.v.servername
+  if not addr or addr == "" then return end
+
+  -- The hook fires when tmux detects a bell in the session.
+  -- We call nvim_exec_lua remotely to invoke _on_term_bell_from_tmux(session_name).
+  local hook_cmd = string.format(
+    [[run-shell 'nvim --server %s --remote-expr "v:lua.FloatTermBellHook(\"%s\")" 2>/dev/null || true']],
+    vim.fn.shellescape(addr),
+    session_name:gsub('"', '\\"')
+  )
+
+  -- Remove any previous hook for this session, then set the new one
+  vim.fn.system({ "tmux", "set-hook", "-t", session_name, "alert-bell", hook_cmd })
+  -- Enable bell monitoring so the hook fires
+  vim.fn.system({ "tmux", "set-option", "-t", session_name, "monitor-bell", "on" })
+end
+
+--- Remove the bell hook from a tmux session (cleanup).
+---@param session_name string
+function M.remove_bell_hook(session_name)
+  vim.fn.system({ "tmux", "set-hook", "-u", "-t", session_name, "alert-bell" })
+end
+
 return M

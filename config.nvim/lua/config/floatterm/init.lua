@@ -128,75 +128,30 @@ function M.spawn(inst, kind)
   -- Now open terminal in the current window/buffer
   local cmd, err_file = tmux.build_cmd(inst.tmux_session)
 
-  if kind == "local" then
-    -- Use proxy approach for local terminals to capture bell (\x07)
-    local term_chan = vim.api.nvim_open_term(bufnr, {
-      on_input = function(_, _, _, data)
-        if inst.jobid then
-          vim.api.nvim_chan_send(inst.jobid, data)
+  -- Use standard termopen for both local and global terminals.
+  -- Bell detection for local terminals is handled via tmux alert-bell hook.
+  inst.jobid = vim.fn.termopen(cmd, {
+    on_exit = function(_, _, _)
+      vim.schedule(function()
+        if err_file and vim.fn.filereadable(err_file) == 1 then
+          local err_msg = vim.fn.readfile(err_file)
+          vim.fn.delete(err_file)
+          vim.notify(
+            string.format(
+              "[floatterm] boot failed: %s\ncmd: %s",
+              table.concat(err_msg, "\n"),
+              table.concat(cmd, " ")
+            ),
+            vim.log.levels.ERROR
+          )
         end
-      end,
-    })
-    inst.term_chan = term_chan
+      end)
+    end,
+  })
 
-    inst.jobid = vim.fn.jobstart(cmd, {
-      pty = true,
-      on_stdout = function(_, data)
-        for _, chunk in ipairs(data) do
-          if chunk:find("\x07") then
-            vim.schedule(function()
-              -- Fire the bell handler for this buffer
-              M._on_term_bell(bufnr)
-            end)
-          end
-          vim.schedule(function()
-            if vim.api.nvim_buf_is_valid(bufnr) then
-              -- Strip BEL before forwarding to avoid double-bell
-              local clean = chunk:gsub("\x07", "")
-              if #clean > 0 then
-                vim.api.nvim_chan_send(term_chan, clean)
-              end
-            end
-          end)
-        end
-      end,
-      on_exit = function(_, _, _)
-        vim.schedule(function()
-          if err_file and vim.fn.filereadable(err_file) == 1 then
-            local err_msg = vim.fn.readfile(err_file)
-            vim.fn.delete(err_file)
-            vim.notify(
-              string.format(
-                "[floatterm] boot failed: %s\ncmd: %s",
-                table.concat(err_msg, "\n"),
-                table.concat(cmd, " ")
-              ),
-              vim.log.levels.ERROR
-            )
-          end
-        end)
-      end,
-    })
-  else
-    -- Global terminals use standard termopen (no bell detection needed)
-    inst.jobid = vim.fn.termopen(cmd, {
-      on_exit = function(_, _, _)
-        vim.schedule(function()
-          if err_file and vim.fn.filereadable(err_file) == 1 then
-            local err_msg = vim.fn.readfile(err_file)
-            vim.fn.delete(err_file)
-            vim.notify(
-              string.format(
-                "[floatterm] boot failed: %s\ncmd: %s",
-                table.concat(err_msg, "\n"),
-                table.concat(cmd, " ")
-              ),
-              vim.log.levels.ERROR
-            )
-          end
-        end)
-      end,
-    })
+  -- Install tmux bell hook for local terminals
+  if kind == "local" and inst.tmux_session then
+    tmux.install_bell_hook(inst.tmux_session)
   end
 
   -- Buffer settings
@@ -209,6 +164,8 @@ function M.spawn(inst, kind)
 
   vim.cmd("startinsert")
 end
+
+
 
 --- Move a terminal to a new slot
 ---@param inst TerminalInstance
@@ -335,15 +292,18 @@ end
 --- Backward compat alias
 M.is_in_float_terminal = M.is_in_terminal
 
---- Handle terminal bell from a local terminal buffer.
---- Marks the owning tab in _tab_beep and redraws the tabline.
----@param bufnr integer
-function M._on_term_bell(bufnr)
-  -- Find which tab owns this buffer
+--- Handle terminal bell from a tmux session hook.
+--- Called via the global FloatTermBellHook() function.
+--- Finds the tab owning the tmux session and marks it as beeping.
+---@param session_name string
+function M._on_term_bell(session_name)
+  -- Find which tab owns this tmux session
   local owner_tab = nil
+  local owner_bufnr = nil
   for tab, inst in pairs(state.locals) do
-    if inst.bufnr == bufnr then
+    if inst.tmux_session == session_name then
       owner_tab = tab
+      owner_bufnr = inst.bufnr
       break
     end
   end
@@ -351,7 +311,7 @@ function M._on_term_bell(bufnr)
   if not owner_tab then return end
 
   -- Don't mark if the terminal buffer is currently focused
-  if vim.api.nvim_get_current_buf() == bufnr then
+  if owner_bufnr and vim.api.nvim_get_current_buf() == owner_bufnr then
     return
   end
 
@@ -426,6 +386,10 @@ function M.setup()
       end
       for tab, loc in pairs(state.locals) do
         if not valid_set[tab] then
+          -- Remove tmux bell hook
+          if loc.tmux_session then
+            pcall(tmux.remove_bell_hook, loc.tmux_session)
+          end
           -- Kill the job if still running
           if loc.jobid then
             pcall(vim.fn.jobstop, loc.jobid)
@@ -451,6 +415,14 @@ function M.setup()
       end
     end,
   })
+
+  -- Register global function for tmux bell hook RPC callback
+  _G.FloatTermBellHook = function(session_name)
+    vim.schedule(function()
+      M._on_term_bell(session_name)
+    end)
+    return "ok"
+  end
 
   -- Auto-enter insert mode when entering a terminal buffer
   if vim.g.terminal_auto_insert then
@@ -515,6 +487,10 @@ function M.setup()
       -- Check local terminals
       for _, loc in pairs(state.locals) do
         if loc.bufnr == bufnr then
+          -- Remove tmux bell hook
+          if loc.tmux_session then
+            pcall(tmux.remove_bell_hook, loc.tmux_session)
+          end
           loc.bufnr = nil
           loc.jobid = nil
           if loc.winid and vim.api.nvim_win_is_valid(loc.winid) then

@@ -3,7 +3,6 @@
 ---@class TerminalInstance
 ---@field bufnr integer|nil
 ---@field jobid integer|nil
----@field term_chan integer|nil  -- terminal channel for proxy-based terminals (local only)
 ---@field tmux_session string|nil
 ---@field slot SlotPosition
 ---@field winid integer|nil
