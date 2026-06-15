@@ -4,6 +4,7 @@ return {
     -- Pure neovim API: dual terminal (global + local) with slot positioning
     dir = vim.fn.stdpath("config") .. "/lua/config/floatterm",
     name = "floatterm",
+    lazy = false,
     virtual = true,
     config = function()
       require("config.floatterm").setup()
