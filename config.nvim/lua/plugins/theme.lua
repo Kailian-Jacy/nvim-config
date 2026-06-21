@@ -298,7 +298,21 @@ return {
             end,
           }}, -- Used to display is Debugging information.]]
           lualine_a = {
-            { "filename", path = 1 },
+            {
+              function()
+                local buf = vim.api.nvim_get_current_buf()
+                local bt = vim.bo[buf].buftype
+                if bt == "terminal" then
+                  local title = vim.b[buf].term_title
+                  if title and title ~= "" then
+                    title = title:match("([^/]+)$") or title
+                    return " " .. title
+                  end
+                  return " terminal"
+                end
+                return vim.fn.expand("%:~:.")
+              end,
+            },
           },
           lualine_b = {},
           lualine_c = {},
