@@ -775,8 +775,8 @@ local cmd_mappings = {
   -- Task management
   { cmdKeymap = "<D-l>", leaderKeymap = "<leader>ll", modes = { "n" }, description = "Review last task output" },
   { cmdKeymap = "<D-L>", leaderKeymap = "<leader>lL", modes = { "n" }, description = "Task list" },
-  -- Bookmarks
-  { cmdKeymap = "<D-M>", leaderKeymap = "<leader>sm", modes = { "n", "v" }, description = "List keymaps" },
+  -- Markdown preview
+  { cmdKeymap = "<D-M>", leaderKeymap = "<leader>mp", modes = { "n" }, description = "Toggle markdown preview" },
   -- New buffer/instances.
   { cmdKeymap = "<D-n>", leaderKeymap = "<cmd>enew<CR>", modes = { "n" }, description = "New buffer." },
   {

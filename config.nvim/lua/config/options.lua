@@ -148,6 +148,9 @@ vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 0
 vim.opt.expandtab = true
 
+-- Global file format
+vim.opt.fileformats = { "unix", "dos", "mac" }
+
 -- [ These are the Options needs to be set when migration to new machine. ]
 
 -- Some would load env from someplace out of bash or zshrc.
