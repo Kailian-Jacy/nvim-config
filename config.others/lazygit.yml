@@ -1,0 +1,23 @@
+# lazygit config
+# Symlink to: ~/.config/lazygit/config.yml
+
+git:
+  disableForcePushing: true
+
+customCommands:
+  - key: 'U'
+    command: 'git submodule update --init --recursive'
+    context: 'files'
+    description: 'Update submodules'
+    # stream: true
+  - key: 'U'
+    command: 'git push --force-with-lease --force-if-includes'
+    context: 'localBranches'
+    description: 'Force push with lease'
+  # Open file in parent neovim: hides lazygit float, then opens the buffer.
+  # Requires LazygitEdit command (defined in config/floatterm/init.lua).
+  # Works because $NVIM is auto-set when lazygit runs inside nvim's :terminal.
+  - key: 'E'
+    description: "Edit in neovim"
+    context: files
+    command: "nvim --server $NVIM --remote-send \"<C-\\><C-n>:LazygitEdit $(git rev-parse --show-toplevel)/{{.SelectedFile.Name}}<CR>\""

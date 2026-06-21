@@ -515,6 +515,8 @@ function M.setup()
   })
 
   -- Lazygit command (independent of float terminal system)
+  local lazygit_state = { win = nil, buf = nil }
+
   vim.api.nvim_create_user_command("Lazygit", function(args)
     local cwd = args.args ~= "" and vim.fn.expand(args.args) or vim.fn.getcwd()
     local buf = vim.api.nvim_create_buf(false, true)
@@ -529,6 +531,8 @@ function M.setup()
       border = "none",
       style = "minimal",
     })
+    lazygit_state.win = win
+    lazygit_state.buf = buf
     vim.fn.termopen({ "lazygit" }, { cwd = cwd })
     vim.cmd("startinsert")
     -- Auto-close window when lazygit exits
@@ -542,9 +546,24 @@ function M.setup()
         if vim.api.nvim_buf_is_valid(buf) then
           vim.api.nvim_buf_delete(buf, { force = true })
         end
+        lazygit_state.win = nil
+        lazygit_state.buf = nil
       end,
     })
   end, { nargs = "?" })
+
+  -- LazygitEdit: called from lazygit custom command to open a file in nvim.
+  -- Hides the lazygit float first, then opens the file.
+  vim.api.nvim_create_user_command("LazygitEdit", function(args)
+    local file = args.args
+    if not file or file == "" then return end
+    -- Hide lazygit float (keep buffer alive so lazygit keeps running)
+    if lazygit_state.win and vim.api.nvim_win_is_valid(lazygit_state.win) then
+      vim.api.nvim_win_hide(lazygit_state.win)
+    end
+    -- Open the file
+    vim.cmd("edit " .. vim.fn.fnameescape(file))
+  end, { nargs = 1, complete = "file" })
 
   -- LazygitHere: open lazygit in the current window (no float)
   vim.api.nvim_create_user_command("LazygitHere", function(args)
