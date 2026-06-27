@@ -106,6 +106,9 @@ function M.spawn(inst, kind)
     inst.tmux_session = tmux.global_session_name()
   else
     inst.tmux_session = tmux.session_name_for_tab()
+    -- Bind this tab to its dscc task (same name as the local/tmux session,
+    -- which is what `dscc run <session>` creates/attaches).
+    pcall(vim.fn.settabvar, vim.fn.tabpagenr(), "dscc_task", inst.tmux_session)
   end
 
   -- Create scratch buffer

@@ -486,6 +486,10 @@ return {
               ["<c-e>"] = { "explore_here", mode = { "n", "i" } },
               ["<d-e>"] = { "explore_here", mode = { "n", "i" } },
 
+              -- Mount selected directory into the current tab's dscc task.
+              ["<c-m>"] = { "mount_to_current_task", mode = { "n", "i" } },
+              ["<d-m>"] = { "mount_to_current_task", mode = { "n", "i" } },
+
               -- Maximize.
               ["<D-o>"] = {"maximize", mode = { "n", "i" }},
               ["<C-o>"] = {"maximize", mode = { "n", "i" }},
@@ -547,6 +551,11 @@ return {
               ["<d-e>"] = { "explore_here", mode = { "n", "i" } },
               ["<e>"] = { "explore_here", mode = { "n" } },
 
+              -- Mount selected directory into the current tab's dscc task.
+              ["<c-m>"] = { "mount_to_current_task", mode = { "n", "i" } },
+              ["<d-m>"] = { "mount_to_current_task", mode = { "n", "i" } },
+              ["m"] = { "mount_to_current_task", mode = { "n" } },
+
               -- Inspecting.
               ["<c-p>"] = "inspect",
               ["<d-p>"] = "inspect",
@@ -607,6 +616,56 @@ return {
           }
         },
         actions = {
+          -- Mount the selected directory into the dscc task of the current tab.
+          -- Target mount path is /share/<dir_name>. Files cannot be mounted.
+          ---@param item? snacks.picker.Item
+          mount_to_current_task = function(_, item)
+            if not item then
+              vim.notify("No item selected to mount.", vim.log.levels.WARN)
+              return
+            end
+            local path = item._path or item.file
+            if not path or #path == 0 then
+              vim.notify("Selected item has no path to mount.", vim.log.levels.WARN)
+              return
+            end
+            path = (vim.fn.fnamemodify(path, ":p"):gsub("/$", ""))
+
+            -- Files are not allowed for mounting.
+            if vim.fn.isdirectory(path) ~= 1 then
+              vim.notify("Only directories can be mounted, not files:\n" .. path, vim.log.levels.WARN)
+              return
+            end
+
+            -- Resolve the dscc task bound to the current tab.
+            local task = vim.g.dscc_current_tab_task()
+            if not task then
+              vim.notify("Current tab is not associated with a dscc task.", vim.log.levels.WARN)
+              return
+            end
+
+            if vim.fn.executable("dscc") ~= 1 then
+              vim.notify("dscc executable not found on PATH.", vim.log.levels.ERROR)
+              return
+            end
+
+            local dir_name = vim.fs.basename(path)
+            local dest = "/share/" .. dir_name
+            local spec = path .. ":" .. dest
+            vim.system({ "dscc", "mount", task, spec }, { text = true }, function(obj)
+              vim.schedule(function()
+                if obj.code == 0 then
+                  vim.notify(
+                    string.format("Mounted %s -> %s  (task: %s)", path, dest, task),
+                    vim.log.levels.INFO
+                  )
+                else
+                  local err = obj.stderr ~= "" and obj.stderr or obj.stdout
+                  vim.notify("dscc mount failed:\n" .. (err or "unknown error"), vim.log.levels.ERROR)
+                end
+              end)
+            end)
+          end,
           ---@param picker snacks.Picker
           ---@param item? snacks.picker.Item
           maximize = function(picker, _)
@@ -834,6 +893,9 @@ return {
                 end
                 local tabnr = vim.g.new_tab_at(worktree_path, true, true)
                 vim.fn.settabvar(tabnr, "tabname", item.name)
+                -- Bind the tab to its dscc task so the current-tab task resolver
+                -- can find it without path/name guessing.
+                vim.fn.settabvar(tabnr, "dscc_task", item.name)
               end,
               explore_worktree = function(picker, item)
                 if not item or not item._path then return end
@@ -1025,6 +1087,9 @@ return {
                       vim.cmd("tabnew")
                       local tabnr = vim.fn.tabpagenr()
                       vim.fn.settabvar(tabnr, "tabname", tab_name)
+                      -- Bind the tab to its dscc task (use the real task name,
+                      -- not the display tab name which may carry a sprint suffix).
+                      vim.fn.settabvar(tabnr, "dscc_task", sprint_item.name)
                       vim.fn.termopen({ "docker", "attach", cid })
                       vim.cmd("startinsert")
                     end,

@@ -130,6 +130,33 @@ local function obsidian_app_exists()
   return false
 end
 
+-- dscc helpers
+--- Bind a dscc task to a tab via the tab-local variable `dscc_task`.
+--- Call this whenever a DSCC session is opened/created in a tab.
+--- @param task string  dscc task name
+--- @param tabnr integer?  tab number (defaults to the current tab)
+vim.g.dscc_set_tab_task = function(task, tabnr)
+  tabnr = tabnr or vim.fn.tabpagenr()
+  vim.fn.settabvar(tabnr, "dscc_task", task or "")
+end
+
+--- Resolve the dscc task associated with the current tab.
+--- The task name is stored in the tab-local variable `dscc_task`, set when the
+--- DSCC session is opened/created in the tab (floatterm spawn, picker tab
+--- actions). Read that variable directly instead of guessing from cwd/name.
+--- @return string? task_name
+vim.g.dscc_current_tab_task = function()
+  local task = vim.t.dscc_task
+  if task == nil or task == vim.NIL then
+    return nil
+  end
+  task = tostring(task)
+  if #task == 0 then
+    return nil
+  end
+  return task
+end
+
 -- Export for use in options.lua
 return {
   get_os_type = get_os_type,

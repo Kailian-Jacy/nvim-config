@@ -713,6 +713,7 @@ end, { desc = "Toggle debugging keymaps mode." })
 ---@field description string
 ---@field no_insert_mode boolean | nil @default false
 ---@field back_to_insert boolean | nil @default false
+---@field termlocal boolean | nil @default false @whether the keymap is available in terminal mode
 
 ---@type table<CmdMapping>
 local cmd_mappings = {
@@ -738,6 +739,7 @@ local cmd_mappings = {
     leaderKeymap = "<leader>fe",
     modes = { "n", "v" },
     description = "List directory on current dir.",
+    termlocal = true,
   },
   {
     cmdKeymap = "<D-E>",
@@ -752,7 +754,7 @@ local cmd_mappings = {
   --   modes = { "n", "i" },
   --   description = "Telescope directory on Working directory.",
   -- },
-  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n", "v" }, description = "List all files." },
+  { cmdKeymap = "<D-f>", leaderKeymap = "<leader>ff", modes = { "n", "v" }, description = "List all files.", termlocal = true },
   -- { cmdKeymap = "<D-F>", leaderKeymap = "<leader>fF", modes = { "n" }, description = "Search in the working directory" },
   -- Git
   {
@@ -803,7 +805,8 @@ local cmd_mappings = {
   },
   -- Search
   { cmdKeymap = "<D-r>", leaderKeymap = "<leader>rn", modes = { "n", "v" }, description = "LSP rename variable." },
-  { cmdKeymap = "<D-R>", leaderKeymap = "<leader>cR", modes = { "n", "v" }, description = "Rename file" },
+  -- <D-R> is handled via a unified keymap below (buftype-based dispatch):
+  -- terminal buffer -> dscc remove current container; otherwise -> rename file (<leader>cR)
   -- Symbols
   {
     cmdKeymap = "<D-s>",
@@ -879,7 +882,7 @@ local cmd_mappings = {
     back_to_insert = false,
   },
   -- Zoxide navigation.
-  { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Navigate Cd with Zeoxide" },
+  { cmdKeymap = "<D-z>", leaderKeymap = "<leader>zz", modes = { "n", "v" }, description = "Navigate Cd with Zeoxide", termlocal = true },
   -- Searching
   { cmdKeymap = "<D-/>", leaderKeymap = "<leader>/", modes = { "n", "v" }, description = "Search (Global)" },
   {
@@ -914,6 +917,13 @@ for _, mapping in ipairs(cmd_mappings) do
     local refined_keymap = vim.api.nvim_replace_termcodes(keymap, true, false, true)
     vim.api.nvim_feedkeys(refined_keymap, "m", false)
   end, { desc = mapping.description })
+  if mapping.termlocal then
+    -- Available in terminal mode: leave terminal mode first, then run the keymap.
+    vim.keymap.set("t", mapping.cmdKeymap, function()
+      local refined_keymap = vim.api.nvim_replace_termcodes("<C-\\><C-n>" .. keymap, true, false, true)
+      vim.api.nvim_feedkeys(refined_keymap, "m", false)
+    end, { desc = mapping.description })
+  end
 end
 
 -- Terminal-mode Cmd mappings: can't use feedkeys/<leader> indirection in "t" mode
@@ -943,6 +953,83 @@ vim.keymap.set({ "n", "v", "t" }, "<D-BS>", function()
     vim.api.nvim_feedkeys(keymap, "m", false)
   end
 end, { desc = "Cmd-Del: reset terminal or AI rewrite based on buftype" })
+
+-- dscc: force-remove the current tab's sprint container.
+-- Resolves the task the same way as the mount picker (vim.g.dscc_current_tab_task)
+-- and runs `dscc remove <task> -f`. `-f` is required because the container is
+-- running.
+local function dscc_remove_current_container()
+  -- Resolve the dscc task bound to the current tab.
+  local task = vim.g.dscc_current_tab_task()
+  if not task then
+    vim.notify("Current tab is not associated with a dscc task.", vim.log.levels.WARN)
+    return
+  end
+
+  if vim.fn.executable("dscc") ~= 1 then
+    vim.notify("dscc executable not found on PATH.", vim.log.levels.ERROR)
+    return
+  end
+
+  local choice = vim.fn.confirm(
+    ("Force-remove the dscc container for task '%s'?\nThis kills the running container and processes inside."):format(task),
+    "&Yes, kill it\n&No",
+    1, -- default to Yes
+    "Question"
+  )
+  if choice ~= 1 then
+    vim.notify("dscc remove cancelled", vim.log.levels.INFO)
+    return
+  end
+
+  vim.notify(("dscc: force-removing container for '%s'..."):format(task), vim.log.levels.WARN)
+  -- Only the container is removed; this Neovim instance keeps running, so the
+  -- caller is responsible for restoring insert mode in the terminal buffer.
+  vim.system({ "dscc", "stop", "-f", task}, { text = true }, function(obj)
+    vim.schedule(function()
+      if obj.code == 0 then
+        vim.notify(("dscc: container for '%s' removed"):format(task), vim.log.levels.INFO)
+      else
+        local err = obj.stderr ~= "" and obj.stderr or obj.stdout
+        vim.notify("dscc remove failed:\n" .. (err or "unknown error"), vim.log.levels.ERROR)
+      end
+    end)
+  end)
+end
+
+-- Unified <D-R> keymap using buftype-based dispatch
+-- In terminal buffers: dscc remove the current container (with confirmation)
+-- In normal buffers: rename file (same as <leader>cR)
+vim.keymap.set({ "n", "v", "t" }, "<D-R>", function()
+  if vim.bo.buftype == "terminal" then
+    if vim.api.nvim_get_mode().mode == "t" then
+      -- Leave terminal mode so the confirm prompt is interactive.
+      vim.cmd("stopinsert")
+      vim.schedule(function()
+        dscc_remove_current_container()
+        -- vim.fn.confirm() is a modal prompt: dismissing it doesn't fire
+        -- WinEnter/BufWinEnter, so the terminal_auto_insert autocmd never
+        -- re-runs. Neovim survives the container removal, so restore insert
+        -- mode explicitly on every path (Yes or No).
+        if vim.bo.buftype == "terminal" then
+          vim.cmd("startinsert")
+        end
+      end)
+    else
+      dscc_remove_current_container()
+    end
+  else
+    -- Rename file (same as <leader>cR)
+    local keymap = vim.api.nvim_replace_termcodes(" cR", true, false, true)
+    vim.api.nvim_feedkeys(keymap, "m", false)
+  end
+end, { desc = "Cmd-Shift-R: dscc remove (terminal) or rename file" })
+
+-- Insert mode keeps the rename-file behavior.
+vim.keymap.set("i", "<D-R>", function()
+  local keymap = vim.api.nvim_replace_termcodes("<Esc> cR", true, false, true)
+  vim.api.nvim_feedkeys(keymap, "m", false)
+end, { desc = "Rename file" })
 
 -- <D-o> maximize toggle in terminal mode (feedkeys/<leader> doesn't work in t mode)
 vim.keymap.set("t", "<D-o>", function()
