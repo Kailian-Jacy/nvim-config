@@ -1,5 +1,24 @@
 local M = {}
 
+--- Height (in rows) currently occupied by the tab bar, if it exists.
+--- With relative="editor", a float's row=0 sits at the very top of the screen
+--- and OVERLAPS the tabline, so we must offset the float by this amount to keep
+--- the tab bar visible on top.
+---   showtabline = 0 → tabline never shown
+---   showtabline = 1 → tabline shown only when 2+ tabpages exist
+---   showtabline = 2 → tabline always shown
+---@return integer
+local function tabline_height()
+  local st = vim.o.showtabline
+  if st == 0 then
+    return 0
+  elseif st == 2 then
+    return 1
+  else -- st == 1: only when there is more than one tab
+    return (#vim.api.nvim_list_tabpages() >= 2) and 1 or 0
+  end
+end
+
 --- Compute geometry for a given slot
 --- "centered" → fullscreen float (no border)
 --- "left"/"right" → split window (not float)
@@ -8,20 +27,22 @@ local M = {}
 function M.get_geometry(slot)
   local width = vim.o.columns
   -- vim.o.lines = total terminal height (tabline + editor + statusline + cmdline)
-  -- relative="editor" starts below tabline, so available height is:
-  --   vim.o.lines - tabline - cmdheight
-  -- This covers the entire editor area including statusline, leaving no blank lines.
+  -- relative="editor" row=0 sits at the very top and overlaps the tab bar, so we
+  -- offset the float down by the tab bar height (when it exists) and shrink it by
+  --   tabline + cmdheight
+  -- The float then covers the entire editor area (including statusline) while
+  -- leaving the tab bar visible on top and no blank lines at the bottom.
   local cmdheight = vim.o.cmdheight or 1
-  local tabline_height = (vim.o.showtabline == 0) and 0 or 1
+  local tab_h = tabline_height()
 
   if slot == "centered" then
-    -- Fullscreen float, no border — cover entire editor area
+    -- Fullscreen float, no border — cover editor area, keep tab bar on top
     return {
       relative = "editor",
-      row = 0,
+      row = tab_h,
       col = 0,
       width = width,
-      height = vim.o.lines - tabline_height - cmdheight,
+      height = vim.o.lines - tab_h - cmdheight,
       border = "none",
       style = "minimal",
     }
