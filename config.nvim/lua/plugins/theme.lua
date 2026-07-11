@@ -279,6 +279,48 @@ return {
           return { fg = nil, bg = nil }
         end,
       }
+      -- Current hunk index within the active CodeDiff (codediff.nvim) session.
+      -- Reads the session's stored diff result and locates the cursor's hunk.
+      local function codediff_hunk_status()
+        local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
+        if not ok then
+          return ""
+        end
+        local session = lifecycle.get_session(vim.api.nvim_get_current_tabpage())
+        if not session or not session.stored_diff_result then
+          return ""
+        end
+        local changes = session.stored_diff_result.changes
+        if not changes or #changes == 0 then
+          return ""
+        end
+        local buf = vim.api.nvim_get_current_buf()
+        -- inline layout and the conflict "result" buffer use modified line numbers
+        local is_original = buf == session.original_bufnr
+          and session.layout ~= "inline"
+          and buf ~= session.result_bufnr
+        local line = vim.api.nvim_win_get_cursor(0)[1]
+        local idx = 0
+        for i, m in ipairs(changes) do
+          local start = is_original and m.original.start_line or m.modified.start_line
+          if start <= line then
+            idx = i
+          else
+            break
+          end
+        end
+        if idx == 0 then
+          idx = 1 -- cursor sits before the first hunk
+        end
+        return string.format("  %d/%d", idx, #changes)
+      end
+      local codediff_block = {
+        codediff_hunk_status,
+        cond = function()
+          local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
+          return ok and lifecycle.get_session(vim.api.nvim_get_current_tabpage()) ~= nil
+        end,
+      }
       require("lualine").setup({
         options = {
           theme = theme,
@@ -301,7 +343,9 @@ return {
             { "filename", path = 1 },
           },
           lualine_b = {},
-          lualine_c = {},
+          lualine_c = {
+            codediff_block,
+          },
           lualine_x = {
             dap_block
           },
