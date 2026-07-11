@@ -1,24 +1,31 @@
 local M = {}
 
 -- ---------------------------------------------------------------------------
--- Per-nvim tmux server socket  (-S)
+-- Global tmux server socket  (-S)
 --
--- Each neovim instance gets its own tmux server so that:
---   1. Sessions don't collide with other nvim instances or the user's shell.
---   2. send-keys / split-window never leak into the wrong session.
---   3. Bell hooks target the correct server.
+-- floatterm sessions live on the machine's *default* tmux server so that they:
+--   1. show up in a plain `tmux ls`;
+--   2. survive neovim quitting/restarting (dscc-style persistence);
+--   3. can be reattached from any terminal.
 --
--- The socket lives at /tmp/nvim-floatterm-<pid>.sock and is cleaned up on
--- VimLeavePre (see floatterm/init.lua setup()).
+-- Isolation is provided by deterministic session names
+-- (`nvim_local_<cwd>` / `nvim-global`) plus `-t <session>` targeting on every
+-- tmux call, so sharing one server does not cause leaks or collisions.
+--
+-- The server is NOT killed on exit; sessions persist until explicitly closed.
 -- ---------------------------------------------------------------------------
 
---- Return the tmux server socket path for this nvim instance.
+--- Return the default tmux server socket path.
+--- Mirrors tmux's own resolution: ${TMUX_TMPDIR:-/tmp}/tmux-<uid>/default.
 --- The path is computed once and cached.
 ---@return string
 function M.socket_path()
   if not M._socket then
-    local dir = vim.fn.stdpath("run") or "/tmp"
-    M._socket = string.format("%s/nvim-floatterm-%d.sock", dir, vim.fn.getpid())
+    local base = vim.env.TMUX_TMPDIR
+    if not base or #base == 0 then base = "/tmp" end
+    local uv = vim.uv or vim.loop
+    local uid = (uv and uv.getuid) and uv.getuid() or 0
+    M._socket = string.format("%s/tmux-%d/default", base, uid)
   end
   return M._socket
 end
@@ -27,6 +34,26 @@ end
 ---@return table  base args: { "tmux", "-S", "<socket>" }
 function M.base_cmd()
   return { "tmux", "-S", M.socket_path() }
+end
+
+--- Ensure the default tmux server is running.
+--- Detects it via the socket path; if absent, starts a fresh server.
+--- (tmux would auto-create on `new-session`, but we do it explicitly so the
+--- fallback is deterministic and bell-hook/set-option calls always have a
+--- server to talk to.)
+function M.ensure_server()
+  local uv = vim.uv or vim.loop
+  local sock = M.socket_path()
+  if uv and uv.fs_stat(sock) then
+    return
+  end
+  -- With an explicit `-S <path>`, tmux does NOT create the socket's parent
+  -- directory, so create ${TMUX_TMPDIR:-/tmp}/tmux-<uid>/ with tmux's 0700 perms.
+  local dir = vim.fn.fnamemodify(sock, ":h")
+  if not (uv and uv.fs_stat(dir)) then
+    vim.fn.mkdir(dir, "p", tonumber("700", 8))
+  end
+  vim.fn.system(vim.list_extend(vim.deepcopy(M.base_cmd()), { "start-server" }))
 end
 
 --- Generate tmux session name for the current tab based on cwd
@@ -122,14 +149,6 @@ end
 function M.remove_bell_hook(session_name)
   local base = M.base_cmd()
   vim.fn.system(vim.list_extend(vim.deepcopy(base), { "set-hook", "-u", "-t", session_name, "alert-bell" }))
-end
-
---- Kill the dedicated tmux server and remove the socket file.
---- Called on VimLeavePre to clean up.
-function M.kill_server()
-  local sock = M.socket_path()
-  vim.fn.system({ "tmux", "-S", sock, "kill-server" })
-  pcall(vim.fn.delete, sock)
 end
 
 return M

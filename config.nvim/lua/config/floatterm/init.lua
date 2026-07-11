@@ -101,6 +101,9 @@ end
 ---@param inst TerminalInstance
 ---@param kind "global"|"local"
 function M.spawn(inst, kind)
+  -- Ensure the (global) tmux server is up before spawning a session.
+  tmux.ensure_server()
+
   -- Determine tmux session name
   if kind == "global" then
     inst.tmux_session = tmux.global_session_name()
@@ -416,14 +419,6 @@ function M.setup()
           end
         end
       end
-    end,
-  })
-
-  -- Kill the dedicated tmux server when neovim exits
-  vim.api.nvim_create_autocmd("VimLeavePre", {
-    group = group,
-    callback = function()
-      pcall(tmux.kill_server)
     end,
   })
 

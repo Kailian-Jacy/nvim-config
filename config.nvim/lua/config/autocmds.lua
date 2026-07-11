@@ -1109,7 +1109,7 @@ vim.api.nvim_create_autocmd("VimLeave", {
   callback = function()
     -- Detach from tmux shell.
     -- Try to detach from the subprocess.
-    local tmux_client_pid = vim.g.__tmux_get_current_attached_cliend_pid()
+    local tmux_client_pid = vim.g.__tmux_get_current_attached_client_pid()
     if tmux_client_pid and #tmux_client_pid > 0 then
       for _, pid in ipairs(tmux_client_pid) do
         if #pid > 0 then
