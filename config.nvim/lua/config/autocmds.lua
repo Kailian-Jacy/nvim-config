@@ -11,6 +11,127 @@
 -- Script runner commands (RunScript, RunTest, SetBufRunner) moved to nvim-runner plugin.
 -- See: lua/plugins/runner.lua
 
+-- :DSCC worktree <name>
+-- One-shot dscc worktree bootstrap:
+--   1. create a git worktree at <repo_root>/../<name>/ (new branch <name>);
+--   2. open a new tab whose (tab-local) workdir is that worktree;
+--   3. register the worktree path with zoxide;
+--   4. create the dscc task bound to the tab and open the agent panel.
+-- The local floatterm derives its dscc task name from the tab cwd and runs
+-- `dscc run <session> --attach`, so we pre-create that task here with the
+-- worktree as its workdir. We also mount the repo's *shared* .git at the same
+-- host path (mirroring what `dscc` does for its own worktrees) so in-container
+-- git can resolve the worktree's `gitdir:` pointer.
+local function dscc_worktree(name)
+  name = vim.trim(name or "")
+  if #name == 0 then
+    vim.notify("DSCC worktree: a worktree/branch name is required.", vim.log.levels.ERROR)
+    return
+  end
+  if vim.fn.executable("git") ~= 1 then
+    vim.notify("DSCC worktree: `git` not found on PATH.", vim.log.levels.ERROR)
+    return
+  end
+
+  local cwd = vim.fn.getcwd()
+  local function git(args)
+    return vim.system(vim.list_extend({ "git", "-C", cwd }, args), { text = true }):wait()
+  end
+
+  -- Resolve the main repository root from the current tab's cwd.
+  local root_res = git({ "rev-parse", "--show-toplevel" })
+  if root_res.code ~= 0 then
+    vim.notify("DSCC worktree: not inside a git repository (cwd: " .. cwd .. ").", vim.log.levels.ERROR)
+    return
+  end
+  local repo_root = vim.trim(root_res.stdout)
+
+  -- Shared/common .git dir. `--git-common-dir` resolves correctly even from a
+  -- linked worktree; fall back to <repo_root>/.git on older git.
+  local common_res = git({ "rev-parse", "--path-format=absolute", "--git-common-dir" })
+  local main_git = (common_res.code == 0 and #vim.trim(common_res.stdout) > 0)
+      and vim.trim(common_res.stdout)
+      or vim.fs.joinpath(repo_root, ".git")
+
+  -- Worktree path: sibling of the repository root, named after the worktree.
+  local parent = vim.fn.fnamemodify(repo_root, ":h")
+  local worktree_path = vim.fs.normalize(vim.fs.joinpath(parent, name))
+  if vim.fn.isdirectory(worktree_path) == 1 or vim.fn.filereadable(worktree_path) == 1 then
+    vim.notify("DSCC worktree: path already exists: " .. worktree_path, vim.log.levels.ERROR)
+    return
+  end
+
+  -- 1. Create the git worktree with a new branch.
+  local add_res = git({ "worktree", "add", worktree_path, "-b", name })
+  if add_res.code ~= 0 then
+    vim.notify(
+      "DSCC worktree: `git worktree add` failed:\n" .. (add_res.stderr or add_res.stdout or ""),
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
+  -- 2 + 3. New tab whose workdir is the worktree, recorded in zoxide.
+  local tabnr = vim.g.new_tab_at(worktree_path, true, true)
+  vim.fn.settabvar(tabnr, "tabname", name)
+
+  if vim.fn.executable("dscc") ~= 1 then
+    vim.notify(
+      "DSCC worktree: worktree + tab ready, but `dscc` not on PATH; skipping task/agent panel.",
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  -- 4. Pre-create the dscc task the agent panel will attach to. Its name must
+  -- match what the floatterm derives from the (now switched) tab cwd.
+  local session = require("config.floatterm.tmux").session_name_for_tab()
+  local create = vim.system({
+    "dscc", "create", session,
+    "--no-worktree", worktree_path,
+    "-m", main_git .. ":" .. main_git,
+    "-y",
+  }, { text = true }):wait()
+  -- "already exists" is fine (reuse it); other failures are reported but we
+  -- still open the panel so the user can inspect the container.
+  if create.code ~= 0 and not tostring(create.stderr or ""):match("already exists") then
+    vim.notify(
+      "DSCC worktree: `dscc create` failed:\n" .. (create.stderr or create.stdout or ""),
+      vim.log.levels.WARN
+    )
+  end
+
+  vim.g.dscc_set_tab_task(session, tabnr)
+
+  -- Open the agent panel (local floatterm -> `dscc run <session> --attach`).
+  require("config.floatterm").toggle_local()
+  vim.notify("DSCC worktree '" .. name .. "' ready at " .. worktree_path, vim.log.levels.INFO)
+end
+
+vim.api.nvim_create_user_command("DSCC", function(opts)
+  local sub = opts.fargs[1]
+  if sub == "worktree" then
+    dscc_worktree(opts.fargs[2])
+  else
+    vim.notify(
+      "DSCC: unknown subcommand '" .. tostring(sub) .. "'. Available: worktree <name>",
+      vim.log.levels.ERROR
+    )
+  end
+end, {
+  nargs = "+",
+  desc = "DSCC helpers. `:DSCC worktree <name>` = worktree + tab + task + agent panel.",
+  complete = function(arglead, cmdline, _)
+    -- Only complete the subcommand token (the first arg after :DSCC).
+    if cmdline:match("^%s*DSCC%s+%S*$") then
+      return vim.tbl_filter(function(s)
+        return vim.startswith(s, arglead)
+      end, { "worktree" })
+    end
+    return {}
+  end,
+})
+
 vim.api.nvim_create_user_command("Copen", "botright copen", { desc = "Open quick fix list full wide" })
 -- Tasks: Overseer
 vim.api.nvim_create_user_command("OverseerRestartLast", function()
@@ -1438,3 +1559,9 @@ vim.api.nvim_create_user_command("NeovideTransparentToggle", function()
     end
   end
 end, {})
+
+-- Concurrent-edit reconciliation: 3-way merge a file when an external agent
+-- rewrites it on disk while we keep editing it in Neovim. See module for docs.
+require("config.agent_merge").setup({
+  -- diff_on_conflict = true, -- uncomment to auto-open a diff split on conflict
+})
