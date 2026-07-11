@@ -336,6 +336,17 @@ return {
             -- Do not save if new buffer.
             vim.cmd([[ :w ]]) -- triggers lsp updating.
           end
+          -- Re-sync gitsigns base for the current buffer. Re-resolves the base
+          -- object for whatever revision is set (index by default), so signs
+          -- pick up commits/stages made outside nvim (e.g. lazygit) even though
+          -- the VirtioFS gitdir watcher never fires. Passing the *current*
+          -- revision keeps a pinned base (`:Gitsigns change_base`) untouched.
+          pcall(function()
+            local c = require("gitsigns.cache").cache[vim.api.nvim_get_current_buf()]
+            if c then
+              require("gitsigns").change_base(c.git_obj.revision, false)
+            end
+          end)
           -- Scrollbar
           require("scrollbar").render() -- try to update the scrollbar.
           -- vim.cmd("SatelliteRefresh")
