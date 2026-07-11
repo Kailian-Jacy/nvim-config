@@ -59,6 +59,12 @@
       url = "github:NStefan002/visual-surround.nvim";
       flake = false;
     };
+    # VSCode-style diff/merge viewer (replaces diffview.nvim). Ships a C diff
+    # engine; the native lib is compiled at build time in categoryDefinitions.
+    "plugins-codediff-nvim" = {
+      url = "github:esmuellert/codediff.nvim";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, nixCats, ... }@inputs: let
@@ -87,6 +93,41 @@
         pname = "nvim-runner";
         version = "local";
         src = ./nvim-runner;
+      };
+
+      # ── codediff.nvim (native C diff engine built at Nix time) ──────────
+      # esmuellert/codediff.nvim normally auto-downloads a prebuilt shared
+      # library into its own plugin directory on first use. Under nixCats the
+      # plugin lives in the read-only Nix store, so instead we compile the
+      # unversioned `libvscode_diff.so` here. OpenMP is left off so the result
+      # depends only on libc (no runtime libgomp), and
+      # VSCODE_DIFF_NO_AUTO_INSTALL=1 (see environmentVariables) stops the
+      # runtime from ever attempting a download. The unversioned name is the
+      # plugin's "manual build" convention and always takes precedence.
+      codediff-nvim = pkgs.vimUtils.buildVimPlugin {
+        pname = "codediff.nvim";
+        version = "2.49.2";
+        src = inputs."plugins-codediff-nvim";
+        dontBuild = true; # root Makefile is a CMake wrapper; skip default make
+        preInstall = ''
+          (
+            cd libvscode-diff
+            mkdir -p build/include
+            version="$(tr -d '[:space:]' < ../VERSION)"
+            sed "s/@PROJECT_VERSION@/$version/g" \
+              include/version.h.in > build/include/version.h
+            cc -Wall -std=c11 -O2 -DNDEBUG -DUTF8PROC_STATIC \
+              -D_POSIX_C_SOURCE=199309L \
+              -Iinclude -Ibuild/include -Ivendor -fPIC -shared -lm \
+              -o ../libvscode_diff.so \
+              default_lines_diff_computer.c \
+              src/char_level.c src/line_level.c src/myers.c \
+              src/optimize.c src/sequence.c src/range_mapping.c \
+              src/string_hash_map.c src/utils.c src/print_utils.c \
+              src/utf8_utils.c src/compute_moved_lines.c \
+              vendor/utf8proc.c
+          )
+        '';
       };
     in {
 
@@ -199,7 +240,6 @@
 
           # ── Git ──────────────────────────────────────────────────────
           gitsigns-nvim
-          diffview-nvim
           gitlinker-nvim
           vim-signify
 
@@ -262,6 +302,7 @@
         # ── Local plugins ─────────────────────────────────────────────
         localPlugins = [
           nvim-runner
+          codediff-nvim  # replaces diffview-nvim (native lib built above)
         ];
       };
 
@@ -277,6 +318,10 @@
 
       # ── Environment variables ───────────────────────────────────────────
       environmentVariables = {
+        general = {
+          # codediff.nvim: never auto-download the native lib — Nix builds it.
+          VSCODE_DIFF_NO_AUTO_INSTALL = "1";
+        };
         debug = {
           # Expose codelldb extension path so Lua config can find the adapter binary.
           # The extension layout is: <ext>/adapter/codelldb and <ext>/lldb/lib/liblldb.so

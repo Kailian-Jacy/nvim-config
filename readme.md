@@ -7,7 +7,7 @@ A Neovim setup with extremely neat UI, optimized for productivity.
 - **Dracula theme** with transparent floating windows and custom highlights
 - **AI integration**: Copilot, Avante (Claude/DeepSeek), and inline code rewriting via gp.nvim
 - **Debugging**: Full DAP setup with breakpoints, virtual text, and no-UI debug keymaps
-- **Git**: Gitsigns, diffview, gitlinker, lazygit integration
+- **Git**: Gitsigns, codediff (VSCode-style diff/merge), gitlinker, lazygit integration
 - **Navigation**: Snacks.nvim picker with zoxide, bookmarks, and smart file finding
 - **LSP**: Mason-managed language servers for Rust, Go, Python, C++, Lua, and more
 - **Terminal**: Tmux-integrated floating terminal with layout management

@@ -293,71 +293,65 @@ return {
     end,
   },
   {
-    -- Give diff tab to nvim.
-    -- DiffviewOpen oldCommit..newCommit to perform diff. Left is old, and right is new.
-    "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
+    -- VSCode-style diff/merge viewer (replaces diffview.nvim).
+    --   :CodeDiff              -> git status explorer (pick files to diff);
+    --                            run again inside a diff tab to close it.
+    --   :CodeDiff <revision>   -> diff working tree against a git revision.
+    --   :CodeDiff history      -> commit history panel.
+    --   :CodeDiff merge <file> -> 3-way merge conflict resolution.
+    -- The native C diff engine is compiled by Nix (see flake.nix). Outside
+    -- Nix, the plugin auto-downloads a prebuilt binary on first use.
+    "esmuellert/codediff.nvim",
+    cmd = { "CodeDiff" },
     keys = {
       {
         "<leader>sD",
-        "<Cmd>DiffviewOpen<CR>",
+        "<Cmd>CodeDiff<CR>",
         mode = "n",
-        desc = "n",
+        -- :CodeDiff toggles: opens the explorer, or closes the diff tab when
+        -- already inside one -- matching the old diffview <leader>sD behaviour.
+        desc = "Toggle CodeDiff (git explorer)",
       },
     },
-    config = function()
-      local actions = require("diffview.actions")
-      require("diffview").setup({
+    opts = {
+      diff = {
+        -- @AI: inline by default
+        layout = "side-by-side",
+        original_position = "left", -- old/original on the left, like diffview
+      },
+      keymaps = {
         view = {
-          merge_tool = {
-            layout = "diff1_plain", -- or diff3_mixed.
-          },
+          -- Preserve the old diffview muscle memory.
+          toggle_explorer = "<leader>b", -- was actions.toggle_files
+          next_file = "<leader>qj",       -- was actions.select_next_entry
+          prev_file = "<leader>qk",       -- was actions.select_prev_entry
         },
-        keymaps = {
-          view = {
-            { "n", "<leader>qj", actions.select_next_entry, { desc = "Open the diff for the next file" } },
-            { "n", "<leader>qk", actions.select_prev_entry, { desc = "Open the diff for the previous file" } },
-            { "n", "<leader>sD", "<Cmd>tabclose<CR>",       mode = "n",                                      desc = "Close in diffview" },
-            { "n", "<leader>fe", actions.toggle_files,      { desc = "Toggle the file panel." } },
-            -- Conflict resolution keymaps (Issue #13: accept certain conflict)
-            { "n", "<leader>co", actions.conflict_choose("ours"),       { desc = "Choose OURS version" } },
-            { "n", "<leader>ct", actions.conflict_choose("theirs"),     { desc = "Choose THEIRS version" } },
-            { "n", "<leader>cb", actions.conflict_choose("base"),       { desc = "Choose BASE version" } },
-            { "n", "<leader>ca", actions.conflict_choose("all"),        { desc = "Keep all versions (delete markers)" } },
-            { "n", "<leader>cx", actions.conflict_choose("none"),       { desc = "Delete conflict region" } },
-            { "n", "<leader>cO", actions.conflict_choose_all("ours"),   { desc = "Choose OURS for ALL conflicts" } },
-            { "n", "<leader>cT", actions.conflict_choose_all("theirs"), { desc = "Choose THEIRS for ALL conflicts" } },
-            -- Conflict navigation
-            { "n", "]x", actions.next_conflict,  { desc = "Next conflict marker" } },
-            { "n", "[x", actions.prev_conflict,  { desc = "Previous conflict marker" } },
-          },
-          file_panel = {
-            { "n", "<leader>sD", "<Cmd>tabclose<CR>",  mode = "n",                         desc = "Close in diffview" },
-            { "n", "<leader>fe", actions.toggle_files, { desc = "Toggle the file panel." } },
-            -- Conflict resolution from file panel
-            { "n", "<leader>cO", actions.conflict_choose_all("ours"),   { desc = "Choose OURS for ALL conflicts" } },
-            { "n", "<leader>cT", actions.conflict_choose_all("theirs"), { desc = "Choose THEIRS for ALL conflicts" } },
-          }
+        -- Conflict keymaps below already match the previous diffview bindings
+        -- out of the box; they are set explicitly here for clarity:
+        --   <leader>co accept_current (ours)    <leader>cO accept_all_current
+        --   <leader>ct accept_incoming (theirs) <leader>cT accept_all_incoming
+        --   <leader>cb accept_both
+        --   <leader>cx discard (keep base)
+        --   ]x / [x    next / prev conflict
+        conflict = {
+          accept_current = "<leader>co",
+          accept_incoming = "<leader>ct",
+          accept_both = "<leader>cb",
+          discard = "<leader>cx",
+          accept_all_current = "<leader>cO",
+          accept_all_incoming = "<leader>cT",
+          next_conflict = "]x",
+          prev_conflict = "[x",
         },
-        hooks = {
-          view_opened = function(view)
-            -- 1. Get the current tabpage.
-            local tab_id = view.tabpage
-            -- 2. Set the name to be diff with versions.
-            local workdir = vim.fn.getcwd(vim.fn.tabpagewinnr(tab_id), tab_id)
-            -- TODO: Get the compared commit to display.
-            vim.api.nvim_tabpage_set_var(tab_id, "tabname", "Diff: " .. vim.fn.fnamemodify(workdir, ":t"))
-          end
-        }
-      })
-    end
+      },
+    },
   },
   --{
   --"tpope/vim-fugitive",
   --},
   {
     -- Virtual plugin for extended git workflow commands
-    -- Complements gitsigns (hunk-level) and diffview (diff/merge) with
+    -- Complements gitsigns (hunk-level) and codediff (diff/merge) with
     -- higher-level git operations: stash, log, cherry-pick, and interactive staging.
     -- Addresses nvim-config#13: Scriptlize git informations for workflow.
     dir = vim.fn.stdpath("config"),
