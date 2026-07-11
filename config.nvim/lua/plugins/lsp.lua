@@ -168,58 +168,8 @@ return {
         select_textobject("@class.inner", "textobjects")
       end, { desc = "Select inner class" })
 
-      -- Incremental selection (Tab/Shift-Tab) — replaces the removed
-      -- nvim-treesitter incremental_selection module.
-      -- Uses built-in vim.treesitter API to walk the node tree.
-      local _inc_sel_node = nil  -- tracks current node for incremental expansion
-
-      -- Helper: select a treesitter node in linewise visual mode
-      local function select_node(node)
-        if not node then return end
-        local start_row, _, end_row, end_col = node:range()
-        if end_col == 0 and end_row > start_row then
-          end_row = end_row - 1
-        end
-        vim.api.nvim_win_set_cursor(0, { start_row + 1, 0 })
-        vim.cmd("normal! V")
-        vim.api.nvim_win_set_cursor(0, { end_row + 1, 0 })
-      end
-
-      -- Init / expand selection (Tab)
-      vim.keymap.set("n", "<Tab>", function()
-        local node = vim.treesitter.get_node()
-        if not node then return end
-        _inc_sel_node = node
-        select_node(node)
-      end, { desc = "Init treesitter incremental selection" })
-
-      vim.keymap.set("x", "<Tab>", function()
-        if not _inc_sel_node then return end
-        local parent = _inc_sel_node:parent()
-        if parent then
-          _inc_sel_node = parent
-          select_node(parent)
-        end
-      end, { desc = "Expand treesitter selection to parent node" })
-
-      -- Shrink selection (Shift-Tab)
-      vim.keymap.set("x", "<S-Tab>", function()
-        if not _inc_sel_node then return end
-        -- Find the first named child to shrink to
-        local child = _inc_sel_node:named_child(0)
-        if child then
-          _inc_sel_node = child
-          select_node(child)
-        end
-      end, { desc = "Shrink treesitter selection to child node" })
-
-      -- Reset tracked node when leaving visual mode
-      vim.api.nvim_create_autocmd("ModeChanged", {
-        pattern = "[vV\x16]*:n",
-        callback = function()
-          _inc_sel_node = nil
-        end,
-      })
+      -- Incremental-selection <Tab>/<S-Tab> maps removed on purpose: <Tab> is
+      -- now bound to sidekick NES in normal mode (see lua/config/keymaps.lua).
     end,
   },
   {
@@ -285,6 +235,12 @@ return {
 
       -- Start LSP inlay hints
       vim.lsp.inlay_hint.enable(true)
+
+      -- Copilot LSP for sidekick NES is provided by copilot.vim itself: it starts
+      -- a "GitHub Copilot" vim.lsp client (autoload/copilot/client.vim ->
+      -- _copilot.lsp_start_client -> vim.lsp.start) that already supports
+      -- copilotInlineEdit / Next Edit Suggestions. sidekick.is_copilot() matches it
+      -- by name, so no extra LSP config is needed here; auth is via :Copilot setup.
     end,
   },
   {

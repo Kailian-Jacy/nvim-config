@@ -53,6 +53,34 @@ return {
     end
   )(),
   {
+    -- sidekick.nvim: Copilot LSP "Next Edit Suggestions" (NES). Complements
+    -- copilot.vim's insert-mode inline completions (they coexist by mode).
+    -- Keymaps live centrally in lua/config/keymaps.lua: <Tab> jump/apply-or-
+    -- request, <Esc> dismiss (that is why nes.clear.esc is disabled below).
+    -- NES is normal-mode only: it triggers on leaving insert / normal-mode
+    -- edits and is cleared on InsertEnter / TextChangedI.
+    "folke/sidekick.nvim",
+    enabled = vim.g.modules.copilot and vim.g.modules.copilot.enabled,
+    event = "LspAttach",
+    opts = {
+      nes = {
+        -- Honor the same opt-outs copilot.vim uses (bigfile.lua /
+        -- miscellaneous.lua set vim.b.copilot_enabled = false), plus a
+        -- sidekick-specific global/per-buffer toggle.
+        enabled = function(buf)
+          if vim.b[buf].copilot_enabled == false then
+            return false
+          end
+          return vim.g.sidekick_nes ~= false and vim.b[buf].sidekick_nes ~= false
+        end,
+        -- <Esc> is handled centrally in keymaps.lua (layered clear), so let it
+        -- own the key instead of sidekick installing its own <Esc> handler.
+        clear = { esc = false },
+      },
+    },
+    -- No `keys`: <Tab>/<Esc> are defined in lua/config/keymaps.lua.
+  },
+  {
     -- Quick one-key AI modification helper.
     -- Addresses nvim-config#14: A quick one-key ai modification helper.
     -- Philosophy: keep it simple, select code → one key → AI edits in place.
