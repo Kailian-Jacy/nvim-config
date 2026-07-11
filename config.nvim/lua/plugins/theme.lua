@@ -341,11 +341,10 @@ return {
           }}, -- Used to display is Debugging information.]]
           lualine_a = {
             { "filename", path = 1 },
-          },
-          lualine_b = {},
-          lualine_c = {
             codediff_block,
           },
+          lualine_b = {},
+          lualine_c = {},
           lualine_x = {
             dap_block
           },
