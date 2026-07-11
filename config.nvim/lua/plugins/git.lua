@@ -306,7 +306,16 @@ return {
     keys = {
       {
         "<leader>sD",
-        "<Cmd>CodeDiff<CR>",
+        function()
+          -- Capture the invoking tab's display name so the diff tab can be
+          -- named "[diff]<original_tab_name>" once it opens (see config()).
+          local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
+          local in_diff = ok and lifecycle.get_session(vim.api.nvim_get_current_tabpage()) ~= nil
+          if not in_diff and type(vim.g.tabname) == "function" then
+            vim.g._codediff_origin_tabname = vim.g.tabname(vim.fn.tabpagenr())
+          end
+          vim.cmd("CodeDiff")
+        end,
         mode = "n",
         -- :CodeDiff toggles: opens the explorer, or closes the diff tab when
         -- already inside one -- matching the old diffview <leader>sD behaviour.
@@ -344,6 +353,33 @@ return {
         },
       },
     },
+    config = function(_, opts)
+      require("codediff").setup(opts)
+
+      -- Name the diff tabpage "[diff]<original_tab_name>" so the custom
+      -- tabline (vim.g.tabname) shows where the diff came from. The origin
+      -- name is captured by the <leader>sD keymap; for a bare :CodeDiff we
+      -- fall back to the tab's working-directory tail.
+      vim.api.nvim_create_autocmd("User", {
+        group = vim.api.nvim_create_augroup("CodeDiffTabName", { clear = true }),
+        pattern = "CodeDiffOpen",
+        callback = function(ev)
+          local tabpage = ev.data and ev.data.tabpage
+          if not tabpage or not vim.api.nvim_tabpage_is_valid(tabpage) then
+            return
+          end
+          local tabnr = vim.api.nvim_tabpage_get_number(tabpage)
+          local origin = vim.g._codediff_origin_tabname
+          vim.g._codediff_origin_tabname = nil
+          if not origin or origin == "" then
+            local win = vim.fn.tabpagewinnr(tabnr)
+            origin = vim.fn.fnamemodify(vim.fn.getcwd(win, tabnr), ":t")
+          end
+          vim.fn.settabvar(tabnr, "tabname", "[diff]" .. origin)
+          vim.cmd("redrawtabline")
+        end,
+      })
+    end,
   },
   --{
   --"tpope/vim-fugitive",

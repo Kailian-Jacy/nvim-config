@@ -321,6 +321,63 @@ return {
           return ok and lifecycle.get_session(vim.api.nvim_get_current_tabpage()) ~= nil
         end,
       }
+      -- Insertions / deletions for the active CodeDiff session (line counts
+      -- derived from the stored diff result; end_line is EXCLUSIVE).
+      -- Returns (added, removed) or nil when there is no active session.
+      local function codediff_stat()
+        local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
+        if not ok then
+          return nil
+        end
+        local session = lifecycle.get_session(vim.api.nvim_get_current_tabpage())
+        if not session or not session.stored_diff_result then
+          return nil
+        end
+        local changes = session.stored_diff_result.changes
+        if not changes then
+          return nil
+        end
+        local added, removed = 0, 0
+        for _, m in ipairs(changes) do
+          if m.modified and m.modified.start_line and m.modified.end_line then
+            added = added + math.max(0, m.modified.end_line - m.modified.start_line)
+          end
+          if m.original and m.original.start_line and m.original.end_line then
+            removed = removed + math.max(0, m.original.end_line - m.original.start_line)
+          end
+        end
+        return added, removed
+      end
+      -- Resolve a foreground color from the first existing highlight group.
+      local function hl_fg(groups, fallback)
+        for _, g in ipairs(groups) do
+          local h = vim.api.nvim_get_hl(0, { name = g, link = false })
+          if h and h.fg then
+            return string.format("#%06x", h.fg)
+          end
+        end
+        return fallback
+      end
+      local codediff_added = {
+        function()
+          local added = select(1, codediff_stat())
+          return (added and added > 0) and ("+" .. added) or ""
+        end,
+        cond = function()
+          return codediff_stat() ~= nil
+        end,
+        color = { fg = hl_fg({ "GitSignsAdd", "DiffAdd", "Added" }, "#50fa7b") },
+      }
+      local codediff_removed = {
+        function()
+          local _, removed = codediff_stat()
+          return (removed and removed > 0) and ("-" .. removed) or ""
+        end,
+        cond = function()
+          return codediff_stat() ~= nil
+        end,
+        color = { fg = hl_fg({ "GitSignsDelete", "DiffDelete", "Removed" }, "#ff5555") },
+      }
       require("lualine").setup({
         options = {
           theme = theme,
@@ -342,6 +399,8 @@ return {
           lualine_a = {
             { "filename", path = 1 },
             codediff_block,
+            codediff_added,
+            codediff_removed,
           },
           lualine_b = {},
           lualine_c = {},
