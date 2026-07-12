@@ -2,8 +2,10 @@
 -- native diff mode (vimdiff-mergetool style; no external dependency).
 --
 -- Layout (new tab):   OURS │ RESULT │ THEIRS
---   * RESULT  = the real buffer, seeded with git-style conflict markers
---               (non-conflicting changes already auto-merged). Edit & :w here.
+--   * RESULT  = the real buffer, seeded with a marker-free auto-merge (agent's
+--               non-conflicting hunks applied; true conflicts default to ours).
+--               No conflict markers -> reentrant. Edit here, pulling hunks from
+--               OURS/THEIRS as needed, then :w.
 --   * OURS    = your pre-merge content (read-only reference).
 --   * THEIRS  = the agent's on-disk version (read-only reference).
 -- All three are in diff mode with inline (DiffText) highlighting via

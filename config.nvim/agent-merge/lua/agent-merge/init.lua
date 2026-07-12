@@ -32,6 +32,11 @@ M.config = {
   --- fires BufWritePre/Post itself, so conform format-on-save and other write
   --- hooks compose normally (resolve -> BufWritePre -> write -> BufWritePost).
   intercept_write = true,
+  --- On a manual save over an external change, pop a confirmation:
+  ---   change  -> auto-merge / overwrite / abort
+  ---   conflict-> resolve / overwrite / abort
+  --- false = no prompt (auto-merge changes, open resolver on conflict).
+  confirm_external = true,
   --- Conflict presentation: "markers" (git-style markers in the buffer) or
   --- "diffthis" (built-in native 3-way diff resolver, inline highlighting).
   conflict = "markers",
@@ -76,15 +81,12 @@ local function attach_write(buf)
         end)
         return
       end
-      local ok, saved = pcall(app.save, a.buf)
+      local ok = pcall(app.save, a.buf)
       if not ok then -- internal error: never let a bug break saving
         vim.api.nvim_buf_call(a.buf, function() vim.cmd("noautocmd write!") end)
-        return
       end
-      if not saved then
-        -- conflict / not written: fail the write so `:wq` aborts the quit.
-        error("agent-merge: unresolved conflict — resolve then save", 0)
-      end
+      -- If app.save returned false (abort / unresolved), the buffer stays
+      -- modified, which by itself vetoes `:wq` (no error needed).
     end,
   })
 end

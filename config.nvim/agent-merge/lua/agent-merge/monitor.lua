@@ -67,6 +67,13 @@ local function raw_write(buf)
   end)
 end
 
+-- Fire a write event on `buf` (we own the write, so Neovim won't fire these).
+local function fire(buf, ev)
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_exec_autocmds(ev, { buffer = buf })
+  end)
+end
+
 --- Persist the buffer only if the disk still holds the revision we resolved
 --- against (`expect`, nil = expect the file to be absent). Returns false if the
 --- agent wrote again in the meantime, so the caller re-enters the loop.
@@ -77,23 +84,15 @@ local function protected_write(buf, path, expect)
   elseif now == nil or not eq(now, expect) then
     return false
   end
-  -- We own the write (via BufWriteCmd), so Neovim does not fire the normal
-  -- write events for us. Run them ourselves so the usual save pipeline
-  -- (conform format-on-save, LSP willSave, ...) composes in the natural order:
-  --   resolve -> BufWritePre -> write -> BufWritePost.
-  -- Re-verify the agent did not write during BufWritePre (formatting can take
-  -- time) before committing the bytes.
-  vim.api.nvim_buf_call(buf, function()
-    vim.api.nvim_exec_autocmds("BufWritePre", { buffer = buf })
-  end)
+  -- Run the normal pre-write pipeline (conform, LSP willSave, ...) then
+  -- re-verify the agent did not write during it before committing bytes.
+  fire(buf, "BufWritePre")
   if expect ~= nil then
     local after = read_lines(path)
     if after == nil or not eq(after, expect) then return false end
   end
   raw_write(buf)
-  vim.api.nvim_buf_call(buf, function()
-    vim.api.nvim_exec_autocmds("BufWritePost", { buffer = buf })
-  end)
+  fire(buf, "BufWritePost")
   return true
 end
 
@@ -234,6 +233,15 @@ end
 --- @return boolean saved
 function M.auto_merge(buf)
   return M.try_save(buf)
+end
+
+--- Overwrite the file with the buffer as-is (ignoring the external change) and
+--- rebase. Used for the "overwrite / discard external" choice.
+function M.force_write(buf)
+  fire(buf, "BufWritePre")
+  raw_write(buf)
+  fire(buf, "BufWritePost")
+  M.snapshot(buf) -- base := buffer; fires on_sync
 end
 
 ---------------------------------------------------------------------------

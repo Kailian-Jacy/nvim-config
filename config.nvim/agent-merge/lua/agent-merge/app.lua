@@ -20,6 +20,7 @@
 --               change, [=] / [=N] conflict.
 
 local monitor = require("agent-merge.monitor")
+local merge = require("agent-merge.merge")
 local resolver = require("agent-merge.resolver")
 
 local M = {}
@@ -27,6 +28,12 @@ local M = {}
 local cfg ---@type table          shared config (set in setup)
 --- buf -> { kind = "change"|"conflict", n }  drives autosave-hold + statusline
 local pending = {}
+
+local function eq(a, b)
+  if #a ~= #b then return false end
+  for i = 1, #a do if a[i] ~= b[i] then return false end end
+  return true
+end
 
 ---------------------------------------------------------------------------
 -- conflict markers
@@ -68,12 +75,21 @@ end
 ---------------------------------------------------------------------------
 
 -- Dispatch to the chosen presentation with the three versions in hand.
+-- Seed the buffer for resolution and open the chosen presentation.
+-- ctx = { ours, theirs, base, merged }.
 local function present_view(buf, ctx)
   if cfg.on_conflict_resolve then
-    cfg.on_conflict_resolve(buf, ctx)
+    cfg.on_conflict_resolve(buf, ctx) -- custom resolver decides its own seeding
   elseif cfg.conflict == "diffthis" then
+    -- Marker-free seed: auto-merge favouring ours on true conflicts. Keeps the
+    -- agent's non-conflicting hunks and leaves NO markers, so the buffer stays
+    -- reentrant; you reconcile the conflict spots against the THEIRS pane.
+    local seed = merge.merge_favoring(ctx.ours, ctx.base, ctx.theirs, "ours")
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, seed)
     resolver.open(buf, ctx)
   else
+    -- Markers: represent both sides inline for text-based resolution.
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, ctx.merged)
     vim.notify(
       "Conflict in " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
         .. " — resolve the markers, then save.",
@@ -82,7 +98,7 @@ local function present_view(buf, ctx)
   end
 end
 
--- Re-open the resolver view for an already-presented (markered) buffer.
+-- Re-open the resolver view for an already-presented buffer.
 local function reopen_view(buf)
   if cfg.on_conflict_resolve then
     cfg.on_conflict_resolve(buf, nil)
@@ -91,13 +107,12 @@ local function reopen_view(buf)
   end
 end
 
---- Present the conflict: capture the three versions *before* touching the
---- buffer, seed it with markers (non-conflicts already auto-merged), adopt the
---- agent's version as the new base so a resolved save writes cleanly, then hand
---- off to the presentation.
+--- Present a conflict: capture the three versions, adopt the agent's version as
+--- the new base (so a resolved save writes cleanly), then hand off to the
+--- presentation, which seeds the buffer (markers or marker-free) as appropriate.
 local function present_conflict(buf)
   if has_markers(buf) then
-    reopen_view(buf) -- already presented; just re-open the view
+    reopen_view(buf) -- already presented with markers; just re-open the view
     return
   end
   local ours = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -106,9 +121,8 @@ local function present_conflict(buf)
   local base = monitor.base(buf) or {}
   local merged, n = monitor.merge_preview(buf)
   if n <= 0 then return end
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, merged)
   monitor.set_base(buf, theirs)
-  present_view(buf, { ours = ours, theirs = theirs, base = base })
+  present_view(buf, { ours = ours, theirs = theirs, base = base, merged = merged })
 end
 
 ---------------------------------------------------------------------------
@@ -145,23 +159,67 @@ end
 -- public actions
 ---------------------------------------------------------------------------
 
---- Manual save entry point (e.g. <leader><cr>). Marker-guarded: never writes an
---- unresolved conflict; folds in external changes; opens the resolver on a
---- fresh conflict.
+--- Situation-aware confirmation. Returns one of:
+---   change   -> "automerge" | "overwrite" | "abort"
+---   conflict -> "resolve"   | "overwrite" | "abort"
+local function ask(kind, name, n)
+  local msg, choices, default_action
+  if kind == "conflict" then
+    msg = string.format("%s: conflicting external change (%d hunk%s).", name, n, n == 1 and "" or "s")
+    choices = "&Resolve\n&Overwrite (discard external)\nA&bort"
+    default_action = { "resolve", "overwrite", "abort" }
+  else
+    msg = string.format("%s changed on disk (auto-mergeable).", name)
+    choices = "Auto-&merge\n&Overwrite (discard external)\nA&bort"
+    default_action = { "automerge", "overwrite", "abort" }
+  end
+  local c = vim.fn.confirm(msg, choices, 1, kind == "conflict" and "Warning" or "Question")
+  return default_action[c] or "abort" -- c==0 (Esc) => abort
+end
+
+--- Manual save entry point (e.g. <leader><cr> and :w via BufWriteCmd).
+--- No external change  -> normal chained save.
+--- External change     -> confirm (auto-merge/overwrite/abort) unless
+---                        confirm_external=false, then auto behaviour.
+--- Conflict            -> confirm (resolve/overwrite/abort).
+--- Marker-guarded: never writes an unresolved conflict.
 --- @return boolean saved
 function M.save(buf)
   buf = buf or vim.api.nvim_get_current_buf()
   if has_markers(buf) then
-    present_conflict(buf) -- unresolved: re-open the resolver, do not write markers
+    present_conflict(buf) -- unresolved markers: reopen resolver, do not write
     return false
   end
-  return monitor.try_save(buf, {
-    if_conflict = function()
-      present_conflict(buf)
-      return false -- resolve interactively, then save again
-    end,
-    -- if_changed defaults to proceed (auto-merge & save)
-  })
+
+  local path = vim.api.nvim_buf_get_name(buf)
+  local base = monitor.base(buf)
+  local disk = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or nil
+
+  -- New file, untracked, or no external change: normal chained save.
+  if base == nil or disk == nil or eq(disk, base) then
+    return monitor.try_save(buf)
+  end
+
+  -- External change: classify, then decide.
+  local _, n = monitor.merge_preview(buf)
+  local tail = vim.fn.fnamemodify(path, ":t")
+  local decision
+  if not cfg.confirm_external then
+    decision = (n == 0) and "automerge" or "resolve"
+  else
+    decision = ask(n == 0 and "change" or "conflict", tail, n)
+  end
+
+  if decision == "automerge" then
+    return monitor.try_save(buf) -- chained 3-way merge & write
+  elseif decision == "resolve" then
+    present_conflict(buf) -- markers / diff resolver, then save again
+    return false
+  elseif decision == "overwrite" then
+    monitor.force_write(buf) -- our version wins, discard external
+    return true
+  end
+  return false -- abort
 end
 
 --- Statusline component for the current buffer.
