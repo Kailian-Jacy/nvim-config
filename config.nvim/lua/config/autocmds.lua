@@ -1559,9 +1559,3 @@ vim.api.nvim_create_user_command("NeovideTransparentToggle", function()
     end
   end
 end, {})
-
--- Concurrent-edit reconciliation: 3-way merge a file when an external agent
--- rewrites it on disk while we keep editing it in Neovim. See module for docs.
-require("config.agent_merge").setup({
-  -- diff_on_conflict = true, -- uncomment to auto-open a diff split on conflict
-})
