@@ -355,7 +355,15 @@ return {
             end,
           }}, -- Used to display is Debugging information.]]
           lualine_a = {
-            { "filename", path = 1 },
+            { "filename", path = 1, symbols = { modified = "" } },
+            {
+              function()
+                local ok, am = pcall(require, "agent-merge")
+                return ok and am.status() or ""
+              end,
+              -- [+] pending external change (autosave paused); [=]/[=N] conflict
+              color = { gui = "bold" },
+            },
             codediff_added,
             codediff_removed,
           },

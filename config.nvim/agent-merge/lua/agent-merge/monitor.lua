@@ -77,7 +77,23 @@ local function protected_write(buf, path, expect)
   elseif now == nil or not eq(now, expect) then
     return false
   end
+  -- We own the write (via BufWriteCmd), so Neovim does not fire the normal
+  -- write events for us. Run them ourselves so the usual save pipeline
+  -- (conform format-on-save, LSP willSave, ...) composes in the natural order:
+  --   resolve -> BufWritePre -> write -> BufWritePost.
+  -- Re-verify the agent did not write during BufWritePre (formatting can take
+  -- time) before committing the bytes.
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_exec_autocmds("BufWritePre", { buffer = buf })
+  end)
+  if expect ~= nil then
+    local after = read_lines(path)
+    if after == nil or not eq(after, expect) then return false end
+  end
   raw_write(buf)
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_exec_autocmds("BufWritePost", { buffer = buf })
+  end)
   return true
 end
 
@@ -96,6 +112,13 @@ end
 --- @return string[]|nil
 function M.base(buf)
   return bases[buf]
+end
+
+--- Set BASE without signalling on_sync. Used by a resolver that presents a
+--- conflict as markers and adopts the agent's version as the new ancestor, so
+--- the buffer stays "pending" until the resolution is actually written.
+function M.set_base(buf, lines)
+  bases[buf] = lines
 end
 
 --- Compute the 3-way merge preview without saving (for a resolver UI).
