@@ -9,16 +9,18 @@
 --   * LOAD mode "auto"     -> auto_merge on every external change (any buffer);
 --               "on_focus" -> auto_merge a pending change when you focus it;
 --               "manual"   -> never automatic; you drive it (try_save).
---   * CONFLICT  presented as git-style markers in the buffer, with the agent's
---               version adopted as the new base; resolve the markers and save.
---               A custom resolver UI can be plugged in via on_conflict_resolve.
---               (codediff.nvim's merge mode is git-mergetool only -- it needs
---               git index stages :2/:3 -- so it cannot resolve arbitrary
---               on-disk divergences and is intentionally not used here.)
+--   * CONFLICT  presented either as git-style markers in the buffer, or via the
+--               built-in native 3-way diff resolver (conflict = "markers" |
+--               "diffthis"); the agent's version is adopted as the new base so a
+--               resolved save writes cleanly. A custom resolver can be plugged
+--               in via on_conflict_resolve(buf, ctx). (codediff.nvim's merge
+--               mode is git-mergetool only -- it needs git index stages :2/:3 --
+--               so it cannot resolve arbitrary on-disk divergences.)
 --   * STATUS    per-buffer indicator for the statusline: [+] pending external
 --               change, [=] / [=N] conflict.
 
 local monitor = require("agent-merge.monitor")
+local resolver = require("agent-merge.resolver")
 
 local M = {}
 
@@ -62,34 +64,51 @@ local function install_autosave_guard()
 end
 
 ---------------------------------------------------------------------------
--- conflict resolution (git-style markers; pluggable resolver)
+-- conflict resolution (git-style markers; pluggable / built-in diff resolver)
 ---------------------------------------------------------------------------
 
-local function open_resolver(buf)
+-- Dispatch to the chosen presentation with the three versions in hand.
+local function present_view(buf, ctx)
   if cfg.on_conflict_resolve then
-    cfg.on_conflict_resolve(buf) -- user-supplied resolver UI
-    return
+    cfg.on_conflict_resolve(buf, ctx)
+  elseif cfg.conflict == "diffthis" then
+    resolver.open(buf, ctx)
+  else
+    vim.notify(
+      "Conflict in " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
+        .. " — resolve the markers, then save.",
+      vim.log.levels.WARN, { title = "agent-merge" }
+    )
   end
-  vim.notify(
-    "Conflict in " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
-      .. " — resolve the markers, then save.",
-    vim.log.levels.WARN, { title = "agent-merge" }
-  )
 end
 
---- Present the conflict as markers in the buffer (once), adopt the agent's
---- version as the new base so a later clean save writes without re-merging,
---- then open the resolver.
-local function present_conflict(buf)
-  if not has_markers(buf) then
-    local merged, n = monitor.merge_preview(buf)
-    if n <= 0 then return end
-    local path = vim.api.nvim_buf_get_name(buf)
-    local disk = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or {}
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, merged)
-    monitor.set_base(buf, disk)
+-- Re-open the resolver view for an already-presented (markered) buffer.
+local function reopen_view(buf)
+  if cfg.on_conflict_resolve then
+    cfg.on_conflict_resolve(buf, nil)
+  elseif cfg.conflict == "diffthis" then
+    resolver.open(buf, nil)
   end
-  open_resolver(buf)
+end
+
+--- Present the conflict: capture the three versions *before* touching the
+--- buffer, seed it with markers (non-conflicts already auto-merged), adopt the
+--- agent's version as the new base so a resolved save writes cleanly, then hand
+--- off to the presentation.
+local function present_conflict(buf)
+  if has_markers(buf) then
+    reopen_view(buf) -- already presented; just re-open the view
+    return
+  end
+  local ours = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local path = vim.api.nvim_buf_get_name(buf)
+  local theirs = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or {}
+  local base = monitor.base(buf) or {}
+  local merged, n = monitor.merge_preview(buf)
+  if n <= 0 then return end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, merged)
+  monitor.set_base(buf, theirs)
+  present_view(buf, { ours = ours, theirs = theirs, base = base })
 end
 
 ---------------------------------------------------------------------------
@@ -111,6 +130,7 @@ end
 
 function M.on_sync(buf)
   pending[buf] = nil
+  resolver.close(buf) -- no-op unless a diff resolver session is open
 end
 
 --- Called by the glue when a buffer gains focus (definition of "focus" is the
@@ -132,7 +152,7 @@ end
 function M.save(buf)
   buf = buf or vim.api.nvim_get_current_buf()
   if has_markers(buf) then
-    open_resolver(buf) -- still unresolved; do not write markers to disk
+    present_conflict(buf) -- unresolved: re-open the resolver, do not write markers
     return false
   end
   return monitor.try_save(buf, {

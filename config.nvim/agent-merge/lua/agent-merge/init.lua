@@ -32,8 +32,11 @@ M.config = {
   --- fires BufWritePre/Post itself, so conform format-on-save and other write
   --- hooks compose normally (resolve -> BufWritePre -> write -> BufWritePost).
   intercept_write = true,
-  --- Optional custom conflict resolver: fun(buf). Default leaves git-style
-  --- conflict markers in the buffer for you to resolve, then save.
+  --- Conflict presentation: "markers" (git-style markers in the buffer) or
+  --- "diffthis" (built-in native 3-way diff resolver, inline highlighting).
+  conflict = "markers",
+  --- Optional custom conflict resolver: fun(buf, ctx?) where ctx (nil on a bare
+  --- re-open) = { ours, theirs, base }. Overrides `conflict` when set.
   on_conflict_resolve = nil,
   --- Show the conflict hunk count in the statusline ([=5] vs [=]).
   show_conflict_count = false,
