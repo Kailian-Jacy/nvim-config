@@ -362,7 +362,6 @@ return {
                 return ok and am.status() or ""
               end,
               -- [+] pending external change (autosave paused); [=]/[=N] conflict
-              color = { gui = "bold" },
             },
             codediff_added,
             codediff_removed,
