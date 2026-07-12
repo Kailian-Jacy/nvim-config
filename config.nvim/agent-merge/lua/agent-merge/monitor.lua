@@ -29,8 +29,9 @@ local obs = {}
 --- buf -> { kind, n }  last-fired push state (for transition de-duplication)
 local fired = {}
 
-local cb_change = {} ---@type fun(buf: integer)[]
-local cb_conflict = {} ---@type fun(buf: integer, n: integer)[]
+local cb_change ---@type fun(buf: integer)|nil
+local cb_conflict ---@type fun(buf: integer, n: integer)|nil
+local cb_sync ---@type fun(buf: integer)|nil
 
 ---------------------------------------------------------------------------
 -- helpers
@@ -85,13 +86,25 @@ end
 ---------------------------------------------------------------------------
 
 --- Set BASE := lines (default: current buffer). Call at every sync point.
+--- Fires on_sync so the application layer knows the buffer is back in sync
+--- (e.g. to resume autosave).
 function M.snapshot(buf, lines)
   bases[buf] = lines or buf_lines(buf)
+  if cb_sync then cb_sync(buf) end
 end
 
 --- @return string[]|nil
 function M.base(buf)
   return bases[buf]
+end
+
+--- Compute the 3-way merge preview without saving (for a resolver UI).
+--- @return string[] merged, integer conflicts
+function M.merge_preview(buf)
+  local path = vim.api.nvim_buf_get_name(buf)
+  local base = bases[buf] or read_lines(path) or {}
+  local disk = read_lines(path) or {}
+  return merge.three_way(buf_lines(buf), base, disk)
 end
 
 --- Drop all memory for a buffer (call on BufDelete/BufWipeout).
@@ -155,14 +168,14 @@ function M.try_save(buf, hooks)
       local proceed = hooks.if_conflict and hooks.if_conflict(0) or false
       if not proceed then return false end
       if protected_write(buf, path, nil) then
-        bases[buf] = mine
+        M.snapshot(buf, mine)
         return true
       end
       -- file reappeared during the hook; loop and re-evaluate
     elseif eq(disk, base) then
       -- No external change: persist the buffer as-is.
       if protected_write(buf, path, base) then
-        bases[buf] = mine
+        M.snapshot(buf, mine)
         return true
       end
       -- raced with a fresh external write; loop
@@ -204,12 +217,6 @@ end
 -- observation + push callbacks (focused buffers only)
 ---------------------------------------------------------------------------
 
-local function emit(list, ...)
-  for _, fn in ipairs(list) do
-    pcall(fn, ...)
-  end
-end
-
 --- Classify and fire the appropriate push callback if the situation changed.
 --- Exactly one callback per transition; re-fires when the conflict count moves.
 local function dispatch(buf)
@@ -221,12 +228,12 @@ local function dispatch(buf)
   elseif kind == "Changed" then
     if not prev or prev.kind ~= "Changed" then
       fired[buf] = { kind = "Changed", n = 0 }
-      emit(cb_change, buf)
+      if cb_change then cb_change(buf) end
     end
   else -- Conflict
     if not prev or prev.kind ~= "Conflict" or prev.n ~= n then
       fired[buf] = { kind = "Conflict", n = n }
-      emit(cb_conflict, buf, n)
+      if cb_conflict then cb_conflict(buf, n) end
     end
   end
 end
@@ -269,15 +276,20 @@ function M.observing(buf)
   return obs[buf] ~= nil
 end
 
---- Register a push callback: observed file became auto-resolvable (Changed).
+--- Register the push callback: observed file became auto-resolvable (Changed).
 --- Never auto-merges; that is the caller's decision.
 function M.on_change(fn)
-  table.insert(cb_change, fn)
+  cb_change = fn
 end
 
---- Register a push callback: observed file conflicts (n hunks; Deleted ⇒ n=0).
+--- Register the push callback: observed file conflicts (n hunks; Deleted ⇒ n=0).
 function M.on_conflict(fn)
-  table.insert(cb_conflict, fn)
+  cb_conflict = fn
+end
+
+--- Register the callback fired when a buffer returns to sync (new base created).
+function M.on_sync(fn)
+  cb_sync = fn
 end
 
 return M

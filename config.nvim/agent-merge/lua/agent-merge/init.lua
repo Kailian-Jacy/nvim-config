@@ -33,6 +33,7 @@ M.config = {
   --- on_change never auto-merges; the application decides what to do.
   on_change = function(_) end, ---@type fun(buf: integer)
   on_conflict = function(_, _) end, ---@type fun(buf: integer, n: integer)
+  on_sync = function(_) end, ---@type fun(buf: integer)
 }
 
 local function watchable(buf)
@@ -54,6 +55,7 @@ function M.setup(opts)
 
   monitor.on_change(function(buf) M.config.on_change(buf) end)
   monitor.on_conflict(function(buf, n) M.config.on_conflict(buf, n) end)
+  monitor.on_sync(function(buf) M.config.on_sync(buf) end)
 
   local grp = vim.api.nvim_create_augroup("AgentMerge", { clear = true })
 
