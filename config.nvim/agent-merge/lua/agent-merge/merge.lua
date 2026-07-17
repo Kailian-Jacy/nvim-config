@@ -41,23 +41,4 @@ function M.three_way(mine, base, theirs)
   return merged, (res.code < 0 and -1 or res.code)
 end
 
---- Marker-free auto-merge: applies every non-conflicting change from both
---- sides, and for true conflicts favours one side (no conflict markers). Used
---- to seed a diff-based resolver reentrantly.
---- @param side "ours"|"theirs"|"union"
---- @return string[] merged
-function M.merge_favoring(mine, base, theirs, side)
-  local flag = ({ ours = "--ours", theirs = "--theirs", union = "--union" })[side] or "--ours"
-  local fm, fb, ft = tmp(mine), tmp(base), tmp(theirs)
-  local res = vim.system({ "git", "merge-file", "-p", flag, fm, fb, ft }, { text = true }):wait()
-  vim.fn.delete(fm)
-  vim.fn.delete(fb)
-  vim.fn.delete(ft)
-  local out = vim.split(res.stdout or "", "\n", { plain = true })
-  if #out > 0 and out[#out] == "" then
-    table.remove(out)
-  end
-  return out
-end
-
 return M

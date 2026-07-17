@@ -20,7 +20,6 @@
 --               change, [=] / [=N] conflict.
 
 local monitor = require("agent-merge.monitor")
-local merge = require("agent-merge.merge")
 local resolver = require("agent-merge.resolver")
 
 local M = {}
@@ -81,12 +80,18 @@ local function present_view(buf, ctx)
   if cfg.on_conflict_resolve then
     cfg.on_conflict_resolve(buf, ctx) -- custom resolver decides its own seeding
   elseif cfg.conflict == "diffthis" then
-    -- Marker-free seed: auto-merge favouring ours on true conflicts. Keeps the
-    -- agent's non-conflicting hunks and leaves NO markers, so the buffer stays
-    -- reentrant; you reconcile the conflict spots against the THEIRS pane.
-    local seed = merge.merge_favoring(ctx.ours, ctx.base, ctx.theirs, "ours")
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, seed)
-    resolver.open(buf, ctx)
+    -- Markers mark the unresolved regions (so save is guarded and they're
+    -- visible); the OURS/THEIRS panes give the word-level diff. Closing the
+    -- tab aborts and restores, so nothing lingers.
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, ctx.merged)
+    resolver.open(buf, {
+      ours = ctx.ours,
+      theirs = ctx.theirs,
+      on_abort = function(b)
+        vim.api.nvim_buf_set_lines(b, 0, -1, false, ctx.ours) -- discard attempt
+        monitor.set_base(b, ctx.base)                          -- undo base:=disk
+      end,
+    })
   else
     -- Markers: represent both sides inline for text-based resolution.
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, ctx.merged)
@@ -144,7 +149,7 @@ end
 
 function M.on_sync(buf)
   pending[buf] = nil
-  resolver.close(buf) -- no-op unless a diff resolver session is open
+  resolver.finish(buf) -- no-op unless a diff resolver session is open
 end
 
 --- Called by the glue when a buffer gains focus (definition of "focus" is the
