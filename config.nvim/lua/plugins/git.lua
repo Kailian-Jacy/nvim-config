@@ -28,6 +28,7 @@ return {
   },
   {
     "lewis6991/gitsigns.nvim",
+    lazy = false,
     cmd = {
       -- Refer to doc for more details:
       -- :h gitsigns-revision
