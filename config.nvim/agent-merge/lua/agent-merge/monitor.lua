@@ -190,19 +190,20 @@ function M.try_save(buf, hooks)
       local proceed = hooks.if_conflict and hooks.if_conflict(0) or false
       if not proceed then return false end
       if protected_write(buf, path, nil) then
-        M.snapshot(buf, mine)
+        M.snapshot(buf) -- base := actual written buffer (post BufWritePre hooks)
         return true
       end
       -- file reappeared during the hook; loop and re-evaluate
     elseif eq(disk, base) then
       -- No external change: persist the buffer as-is.
       if protected_write(buf, path, base) then
-        M.snapshot(buf, mine)
+        M.snapshot(buf) -- base := actual written buffer (post BufWritePre hooks)
         return true
       end
       -- raced with a fresh external write; loop
     else
       -- External change: 3-way merge to decide resolvability.
+      -- TODO: zianxu: How to quickly resolve apply changes from certain side.
       local merged, n = merge.three_way(mine, base, disk)
       if n < 0 then return false end -- merge engine error
 
