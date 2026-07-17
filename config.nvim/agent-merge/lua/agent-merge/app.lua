@@ -227,15 +227,21 @@ function M.save(buf)
   return false -- abort
 end
 
---- Statusline component for the current buffer.
+--- Statusline component for the current buffer:
+---   [=]/[=N]  conflict pending
+---   [+]       modified (unsaved) or a pending external change
+---   ""        clean & in sync
 --- @return string
 function M.status()
-  local p = pending[vim.api.nvim_get_current_buf()]
-  if not p then return "" end
-  if p.kind == "conflict" then
+  local buf = vim.api.nvim_get_current_buf()
+  local p = pending[buf]
+  if p and p.kind == "conflict" then
     return cfg.show_conflict_count and string.format("[=%d]", p.n or 0) or "[=]"
   end
-  return "[+]"
+  if p or vim.bo[buf].modified then
+    return "[+]"
+  end
+  return ""
 end
 
 ---------------------------------------------------------------------------
