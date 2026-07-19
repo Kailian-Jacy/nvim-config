@@ -933,8 +933,8 @@ vim.keymap.set("t", "<D-t>", function()
 end, { desc = "Toggle global floating terminal" })
 
 vim.keymap.set("t", "<D-a>", function()
-  require("config.floatterm").toggle_local()
-end, { desc = "Toggle local floating terminal" })
+  require("config.floatterm").smart_toggle_local()
+end, { desc = "Toggle local floating terminal (focus iTerm2 tab if session lives there)" })
 
 -- Issue #4: Unified <D-BS> keymap using buftype-based dispatch
 -- In terminal buffers: reset terminal position to centered

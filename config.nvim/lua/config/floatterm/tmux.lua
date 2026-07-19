@@ -119,6 +119,24 @@ function M.build_cmd(session_name)
   return cmd, nil
 end
 
+--- Assemble a shell command *string* that (re)attaches to `session_name`,
+--- reusing the exact same command vector produced by `build_cmd` (which uses
+--- `new-session -As`, i.e. attach-if-exists / create-if-missing on the same
+--- server socket). Intended to be handed to an external terminal such as
+--- iTerm2 via AppleScript so the handoff mirrors what the floatterm spawns.
+---@param session_name string
+---@return string
+function M.attach_cmd_string(session_name)
+  -- Reuse the termlocal/global command assembly; drop the err_file (only the
+  -- in-process spawn consumes it).
+  local cmd = M.build_cmd(session_name)
+  local quoted = {}
+  for _, arg in ipairs(cmd) do
+    quoted[#quoted + 1] = vim.fn.shellescape(arg)
+  end
+  return table.concat(quoted, " ")
+end
+
 --- Install a tmux hook to forward bell events to this Neovim instance.
 --- Uses tmux's `alert-bell` hook to call `nvim --server <addr> --remote-expr`.
 --- Safe to call multiple times; reinstalls the hook idempotently.

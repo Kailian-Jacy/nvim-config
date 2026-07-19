@@ -13,6 +13,57 @@ function M.toggle_local()
   end
 end
 
+-- @AI: Split iterm2 related logic to a submodule inside floatterm to be external/iterm2.
+
+--- iTerm2-aware toggle for the per-tab local terminal.
+--- Behaviour when the float is *not* already visible (i.e. about to open):
+---   1. if the tab's tmux session is already attached in a running iTerm2 tab,
+---      focus that tab instead of opening a duplicate float;
+---   2. otherwise (iTerm2 not running/installed, or the session isn't open
+---      there) open the local termlocal as usual.
+--- When the float *is* visible this is a plain toggle (hide), unchanged.
+function M.smart_toggle_local()
+  local inst = state:get_local()
+  if inst.visible then
+    -- Already on screen: normal toggle-close.
+    M.hide(inst)
+    return
+  end
+  -- If the local terminal buffer/job is still alive here, this Neovim is the
+  -- tmux client (session lives in-editor), so skip the iTerm2 hand-back and
+  -- just reopen the float.
+  local job_alive = inst.jobid and vim.fn.jobwait({ inst.jobid }, 0)[1] == -1
+  if not job_alive then
+    local session = tmux.session_name_for_tab()
+    if M.focus_session_in_iterm(session) then
+      return
+    end
+  end
+  M.show(inst, "local")
+end
+
+--- Try to focus a running iTerm2 tab marked with `session` (the iTerm2 user
+--- variable `user.nvim_session`, set at hand-off time). Returns true only if
+--- such a tab was found and focused. Every failure path (no osascript, iTerm2
+--- not running/installed, or no tab carrying the mark) returns false so the
+--- caller can fall back. The check is done in real time, so a closed iTerm2 tab
+--- simply isn't found here.
+---@param session string
+---@return boolean
+function M.focus_session_in_iterm(session)
+  if not session or session == "" then return false end
+  local script = vim.fn.stdpath("config") .. "/scripts/iterm_focus_session.applescript"
+  if vim.fn.executable("osascript") ~= 1 or vim.fn.filereadable(script) ~= 1 then
+    return false
+  end
+
+  local res = vim.system(
+    { "osascript", script, session },
+    { text = true }
+  ):wait()
+  return res.code == 0 and vim.trim(res.stdout or "") == "focused"
+end
+
 --- Toggle global terminal (shared buffer across tabs)
 --- Issue #3: global.winid is now table<tabpage, winid> to handle cross-tab properly
 function M.toggle_global()
@@ -298,6 +349,73 @@ end
 --- Backward compat alias
 M.is_in_float_terminal = M.is_in_terminal
 
+--- Hand off the focused local terminal's tmux session to a fresh iTerm2 window.
+--- Closes (detaches) the current termlocal buffer so this Neovim client leaves
+--- the tmux session, then reattaches the *same* session in iTerm2 via
+--- AppleScript, reusing the floatterm tmux command assembly. A tab-local var
+--- keyed by the session name guards against launching more than one iTerm
+--- attach for the same session on the same tab.
+function M.handoff_local_to_iterm()
+  local inst, kind = M.get_focused_terminal()
+  if not inst or kind ~= "local" then
+    -- @TODO
+    vim.notify("Cmd-Shift-A: not in a local (termlocal) terminal.", vim.log.levels.WARN)
+    return
+  end
+  local session = inst.tmux_session
+  if not session or session == "" then
+    vim.notify("Cmd-Shift-A: no tmux session bound to this terminal.", vim.log.levels.WARN)
+    return
+  end
+
+  -- Duplication guard, checked in real time against iTerm2 itself: if a tab is
+  -- already marked with this session (user.nvim_session), just focus it instead
+  -- of opening a duplicate. The mark lives on the iTerm2 tab, so a closed tab is
+  -- simply not found and we proceed with a fresh hand-off.
+  if M.focus_session_in_iterm(session) then
+    vim.notify(
+      ("Cmd-Shift-A: session '%s' is already open in iTerm2 — focused it."):format(session),
+      vim.log.levels.INFO
+    )
+    return
+  end
+
+  -- Reuse the floatterm tmux command assembly so iTerm2 runs an identical
+  -- `new-session -As` (attach-if-exists) invocation on the same server socket.
+  local cmd_string = tmux.attach_cmd_string(session)
+  local script = vim.fn.stdpath("config") .. "/scripts/iterm_attach_session.applescript"
+
+  -- osascript can't run inside the dev container (no macOS/iTerm2). Detect that
+  -- and bail out *without* closing the buffer so the session stays usable.
+  if vim.fn.executable("osascript") ~= 1 or vim.fn.filereadable(script) ~= 1 then
+    vim.notify(
+      "Cmd-Shift-A: osascript/applescript unavailable; skipping iTerm2 handoff.\n"
+        .. "attach manually with: " .. cmd_string,
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  vim.system({ "osascript", script, cmd_string, session }, { text = true }, function(obj)
+    if obj.code ~= 0 then
+      vim.schedule(function()
+        vim.notify(
+          "Cmd-Shift-A: iTerm2 attach failed:\n" .. (obj.stderr ~= "" and obj.stderr or obj.stdout or ""),
+          vim.log.levels.ERROR
+        )
+      end)
+    end
+  end)
+
+  -- Close the current termlocal buffer. Terminating the tmux client job detaches
+  -- this Neovim instance from the session (SIGHUP); the session persists on the
+  -- shared server and is now owned by the iTerm2 window we just opened.
+  M.hide(inst)
+  if inst.bufnr and vim.api.nvim_buf_is_valid(inst.bufnr) then
+    pcall(vim.api.nvim_buf_delete, inst.bufnr, { force = true })
+  end
+end
+
 --- Handle terminal bell from a tmux session hook.
 --- Called via the global FloatTermBellHook() function.
 --- Finds the tab owning the tmux session and marks it as beeping.
@@ -463,6 +581,29 @@ function M.setup()
           end
         end, { buffer = args.buf })
       end
+    end,
+  })
+
+  -- Cmd-Shift-A (<D-A>): hand off the local tmux session to iTerm2.
+  -- Bound buffer-locally on the termlocal filetype so it only fires inside
+  -- local terminal buffers ("close the current termlocal buffer").
+  vim.api.nvim_create_autocmd("FileType", {
+    group = group,
+    pattern = "termlocal",
+    callback = function(args)
+      vim.keymap.set({ "n", "t" }, "<D-A>", function()
+        if vim.api.nvim_get_mode().mode == "t" then
+          -- Leave terminal mode first so notifications/prompts are interactive,
+          -- then run the handoff on the next tick.
+          vim.cmd("stopinsert")
+          vim.schedule(function() M.handoff_local_to_iterm() end)
+        else
+          M.handoff_local_to_iterm()
+        end
+      end, {
+        buffer = args.buf,
+        desc = "Cmd-Shift-A: hand off local tmux session to iTerm2",
+      })
     end,
   })
 

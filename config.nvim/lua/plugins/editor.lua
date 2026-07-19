@@ -20,9 +20,9 @@ return {
       -- Toggle local terminal (<leader> mapping; <D-A> is in config/keymaps.lua)
       {
         "<leader>aa",
-        function() require("config.floatterm").toggle_local() end,
+        function() require("config.floatterm").smart_toggle_local() end,
         mode = { "n" },
-        desc = "Toggle local floating terminal",
+        desc = "Toggle local floating terminal (focus iTerm2 tab if session lives there)",
       },
       -- Shift position
       {
