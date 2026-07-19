@@ -325,8 +325,7 @@ return {
     },
     opts = {
       diff = {
-        -- @AI: inline by default
-        layout = "side-by-side",
+        layout = "inline",
         original_position = "left", -- old/original on the left, like diffview
       },
       keymaps = {

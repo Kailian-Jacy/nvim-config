@@ -117,8 +117,9 @@ end
 
 vim.go.tabline = "%!v:lua.Tabline()"
 
--- Bell detection is handled via tmux alert-bell hooks (see floatterm/tmux.lua install_bell_hook).
--- tmux calls FloatTermBellHook() via --remote-expr, which invokes _on_term_bell to update vim.g._tab_beep.
+-- Bell detection is inactive under the abduco backend: abduco has no hook/event
+-- system (unlike tmux's alert-bell), so FloatTermBellHook()/_on_term_bell are
+-- never triggered and vim.g._tab_beep stays unset. Kept for API/tmux parity.
 
 -- Clear beep indicator only when the local terminal buffer is focused again
 vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {

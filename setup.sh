@@ -121,7 +121,7 @@ append_if_missing "$DEFAULT_SHELL_RC" "source $DEFAULT_ENV_FILE_PATH"
 install_via_brew() {
   local INSTALL_DEPENDENCIES="git curl "
   INSTALL_DEPENDENCIES+="cmake make gcc " # required by luasnip, ray-x and treesitter.
-  INSTALL_DEPENDENCIES+="tmux lazygit zoxide "
+  INSTALL_DEPENDENCIES+="tmux abduco lazygit zoxide "
   INSTALL_DEPENDENCIES+="fzf ripgrep fd "
   INSTALL_DEPENDENCIES+="node " # npm comes with node
   INSTALL_DEPENDENCIES+="unzip zip lua@5.4 luarocks "
@@ -212,6 +212,12 @@ install_via_apt() {
     APT_PACKAGES+=" tmux"
   fi
 
+  # abduco: session manager for floatterm terminal buffers. Only add via apt
+  # when available; otherwise a source build fallback runs below.
+  if apt-cache show abduco &>/dev/null; then
+    APT_PACKAGES+=" abduco"
+  fi
+
   apt-get update
   apt-get install -y --no-install-recommends $APT_PACKAGES
   rm -rf /var/lib/apt/lists/*
@@ -247,6 +253,16 @@ install_via_apt() {
     echo "Installing zoxide..."
     curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
     append_if_missing "$DEFAULT_ENV_FILE_PATH" "export PATH=\$PATH:\$HOME/.local/bin"
+  fi
+
+  # abduco: build from source if apt did not provide it (tiny ISC-licensed C prog).
+  if ! check_installed "abduco"; then
+    echo "Installing abduco from source..."
+    local ABDUCO_VERSION="0.6"
+    curl -fsSL "https://github.com/martanne/abduco/archive/refs/tags/v${ABDUCO_VERSION}.tar.gz" \
+      | tar -C /tmp -xzf -
+    ( cd "/tmp/abduco-${ABDUCO_VERSION}" && make && install -m 755 abduco /usr/local/bin/ )
+    rm -rf "/tmp/abduco-${ABDUCO_VERSION}"
   fi
 
   # FZF: install from GitHub release.

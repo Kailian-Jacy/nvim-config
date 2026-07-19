@@ -79,6 +79,7 @@ vim.opt.modeline = false
 
 -- Undo history even when the file is closed.
 vim.opt.undofile = true
+vim.opt.scrollback = 100000
 
 -- Relative number and cursorline.
 vim.opt.number = true

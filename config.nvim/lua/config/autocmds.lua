@@ -85,7 +85,7 @@ local function dscc_worktree(name)
 
   -- 4. Pre-create the dscc task the agent panel will attach to. Its name must
   -- match what the floatterm derives from the (now switched) tab cwd.
-  local session = require("config.floatterm.tmux").session_name_for_tab()
+  local session = require("config.floatterm.abduco").session_name_for_tab()
   local create = vim.system({
     "dscc", "create", session,
     "--no-worktree", worktree_path,

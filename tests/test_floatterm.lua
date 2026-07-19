@@ -148,11 +148,11 @@ vim.o.cmdheight = 1
 vim.o.showtabline = 2
 
 -------------------------------------------------------------
--- Test 4: Tmux session naming
+-- Test 4: Abduco session naming
 -------------------------------------------------------------
-print("\n--- Tmux Naming ---")
+print("\n--- Abduco Naming ---")
 
-local tmux = require("config.floatterm.tmux")
+local tmux = require("config.floatterm.abduco")
 
 -- Global session name
 assert_eq(tmux.global_session_name(), "nvim-global", "global session name")

@@ -1,7 +1,10 @@
 local M = {}
 local state = require("config.floatterm.state")
 local window = require("config.floatterm.window")
-local tmux = require("config.floatterm.tmux")
+-- Session backend: abduco (previously tmux). Exposed here as `multiplexer`;
+-- the API surface is intentionally stable (ensure_server / session_name_for_tab
+-- / global_session_name / build_cmd).
+local multiplexer = require("config.floatterm.abduco")
 
 --- Toggle local terminal (per-tab)
 function M.toggle_local()
@@ -97,18 +100,18 @@ function M.hide_global_on_tab(tab)
   end
 end
 
---- Spawn a new terminal buffer with tmux
+--- Spawn a new terminal buffer via the session multiplexer
 ---@param inst TerminalInstance
 ---@param kind "global"|"local"
 function M.spawn(inst, kind)
-  -- Ensure the (global) tmux server is up before spawning a session.
-  tmux.ensure_server()
+  -- Ensure the multiplexer socket dir is ready before spawning a session.
+  multiplexer.ensure_server()
 
-  -- Determine tmux session name
+  -- Determine session name
   if kind == "global" then
-    inst.tmux_session = tmux.global_session_name()
+    inst.tmux_session = multiplexer.global_session_name()
   else
-    inst.tmux_session = tmux.session_name_for_tab()
+    inst.tmux_session = multiplexer.session_name_for_tab()
     -- Bind this tab to its dscc task (same name as the local/tmux session,
     -- which is what `dscc run <session>` creates/attaches).
     pcall(vim.fn.settabvar, vim.fn.tabpagenr(), "dscc_task", inst.tmux_session)
@@ -132,10 +135,9 @@ function M.spawn(inst, kind)
   end
 
   -- Now open terminal in the current window/buffer
-  local cmd, err_file = tmux.build_cmd(inst.tmux_session)
+  local cmd, err_file = multiplexer.build_cmd(inst.tmux_session)
 
   -- Use standard termopen for both local and global terminals.
-  -- Bell detection for local terminals is handled via tmux alert-bell hook.
   inst.jobid = vim.fn.termopen(cmd, {
     on_exit = function(_, _, _)
       vim.schedule(function()
@@ -154,11 +156,6 @@ function M.spawn(inst, kind)
       end)
     end,
   })
-
-  -- Install tmux bell hook for local terminals
-  if kind == "local" and inst.tmux_session then
-    tmux.install_bell_hook(inst.tmux_session)
-  end
 
   -- Buffer settings
   vim.bo[bufnr].buflisted = false
@@ -392,10 +389,6 @@ function M.setup()
       end
       for tab, loc in pairs(state.locals) do
         if not valid_set[tab] then
-          -- Remove tmux bell hook
-          if loc.tmux_session then
-            pcall(tmux.remove_bell_hook, loc.tmux_session)
-          end
           -- Kill the job if still running
           if loc.jobid then
             pcall(vim.fn.jobstop, loc.jobid)
@@ -500,10 +493,6 @@ function M.setup()
       -- Check local terminals
       for _, loc in pairs(state.locals) do
         if loc.bufnr == bufnr then
-          -- Remove tmux bell hook
-          if loc.tmux_session then
-            pcall(tmux.remove_bell_hook, loc.tmux_session)
-          end
           loc.jobid = nil
           -- Leave window open showing [Process exited]; set up q to close
           setup_q_to_close(bufnr)

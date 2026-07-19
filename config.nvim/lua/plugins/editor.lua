@@ -90,17 +90,16 @@ return {
           end
         end,
         mode = { "t" },
-        desc = "Detach tmux session by delete the buffer",
+        desc = "Detach session by delete the buffer",
       },
-      -- Tmux vertical split with dscc attach in local terminal.
-      -- Sends the split-window command directly through the -S socket
-      -- instead of typing into the terminal (which was the old bug).
+      -- dscc attach --last --shell in a horizontal split.
+      -- abduco (unlike tmux) does NOT multiplex, so there is no in-session
+      -- split-window. Instead we open a real neovim terminal split running the
+      -- ephemeral dscc attach shell directly (no session persistence needed).
       {
         "<D-x>",
         function()
           if vim.bo.filetype == "termlocal" then
-            local tmux_mod = require("config.floatterm.tmux")
-            local base = tmux_mod.base_cmd()
             local shell_cmd = '[ -f "$HOME/.zprofile" ] && . "$HOME/.zprofile"; '
               .. 'dscc attach --last --shell; '
               .. 'code=$?; '
@@ -108,13 +107,17 @@ return {
               ..   'echo "dscc exited with code $code" >&2; '
               .. 'fi; '
               .. 'exit $code'
-            vim.fn.system(vim.list_extend(vim.deepcopy(base), {
-              "split-window", "-v", "zsh", "-ic", shell_cmd,
-            }))
+            -- Leave terminal-insert mode, open a horizontal split below, and
+            -- run the shell there.
+            vim.cmd("stopinsert")
+            vim.cmd("belowright split")
+            vim.cmd("enew")
+            vim.fn.jobstart({ "zsh", "-ic", shell_cmd }, { term = true })
+            vim.cmd("startinsert")
           end
         end,
         mode = { "t" },
-        desc = "Tmux split with dscc attach --last --shell (termlocal only)",
+        desc = "dscc attach --last --shell in a split (termlocal only)",
       },
       -- Lazygit
       {
