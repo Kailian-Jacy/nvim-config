@@ -10,14 +10,30 @@
 	"Todos": {
 		"prefix": "todo",
 		"body": [
-			"// TODO: @zianxu"
-		]
+			"$LINE_COMMENT TODO: @zianxu"
+		],
+		"desc": "Language-aware TODO (line comment). Use `todob` inline."
+	},
+	"TodosBlock": {
+		"prefix": "todob",
+		"body": [
+			"$BLOCK_COMMENT_START TODO: @zianxu $BLOCK_COMMENT_END"
+		],
+		"desc": "Language-aware TODO as a block comment; use when inline so trailing code isn't commented out."
 	},
 	"AtAI": {
 		"prefix": "aido",
 		"body": [
-			"# @AI:"
-		]
+			"$LINE_COMMENT @AI:"
+		],
+		"desc": "Language-aware @AI marker (line comment). Use `aidob` inline."
+	},
+	"AtAIBlock": {
+		"prefix": "aidob",
+		"body": [
+			"$BLOCK_COMMENT_START @AI: $BLOCK_COMMENT_END"
+		],
+		"desc": "Language-aware @AI marker as a block comment; use when inline."
 	},
 	"LazyVimKeymap": {
 		"prefix": "pluginkeymap",
