@@ -1,9 +1,10 @@
 -- Local plugin: reconcile concurrent edits between you and an external agent.
--- Lives in <config>/agent-merge; loaded as a `dir` (local) plugin, never cloned.
+-- Lives in <config>/plugins/agent-merge; loaded as a `dir` (local) plugin, never
+-- cloned.
 return {
   {
     "agent-merge",
-    dir = vim.fn.stdpath("config") .. "/agent-merge",
+    dir = vim.fn.stdpath("config") .. "/plugins/agent-merge",
     lazy = false,
     config = function()
       require("agent-merge").setup({
