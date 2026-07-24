@@ -52,6 +52,11 @@ echo $CURRENT_ABS
 CONFIG_SOURCE=$(dirname "$CURRENT_ABS")/
 echo $CONFIG_SOURCE
 
+# Recursively initialise pinned submodules (e.g. the embedded auto-save.nvim
+# fork inside config.nvim) so the config links/loads a fully-populated tree.
+# Mirrors setup.sh; keep the two in sync.
+git -C "$(dirname "$CURRENT_ABS")" submodule update --init --recursive 2>/dev/null || true
+
 function clone_config() {
 	mkdir -p ~/.config
     rm -dfr ~/.config/nvim 
