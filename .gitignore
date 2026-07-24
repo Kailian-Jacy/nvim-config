@@ -22,3 +22,6 @@ config.nvim/plugin/packer_compiled.lua
 result
 result-*
 .direnv
+
+# Session/tool data (not part of the config)
+.dscc/
