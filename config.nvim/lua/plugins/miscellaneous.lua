@@ -1669,7 +1669,11 @@ return {
   -- telescope.nvim removed: replaced by Snacks picker (see issue #45)
 
   {
+    -- Fork of okuuva/auto-save.nvim, embedded as a git submodule so agent-merge
+    -- can rely on it re-checking the save `condition` at every actual write.
+    -- Loaded from the local copy (like agent-merge); never cloned by lazy.
     "okuuva/auto-save.nvim",
+    dir = vim.fn.stdpath("config") .. "/auto-save.nvim",
     event = { "InsertLeave", "TextChanged" },
     config = function()
       require("auto-save").setup({

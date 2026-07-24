@@ -65,6 +65,15 @@ CURRENT_BASEDIR=$(dirname "$CURRENT_ABS")
 DEFAULT_SHELL_RC_FILENAME=".$(basename "$DEFAULT_SHELL")rc"
 DEFAULT_SHELL_RC="$HOME/$DEFAULT_SHELL_RC_FILENAME"
 
+# Recursively initialise pinned submodules (e.g. the embedded auto-save.nvim
+# fork inside config.nvim) so the config links/loads a fully-populated tree.
+# Must run before the config link below and before lazy.nvim loads plugins.
+if [[ -d "$CURRENT_BASEDIR/.git" ]]; then
+  git -C "$CURRENT_BASEDIR" submodule update --init --recursive
+else
+  echo "⚠️  Not a git worktree — skipping submodule init."
+fi
+
 ###############################################
 #   Helper functions
 ###############################################
