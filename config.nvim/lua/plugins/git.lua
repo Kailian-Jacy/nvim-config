@@ -332,8 +332,10 @@ return {
       keymaps = {
         view = {
           toggle_explorer = "<leader>b", -- toggle the file panel
-          next_file = "<Tab>",           -- switch to next diff file
-          prev_file = "<S-Tab>",         -- switch to previous diff file
+          next_file = "<leader>qj",      -- switch to next diff file
+          prev_file = "<leader>qk",      -- switch to previous diff file
+          next_hunk = "<Tab>",           -- jump to next diff hunk
+          prev_hunk = "<S-Tab>",         -- jump to previous diff hunk
         },
         -- Conflict keymaps below already match the previous diffview bindings
         -- out of the box; they are set explicitly here for clarity:
