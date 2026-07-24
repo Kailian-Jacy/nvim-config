@@ -193,22 +193,46 @@ local function preview_merge(buf)
   local theirs = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or {}
   local merged = monitor.merge_preview(buf)
 
+  -- TODO: Once codediff can render a diff from in-buffer/Lua content directly
+  -- (an `open`-style API taking the two line-lists instead of on-disk files),
+  -- simplify this: drop the temp-file write + deferred delete below and pass
+  -- ours/merged straight to that API.
   -- Apply the merge now (the preview *is* the merge).
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, merged)
   monitor.set_base(buf, theirs)
 
-  -- Diff current -> merged through codediff's standalone file diff. Both sides
-  -- are temp files so neither pane is bound to the live buffer or on-disk file.
-  local ok, codediff = pcall(require, "codediff")
+  -- Diff current -> merged via codediff's :CodeDiff file-diff command. This is
+  -- the public API of the pinned non-forked codediff (v2.52.0): it exposes the
+  -- diff only as a command — its Lua module exports no `open` function (`open`
+  -- only exists in a later/forked codediff). The view is fed from temp files so
+  -- neither pane binds to the live buffer or on-disk file.
+  local f_ours, f_merged = vim.fn.tempname(), vim.fn.tempname()
+  vim.fn.writefile(ours, f_ours)
+  vim.fn.writefile(merged, f_merged)
+  local ok = pcall(vim.cmd,
+    "CodeDiff file " .. vim.fn.fnameescape(f_ours) .. " " .. vim.fn.fnameescape(f_merged))
   if not ok then
+    pcall(vim.fn.delete, f_ours)
+    pcall(vim.fn.delete, f_merged)
     vim.notify("codediff.nvim unavailable — merge applied without a preview.",
       vim.log.levels.INFO, { title = "agent-merge" })
     return
   end
-  local f_ours, f_merged = vim.fn.tempname(), vim.fn.tempname()
-  vim.fn.writefile(ours, f_ours)
-  vim.fn.writefile(merged, f_merged)
-  codediff.open({ args = { "file", f_ours, f_merged }, layout = "side-by-side" })
+  -- codediff's side-by-side view ignores the filetype it is passed and never
+  -- sets one, so the panes would render unhighlighted. Propagate the source
+  -- buffer's authoritative filetype onto the two diff buffers — they are backed
+  -- by our temp files, so we locate them by name.
+  local src_ft = vim.bo[buf].filetype
+  if src_ft and src_ft ~= "" then
+    vim.defer_fn(function()
+      for _, b in ipairs(vim.api.nvim_list_bufs()) do
+        local n = vim.api.nvim_buf_get_name(b)
+        if n == f_ours or n == f_merged then
+          pcall(function() vim.bo[b].filetype = src_ft end)
+        end
+      end
+    end, 30)
+  end
   -- codediff loads both files into buffers on open; drop the temp files shortly
   -- after so the view keeps its in-memory content.
   vim.defer_fn(function()
