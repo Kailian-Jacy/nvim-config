@@ -4,6 +4,7 @@
 -- to the appropriate path or replace with a GitHub URL.
 return {
   {
+    name = "nvim-runner",
     dir = (function()
       -- Resolve the real path of stdpath("config") to handle symlinks,
       -- then go up to the repo root to find nvim-runner/
