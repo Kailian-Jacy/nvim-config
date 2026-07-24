@@ -164,27 +164,62 @@ end
 -- public actions
 ---------------------------------------------------------------------------
 
---- Situation-aware confirmation. Returns one of:
----   change   -> "automerge" | "overwrite" | "abort"
----   conflict -> "resolve"   | "overwrite" | "abort"
-local function ask(kind, name, n)
-  local msg, choices, default_action
-  if kind == "conflict" then
-    msg = string.format("%s: conflicting external change (%d hunk%s).", name, n, n == 1 and "" or "s")
-    choices = "&Resolve\n&Overwrite (discard external)\nA&bort"
-    default_action = { "resolve", "overwrite", "abort" }
-  else
-    msg = string.format("%s changed on disk (auto-mergeable).", name)
-    choices = "Auto-&merge\n&Overwrite (discard external)\nA&bort"
-    default_action = { "automerge", "overwrite", "abort" }
+--- Compact auto-merge confirmation. Returns one of:
+---   "automerge" | "preview" | "overwrite" | "abort"
+local function ask_change()
+  local c = vim.fn.confirm(
+    "Auto-mergeable external changes detected",
+    "[&M]erge\n[&P]review\n[&O]verwrite\n[&C]ancel",
+    1, "Question")
+  -- c == 0 (Esc/Ctrl-C) => "abort"
+  return ({ [1] = "automerge", [2] = "preview", [3] = "overwrite", [4] = "abort" })[c] or "abort"
+end
+
+--- Compact conflict confirmation. Returns one of:
+---   "resolve" | "overwrite" | "abort"
+local function ask_conflict(name, n)
+  local msg = string.format("%s: conflicting external change (%d hunk%s).", name, n, n == 1 and "" or "s")
+  local c = vim.fn.confirm(msg, "&Resolve\n&Overwrite (discard external)\nA&bort", 1, "Warning")
+  return ({ [1] = "resolve", [2] = "overwrite", [3] = "abort" })[c] or "abort" -- c==0 (Esc) => abort
+end
+
+--- Preview an auto-merge: write the merged content into the buffer and open a
+--- codediff view showing the change (current -> merged, i.e. current plus the
+--- external edits). The buffer is rebased onto the external revision so a
+--- follow-up save lands cleanly.
+local function preview_merge(buf)
+  local ours = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local path = vim.api.nvim_buf_get_name(buf)
+  local theirs = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or {}
+  local merged = monitor.merge_preview(buf)
+
+  -- Apply the merge now (the preview *is* the merge).
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, merged)
+  monitor.set_base(buf, theirs)
+
+  -- Diff current -> merged through codediff's standalone file diff. Both sides
+  -- are temp files so neither pane is bound to the live buffer or on-disk file.
+  local ok, codediff = pcall(require, "codediff")
+  if not ok then
+    vim.notify("codediff.nvim unavailable — merge applied without a preview.",
+      vim.log.levels.INFO, { title = "agent-merge" })
+    return
   end
-  local c = vim.fn.confirm(msg, choices, 1, kind == "conflict" and "Warning" or "Question")
-  return default_action[c] or "abort" -- c==0 (Esc) => abort
+  local f_ours, f_merged = vim.fn.tempname(), vim.fn.tempname()
+  vim.fn.writefile(ours, f_ours)
+  vim.fn.writefile(merged, f_merged)
+  codediff.open({ args = { "file", f_ours, f_merged }, layout = "side-by-side" })
+  -- codediff loads both files into buffers on open; drop the temp files shortly
+  -- after so the view keeps its in-memory content.
+  vim.defer_fn(function()
+    pcall(vim.fn.delete, f_ours)
+    pcall(vim.fn.delete, f_merged)
+  end, 5000)
 end
 
 --- Manual save entry point (e.g. <leader><cr> and :w via BufWriteCmd).
 --- No external change  -> normal chained save.
---- External change     -> confirm (auto-merge/overwrite/abort) unless
+--- Auto-mergeable change-> confirm (merge/preview/overwrite/abort) unless
 ---                        confirm_external=false, then auto behaviour.
 --- Conflict            -> confirm (resolve/overwrite/abort).
 --- Marker-guarded: never writes an unresolved conflict.
@@ -212,11 +247,14 @@ function M.save(buf)
   if not cfg.confirm_external then
     decision = (n == 0) and "automerge" or "resolve"
   else
-    decision = ask(n == 0 and "change" or "conflict", tail, n)
+    decision = (n == 0) and ask_change() or ask_conflict(tail, n)
   end
 
   if decision == "automerge" then
     return monitor.try_save(buf) -- chained 3-way merge & write
+  elseif decision == "preview" then
+    preview_merge(buf) -- codediff view; buffer now holds the merge
+    return false -- review, then save again to persist
   elseif decision == "resolve" then
     present_conflict(buf) -- markers / diff resolver, then save again
     return false
