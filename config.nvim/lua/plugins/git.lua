@@ -300,8 +300,7 @@ return {
     --   :CodeDiff <revision>   -> diff working tree against a git revision.
     --   :CodeDiff history      -> commit history panel.
     --   :CodeDiff merge <file> -> 3-way merge conflict resolution.
-    -- The native C diff engine is compiled by Nix (see flake.nix). Outside
-    -- Nix, the plugin auto-downloads a prebuilt binary on first use.
+    -- The plugin auto-downloads a prebuilt binary on first use.
     "esmuellert/codediff.nvim",
     cmd = { "CodeDiff" },
     keys = {

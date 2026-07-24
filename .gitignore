@@ -18,7 +18,5 @@ Thumbs.db
 # Neovim
 config.nvim/plugin/packer_compiled.lua
 
-# Nix
-result
-result-*
-.direnv
+# Session/tool data (not part of the config)
+.dscc/
