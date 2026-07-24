@@ -48,8 +48,6 @@ return {
       },
     },
     config = function()
-      local is_nix = vim.g.nixCats ~= nil
-
       vim.g.rustaceanvim = function()
         local cfg = require('rustaceanvim.config')
         -- Determine codelldb extension path.
@@ -58,14 +56,6 @@ return {
         if vim.g.codelldb_extension_path and vim.g.codelldb_extension_path ~= "" then
           -- User-provided path takes priority.
           extension_path = vim.g.codelldb_extension_path
-        elseif is_nix then
-          -- In Nix environment, use the path exposed via environment variable.
-          local env_path = vim.env.CODELLDB_EXTENSION_PATH
-          if env_path and env_path ~= "" then
-            extension_path = env_path .. "/"
-          else
-            vim.notify("nixCats: CODELLDB_EXTENSION_PATH not set. Debug may not work.", vim.log.levels.WARN)
-          end
         elseif pcall(require, "mason-registry") and require("mason-registry").is_installed("codelldb") then
           extension_path = vim.fn.stdpath("data") .. "/mason/packages/codelldb/extension/"
         else
