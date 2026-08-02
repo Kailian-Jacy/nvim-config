@@ -94,6 +94,12 @@ end
 function M.setup(opts)
   M.config = vim.tbl_extend("force", M.config, opts or {})
 
+  -- Own the external-change policy: an 'autoread' reload syncs a buffer to
+  -- disk via FileChangedShellPost (not BufReadPost), silently invalidating our
+  -- BASE snapshot and producing phantom "pending merge" states. Consumers of
+  -- the option (e.g. checktime autocmds) should check it at call time.
+  vim.o.autoread = false
+
   app.setup(M.config)
   monitor.on_change(app.on_change)
   monitor.on_conflict(app.on_conflict)

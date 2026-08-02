@@ -425,7 +425,9 @@ return {
         elseif subcmd == "pop" then
           local result = run("git stash pop")
           vim.notify(result ~= "" and result or "Stash popped.", vim.log.levels.INFO)
-          vim.cmd("checktime") -- reload changed files
+          -- Reload changed files; skipped when 'autoread' is off (then
+          -- agent-merge detects the on-disk change and reconciles on save).
+          if vim.o.autoread then vim.cmd("checktime") end
         elseif subcmd == "list" then
           local result = run("git stash list")
           if result == "" then
@@ -439,7 +441,7 @@ return {
         elseif subcmd == "apply" then
           local result = run("git stash apply")
           vim.notify(result ~= "" and result or "Stash applied.", vim.log.levels.INFO)
-          vim.cmd("checktime")
+          if vim.o.autoread then vim.cmd("checktime") end -- see stash pop above
         else
           vim.notify("Unknown stash subcommand: " .. subcmd, vim.log.levels.ERROR)
         end

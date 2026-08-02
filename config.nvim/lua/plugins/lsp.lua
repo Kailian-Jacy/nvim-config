@@ -316,9 +316,12 @@ return {
         "<leader><CR>",
         -- Refreshing.
         function()
-          -- Try load the buffer, if changed outside of the edito.
-          local filename = vim.fn.expand('%')
-          vim.cmd([[ :checktime ]] .. filename)
+          -- Try load the buffer, if changed outside of the editor. Skipped when
+          -- 'autoread' is off (e.g. agent-merge reconciles on the `:w` below
+          -- instead; checktime would only raise W11/W12 prompts).
+          if vim.o.autoread then
+            vim.cmd([[ :checktime ]] .. vim.fn.expand('%'))
+          end
 
           vim.print_silent("@conform.format")
           vim.cmd [[ ConformFormat ]]

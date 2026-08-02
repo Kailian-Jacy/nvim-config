@@ -108,6 +108,8 @@ vim.filetype.add({
 vim.g.debug_virtual_text_truncate_size = 20
 
 -- Auto read configuration files.
+-- NOTE: plugins may override this at setup time (agent-merge disables it to
+-- own external-change reconciliation); check `vim.o.autoread` before relying on it.
 vim.o.autoread = true
 
 -- neovide settings.

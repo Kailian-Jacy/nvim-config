@@ -333,11 +333,16 @@ vim.api.nvim_create_autocmd("TabClosed", {
   end,
 })
 
--- Autoload files that has been changed. Triggers ":h autoread"
+-- Autoload files that has been changed. Triggers ":h autoread".
+-- Checked at call time: when 'autoread' is disabled (e.g. by agent-merge, which
+-- owns external-change reconciliation), checktime would not reload and only
+-- raise W11/W12 "file changed" prompts, so we skip it.
 vim.api.nvim_create_autocmd("FocusGained", {
   pattern = "*",
   callback = function ()
-    vim.cmd [[ checktime ]]
+    if vim.o.autoread then
+      vim.cmd [[ checktime ]]
+    end
   end,
 })
 
