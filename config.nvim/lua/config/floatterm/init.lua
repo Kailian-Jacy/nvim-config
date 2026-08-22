@@ -450,6 +450,42 @@ end
 function M.setup()
   local group = vim.api.nvim_create_augroup("FloatTerm", { clear = true })
 
+  -- Guard against leaked terminal window options, part 1: inheritance.
+  -- Window options (number/signcolumn/...) are copied to windows split off a
+  -- terminal window (e.g. a picker or :vsplit opened from inside the float).
+  -- Window VARS are not copied, so at WinNew time we look at the window we
+  -- were split from: if it is floatterm-owned, reset the new window to editor
+  -- defaults.
+  vim.api.nvim_create_autocmd("WinNew", {
+    group = group,
+    callback = function()
+      local new_win = vim.api.nvim_get_current_win()
+      if vim.w[new_win].floatterm_owned then return end
+      local src = vim.fn.win_getid(vim.fn.winnr("#"))
+      if src ~= 0 and src ~= new_win and vim.w[src] and vim.w[src].floatterm_owned then
+        require("config.floatterm.window").restore_editor_opts(new_win)
+      end
+    end,
+  })
+
+  -- Part 2: in-place replacement. The options survive the terminal buffer
+  -- being replaced in the still-open window (e.g. `bdelete!` of a termlocal
+  -- buffer puts the next buffer into it). The result was a normal file
+  -- rendered with no line numbers, an invisible gitsigns column, and E1513
+  -- (winfixbuf) on every buffer switch -- looking like a "terminal" window
+  -- that only a restart could fix. Whenever a non-terminal buffer shows up in
+  -- a floatterm-marked window, restore editor options.
+  vim.api.nvim_create_autocmd("BufWinEnter", {
+    group = group,
+    callback = function(args)
+      local win = vim.api.nvim_get_current_win()
+      if vim.api.nvim_win_get_buf(win) ~= args.buf then return end
+      if not vim.w[win].floatterm_owned then return end
+      if vim.bo[args.buf].buftype == "terminal" then return end
+      require("config.floatterm.window").restore_editor_opts(win)
+    end,
+  })
+
   -- Sync state when window is closed externally
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
@@ -518,13 +554,15 @@ function M.setup()
           if loc.jobid then
             pcall(vim.fn.jobstop, loc.jobid)
           end
+          -- Close window BEFORE deleting the buffer: deleting first made nvim
+          -- put another buffer into the still-open terminal window, which then
+          -- kept the terminal window options (no numbers, winfixbuf, ...).
+          if loc.winid and vim.api.nvim_win_is_valid(loc.winid) then
+            pcall(vim.api.nvim_win_close, loc.winid, true)
+          end
           -- Close buffer
           if loc.bufnr and vim.api.nvim_buf_is_valid(loc.bufnr) then
             pcall(vim.api.nvim_buf_delete, loc.bufnr, { force = true })
-          end
-          -- Close window if somehow still valid
-          if loc.winid and vim.api.nvim_win_is_valid(loc.winid) then
-            pcall(vim.api.nvim_win_close, loc.winid, true)
           end
           state.locals[tab] = nil
         end

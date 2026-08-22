@@ -73,6 +73,45 @@ function M.is_float_slot(slot)
   return slot == "centered"
 end
 
+--- Apply terminal window-local options and mark the window as floatterm-owned.
+--- The mark (a window variable) is COPIED to windows split off this one, which
+--- lets the guard autocmd in init.lua detect and undo leaked options: window
+--- options like 'number'/'signcolumn' are inherited by new splits, so a picker
+--- or split opened from inside a terminal window used to produce a normal file
+--- window with no line numbers, no sign column (gitsigns invisible) and, when
+--- the buffer was replaced in place, a stuck 'winfixbuf' (E1513 on any :e/:b).
+---@param winid integer
+local function apply_term_opts(winid)
+  -- NOTE: must use scope="local". `vim.wo[winid].x = v` behaves like `:set`
+  -- and ALSO changes the global default of the option, so every window
+  -- created after opening a terminal inherited number=false / signcolumn=no /
+  -- winfixbuf=true -- normal files rendered without line numbers, gitsigns
+  -- signs invisible, and E1513 on every buffer switch until nvim restart.
+  local function setl(name, value)
+    vim.api.nvim_set_option_value(name, value, { win = winid, scope = "local" })
+  end
+  setl("number", false)
+  setl("relativenumber", false)
+  setl("signcolumn", "no")
+  setl("winfixbuf", true)
+  vim.w[winid].floatterm_owned = true
+end
+
+--- Restore editor window options on a window that carries leaked floatterm
+--- options (see apply_term_opts). Values come from the global option values.
+---@param winid integer
+function M.restore_editor_opts(winid)
+  local function restore(name)
+    local global = vim.api.nvim_get_option_value(name, { scope = "global" })
+    vim.api.nvim_set_option_value(name, global, { win = winid, scope = "local" })
+  end
+  vim.api.nvim_set_option_value("winfixbuf", false, { win = winid, scope = "local" })
+  restore("number")
+  restore("relativenumber")
+  restore("signcolumn")
+  vim.w[winid].floatterm_owned = nil
+end
+
 --- Open a window for a buffer at the given slot
 ---@param bufnr integer
 ---@param slot SlotPosition
@@ -84,19 +123,12 @@ function M.open(bufnr, slot)
     -- Float window
     config.focusable = true
     local winid = vim.api.nvim_open_win(bufnr, true, config)
-    -- Window options
-    vim.wo[winid].number = false
-    vim.wo[winid].relativenumber = false
-    vim.wo[winid].signcolumn = "no"
-    vim.wo[winid].winfixbuf = true
+    apply_term_opts(winid)
     return winid
   else
     -- Split window (Neovim 0.10+ supports split param in nvim_open_win)
     local winid = vim.api.nvim_open_win(bufnr, true, config)
-    vim.wo[winid].number = false
-    vim.wo[winid].relativenumber = false
-    vim.wo[winid].signcolumn = "no"
-    vim.wo[winid].winfixbuf = true
+    apply_term_opts(winid)
     return winid
   end
 end

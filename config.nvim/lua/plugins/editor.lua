@@ -86,7 +86,15 @@ return {
         -- This would be useful when cwd changed.
         function()
           if vim.bo.filetype == "termlocal" then
-            vim.cmd([[ bdelete! ]])
+            -- Hide the floatterm window BEFORE deleting the buffer; otherwise
+            -- nvim swaps another buffer into the still-open terminal window,
+            -- which keeps the terminal window options (no line numbers,
+            -- signcolumn=no, winfixbuf) on a normal file.
+            local ft = require("config.floatterm")
+            local bufnr = vim.api.nvim_get_current_buf()
+            local inst = ft.get_focused_terminal()
+            if inst then ft.hide(inst) end
+            vim.cmd("bdelete! " .. bufnr)
           end
         end,
         mode = { "t" },

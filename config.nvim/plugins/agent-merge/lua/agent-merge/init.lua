@@ -81,9 +81,17 @@ local function attach_write(buf)
         end)
         return
       end
-      local ok = pcall(app.save, a.buf)
+      local ok, err = pcall(app.save, a.buf)
       if not ok then -- internal error: never let a bug break saving
         vim.api.nvim_buf_call(a.buf, function() vim.cmd("noautocmd write!") end)
+        -- The fallback wrote the buffer to disk behind the engine's back:
+        -- resync the base or every later save sees a phantom external change
+        -- (stale base, empty preview diff). And surface the swallowed error.
+        monitor.snapshot(a.buf)
+        vim.notify(
+          "agent-merge: save pipeline failed, fell back to a plain write.\n" .. tostring(err),
+          vim.log.levels.ERROR, { title = "agent-merge" }
+        )
       end
       -- If app.save returned false (abort / unresolved), the buffer stays
       -- modified, which by itself vetoes `:wq` (no error needed).
@@ -116,6 +124,26 @@ function M.setup(opts)
         monitor.snapshot(a.buf)
         attach_write(a.buf)
         if M.config.load == "auto" then observe(a.buf) end
+      end
+    end,
+  })
+
+  -- Reloads that bypass BufReadPost (an 'autoread' reload or answering "Load"
+  -- at the W11 prompt go through FileChangedShell(Post) only) sync the buffer
+  -- to disk without updating BASE, leaving a stale base and phantom pending
+  -- states. Re-snapshot at that sync point. ('autoread' is global-local, so
+  -- `vim.o.autoread = false` above does not cover buffers where a plugin did
+  -- `setlocal autoread`.)
+  vim.api.nvim_create_autocmd("FileChangedShellPost", {
+    group = grp,
+    callback = function(a)
+      if not watchable(a.buf) or vim.bo[a.buf].modified then return end
+      -- Only resync if the buffer was actually reloaded to the disk content;
+      -- a pure timestamp notification (no reload) must keep the old ancestor.
+      local disk = vim.fn.readfile(vim.api.nvim_buf_get_name(a.buf))
+      local lines = vim.api.nvim_buf_get_lines(a.buf, 0, -1, false)
+      if vim.deep_equal(disk, lines) then
+        monitor.snapshot(a.buf, disk)
       end
     end,
   })

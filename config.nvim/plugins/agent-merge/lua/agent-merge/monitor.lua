@@ -156,10 +156,21 @@ local function classify(buf)
   if eq(disk, base) then
     return "UpToDate", 0
   end
-  if eq(buf_lines(buf), base) then
+  local mine = buf_lines(buf)
+  if eq(mine, disk) then
+    -- Buffer and file already agree: any base divergence is stale memory (a
+    -- write or reload that bypassed our sync points, e.g. an 'autoread' /
+    -- W11-prompt reload via FileChangedShellPost, or a fallback write).
+    -- There is by definition nothing to merge -- re-adopt disk as the base.
+    -- This also fires on_sync so the application layer resumes autosave
+    -- instead of holding a phantom "pending external change".
+    M.snapshot(buf, disk)
+    return "UpToDate", 0
+  end
+  if eq(mine, base) then
     return "Changed", 0 -- buffer clean; adopting disk is trivially resolvable
   end
-  local _, n = merge.three_way(buf_lines(buf), base, disk)
+  local _, n = merge.three_way(mine, base, disk)
   if n <= 0 then
     return "Changed", 0
   end
@@ -256,6 +267,12 @@ local function dispatch(buf)
   local prev = fired[buf]
 
   if kind == "UpToDate" then
+    -- Returning to sync (e.g. an external change was reverted, or a stale base
+    -- was re-adopted in classify): clear the transition memory AND tell the
+    -- application layer, so a paused autosave resumes. Previously `pending`
+    -- was only cleared by an actual write, so a transient external change
+    -- paused autosave forever.
+    if prev and cb_sync then cb_sync(buf) end
     fired[buf] = nil
   elseif kind == "Changed" then
     if not prev or prev.kind ~= "Changed" then
