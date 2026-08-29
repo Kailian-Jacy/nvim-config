@@ -259,6 +259,18 @@ function M.save(buf)
   local base = monitor.base(buf)
   local disk = vim.fn.filereadable(path) == 1 and vim.fn.readfile(path) or nil
 
+  -- Stale-base guard: if the buffer and the file already agree, any base
+  -- divergence is stale memory (a reload/write that bypassed our sync points).
+  -- Nothing can possibly need merging -- resync the base from disk and fall
+  -- through to a normal save (which also resets 'modified'). Without this, a
+  -- stale base produced a phantom "auto-mergeable external change" prompt
+  -- whose preview diff is empty (merged == ours).
+  if disk ~= nil and eq(disk, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+    and (base == nil or not eq(disk, base)) then
+    monitor.snapshot(buf, disk)
+    base = disk
+  end
+
   -- New file, untracked, or no external change: normal chained save.
   if base == nil or disk == nil or eq(disk, base) then
     return monitor.try_save(buf)
