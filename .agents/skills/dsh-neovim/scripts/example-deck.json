@@ -1,0 +1,69 @@
+{
+  "title": "example · how Spec:parse splits into two phases",
+  "root": "/Users/zian.xu/.local/share/nvim/lazy/lazy.nvim",
+  "roots": [
+    { "dir": "/Users/zian.xu/.local/share/nvim/lazy/lazy.nvim/lua/lazy/core", "label": "lazy/core" }
+  ],
+  "steps": [
+    {
+      "act": "ACT I · PARSING",
+      "title": "parse = normalize + resolve",
+      "file": "/Users/zian.xu/.local/share/nvim/lazy/lazy.nvim/lua/lazy/core/plugin.lua",
+      "lnum": 52,
+      "range": [51, 55],
+      "brief": "two phases: emit fragments, then fold them",
+      "body": "normalize() walks your tables and emits FRAGMENTS. meta:resolve() folds fragments into PLUGINS. Nothing is loaded; this is pure data.",
+      "detail": [
+        {
+          "h": "THE IDEA",
+          "t": "Two phases separated by a hard boundary. Phase one is syntactic: it cares only how your tables nest. Phase two is semantic: identity, inheritance and pruning all appear there."
+        },
+        {
+          "h": "IN CODE",
+          "c": "function Spec:parse(spec)\n  self:normalize(spec)   -- syntax  -> fragments\n  self.meta:resolve()    -- meaning -> plugins\nend"
+        },
+        {
+          "h": "WHY IT MATTERS",
+          "t": "Almost every surprising behaviour becomes obvious once you ask which phase it belongs to. \"Why did my two specs merge?\" is phase two."
+        }
+      ],
+      "ann": [
+        { "pat": "self:normalize(spec)", "kind": "eol", "text": "phase 1: spec tables → fragments" },
+        { "pat": "self.meta:resolve()", "kind": "eol", "text": "phase 2: fragments → plugins" }
+      ]
+    },
+    {
+      "act": "ACT I · PARSING",
+      "title": "★ frag_stack vs dep_stack",
+      "file": "/Users/zian.xu/.local/share/nvim/lazy/lazy.nvim/lua/lazy/core/fragments.lua",
+      "lnum": 149,
+      "range": [149, 171],
+      "brief": "★ dep_stack is what turns nesting into an edge",
+      "body": "Both `dependencies` and `specs` create child fragments. Only `dependencies` also pushes dep_stack — the whole difference between nested and depended-upon.",
+      "detail": [
+        {
+          "h": "THE IDEA",
+          "t": "Two stacks answering two different questions. frag_stack answers \"who contains me\". dep_stack answers \"who is currently collecting dependencies\"."
+        },
+        {
+          "h": "IN CODE",
+          "c": "did = top(dep_stack)\nif did and did == pid:     -- parent is collecting\n  frag.dep = true\n  parent.deps += id        -- the edge, as an ID\npush frag_stack, id\nif plugin.dependencies:\n  push dep_stack, id       -- ONLY here\n  normalize(dependencies)\n  pop dep_stack"
+        },
+        {
+          "h": "THE TEST",
+          "t": "`did == pid` is the whole trick. dep_stack is honoured only when its top is my DIRECT parent, which stops a grandchild inside a nested `specs` from being registered as a dependency of the grandparent."
+        },
+        {
+          "h": "SIDE BY SIDE",
+          "c": "{ \"a/a\", dependencies = { \"b/b\" } }\n  --> frag b: dep=true, a.deps={b}\n\n{ \"a/a\", specs = { \"b/b\" } }\n  --> frag b: dep=nil,  a.deps={}"
+        }
+      ],
+      "ann": [
+        { "pat": "local did = self.dep_stack[#self.dep_stack]", "kind": "note", "text": "★ The whole difference between `dependencies` and `specs` lives in the next twenty lines." },
+        { "pat": "if did and did == pid then", "kind": "eol", "text": "★ true only if MY parent pushed dep_stack" },
+        { "pat": "table.insert(parent.deps, id)", "kind": "eol", "text": "edge stored as an ID, not a name" },
+        { "pat": "table.insert(self.dep_stack, id)", "kind": "eol", "text": "…but only `dependencies` pushes THIS" }
+      ]
+    }
+  ]
+}

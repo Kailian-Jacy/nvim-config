@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# wt — drive the dsh.nvim walkthrough engine in a running neovim over its socket.
+#
+# Every call goes through a temp Lua file rather than an inline expression:
+# quoting a payload through --remote-expr is a reliable source of breakage, and a
+# file sidesteps it entirely.
+#
+#   wt limits                  authoring limits as JSON (query, do not guess)
+#   wt validate DECK.json      report problems; no UI change
+#   wt open DECK.json [force]  validate then open; refuses a broken deck
+#   wt reload                  re-read the deck file, keep position
+#   wt status | state          one-line | full JSON state
+#   wt next | prev             navigate
+#   wt goto N                  jump to step N
+#   wt layer [N]               cycle, or set, the disclosure layer
+#   wt close                   clear annotations, restore keymaps
+#   wt eval 'lua...'           arbitrary Lua in the instance
+#   wt socket                  print the resolved socket path
+set -euo pipefail
+
+sock="${NVIM_SOCKET:-}"
+if [ -z "$sock" ]; then
+  # newest socket under the per-user runtime dir
+  sock=$(ls -t "${TMPDIR:-/tmp}"/nvim."${USER}"/*/nvim.*.0 2>/dev/null | head -1 || true)
+fi
+if [ -z "$sock" ]; then
+  echo "wt: no nvim socket found. Set NVIM_SOCKET, or start nvim with --listen." >&2
+  exit 1
+fi
+
+run_lua() { # lua source on stdin
+  local f
+  f=$(mktemp "${TMPDIR:-/tmp}/wt-XXXXXX.lua")
+  cat >"$f"
+  nvim --server "$sock" --remote-expr "luaeval('loadfile(\"$f\")()')" || {
+    rm -f "$f"
+    return 1
+  }
+  echo
+  rm -f "$f"
+}
+
+api() { # api <lua-expression-after-the-module>
+  printf 'return tostring(require("dsh.walkthrough").%s)\n' "$1" | run_lua
+}
+
+cmd="${1:-status}"
+shift || true
+
+case "$cmd" in
+socket) echo "$sock" ;;
+limits) api 'limits()' ;;
+status) api 'status()' ;;
+state) api 'state()' ;;
+next) api 'next()' ;;
+prev) api 'prev()' ;;
+close) api 'close()' ;;
+reload) api 'reload()' ;;
+goto) api "goto_step($1)" ;;
+layer) if [ $# -gt 0 ]; then api "layer($1)"; else api 'layer()'; fi ;;
+validate) api "validate([==[$(cd "$(dirname "$1")" && pwd)/$(basename "$1")]==], true)" ;;
+open)
+  deck="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+  if [ "${2:-}" = "force" ]; then
+    api "open([==[$deck]==], { force = true })"
+  else
+    api "open([==[$deck]==])"
+  fi
+  ;;
+eval) printf '%s\n' "$*" | run_lua ;;
+*)
+  sed -n '3,25p' "$0" >&2
+  exit 2
+  ;;
+esac

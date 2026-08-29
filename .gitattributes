@@ -1,0 +1,4 @@
+# core.autocrlf is true globally on this machine, so a checkout would rewrite
+# working-tree line endings. A shell script with CRLF fails at exec time with
+# `bad interpreter: /usr/bin/env bash^M`, so pin the executable scripts to LF.
+.agents/skills/dsh-neovim/scripts/wt text eol=lf
