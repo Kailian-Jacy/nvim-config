@@ -4,7 +4,26 @@ title-hidden = true
 srgb = false
 
 [font]
-normal = { family = "MonoLisa Nerd Font", style = "Light"}
-italic = { family = "MonoLisa Nerd Font", style = "Light Italic"}
-bold_italic = { family = "MonoLisa Nerd Font", style = "Bold Italic"}
 size = 14
+
+[[font.normal]]
+family = "MonoLisa Nerd Font"
+style = "Light"
+[[font.normal]]
+family = "PingFang SC"
+style = "Light"
+
+[[font.bold]]
+family = "MonoLisa Nerd Font"
+style = "Bold"
+[[font.bold]]
+family = "PingFang SC"
+style = "Bold"
+
+[[font.italic]]
+family = "MonoLisa Nerd Font"
+style = "Light Italic"
+[[font.italic]]
+family = "PingFang SC"
+style = "Light Italic"
+
