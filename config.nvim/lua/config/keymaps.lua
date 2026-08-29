@@ -52,9 +52,17 @@ vim.keymap.set({ "n", "v" }, "<leader>-", "<cmd>split<cr><c-w>j")
 vim.keymap.set({ "n", "v" }, "<leader>|", "<cmd>vsplit<cr><c-w>l")
 vim.keymap.set({ "n", "v" }, "<leader>wd", "<c-w>q", { desc = "Close the current window." })
 vim.keymap.set({ "n", "v" }, "<esc>", function()
+  -- Layered <Esc>: the first press dismisses a pending sidekick NES suggestion;
+  -- once nothing is pending, <Esc> clears the search highlight (original behavior).
+  -- Requires sidekick nes.clear.esc = false so this map is the sole <Esc> handler.
+  local ok, nes = pcall(require, "sidekick.nes")
+  if ok and nes.have and nes.have() then
+    nes.clear()
+    return
+  end
   vim.cmd([[ noh ]])
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
-end, { desc = "Esc wrapper: no highlight with esc." })
+end, { desc = "Esc: clear NES suggestion, else no-highlight." })
 
 vim.keymap.set({ "n", "v" }, "<leader>ps", '"+p', { desc = "paste from the clipboard." })
 
@@ -327,7 +335,20 @@ end, { noremap = true, silent = true })
 
 -- Tab-related.
 vim.keymap.set("n", "<leader><tab>", "<cmd>tabnew<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "<tab>", "<cmd>FlipPinnedTab<cr>", { noremap = true, silent = true })
+-- <Tab> (normal): sidekick NES. If an edit is pending, jump to / apply it;
+-- otherwise request a fresh suggestion right now. Replaces FlipPinnedTab (rarely
+-- used) and the treesitter incremental-selection <Tab> (removed in plugins/lsp.lua).
+vim.keymap.set("n", "<tab>", function()
+  local ok, sidekick = pcall(require, "sidekick")
+  if not ok then
+    return
+  end
+  -- nes_jump_or_apply() returns truthy if it jumped/applied; falsy when nothing
+  -- was pending -> request a suggestion now.
+  if not sidekick.nes_jump_or_apply() then
+    require("sidekick.nes").update()
+  end
+end, { desc = "NES: jump/apply edit, else request suggestion", silent = true })
 vim.keymap.set("n", "d<tab>", "<cmd>tabclose<CR>", { noremap = true, silent = true })
 
 -- Migrate to normal-tabbing switching.
