@@ -314,23 +314,36 @@ return {
     keys = {
       {
         "<leader><CR>",
-        -- Refreshing.
+        -- Save first, then refresh. Saving first keeps formatter churn out of
+        -- an agent-merge 3-way merge. If the save does not land (a confirm was
+        -- cancelled, the resolver opened, markers remain), stop here. Inside
+        -- the agent-merge resolver this save commits the resolution.
         function()
           -- Try load the buffer, if changed outside of the editor. Skipped when
-          -- 'autoread' is off (e.g. agent-merge reconciles on the `:w` below
-          -- instead; checktime would only raise W11/W12 prompts).
+          -- 'autoread' is off (agent-merge then reconciles on the save below;
+          -- checktime would only raise W11/W12 prompts).
           if vim.o.autoread then
             vim.cmd([[ :checktime ]] .. vim.fn.expand('%'))
           end
 
+          local buf = vim.api.nvim_get_current_buf()
+          -- Nothing to save for an unnamed or unmodified buffer.
+          if vim.api.nvim_buf_get_name(buf) ~= "" and vim.bo[buf].modified then
+            local am_ok, am = pcall(require, "agent-merge")
+            local saved
+            if am_ok and am.handles(buf) then
+              saved = am.save(buf)
+            else
+              saved = pcall(vim.cmd, "write") -- special buffers (acwrite, ...)
+            end
+            if not saved then return end
+          end
+
+          -- Formatting is async; its result is saved by auto-save, which goes
+          -- through agent-merge as well.
           vim.print_silent("@conform.format")
           vim.cmd [[ ConformFormat ]]
           require("lint").try_lint()
-          -- Try save
-          if not vim.api.nvim_buf_get_name(0) == "" then
-            -- Do not save if new buffer.
-            vim.cmd([[ :w ]]) -- triggers lsp updating.
-          end
           -- Re-sync gitsigns base for the current buffer. Re-resolves the base
           -- object for whatever revision is set (index by default), so signs
           -- pick up commits/stages made outside nvim (e.g. lazygit) even though
