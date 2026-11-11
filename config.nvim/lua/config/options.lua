@@ -47,6 +47,9 @@ vim.g.modules = vim.tbl_deep_extend("keep", (vim.g.modules or {}), default_modul
 -- If reading binary with xxd and show as human-readable text.
 vim.g.read_binary_with_xxd = false
 
+-- Directory for :GrantSocket (agent-accessible via ACL).
+vim.g.agent_socket_dir = "/tmp/nvim-" .. vim.env.USER
+
 -- Floating terminal system (floatterm)
 vim.g.floatterm_global_session = "nvim-global"
 vim.g.floatterm_local_prefix = "nvim_local_"

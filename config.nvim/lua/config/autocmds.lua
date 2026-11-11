@@ -144,6 +144,12 @@ vim.api.nvim_create_user_command("OverseerRestartLast", function()
   end
 end, {})
 
+-- Open an extra RPC socket in vim.g.agent_socket_dir for the agent.
+vim.api.nvim_create_user_command("GrantSocket", function()
+  local sock = vim.fn.serverstart(string.format("%s/nvim-%d.sock", vim.g.agent_socket_dir, vim.fn.getpid()))
+  vim.notify("Agent socket: " .. sock)
+end, {})
+
 -- Neovim debugging server
 vim.api.nvim_create_user_command("DebugServe", function(opt)
   if opt.args == "stop" then
