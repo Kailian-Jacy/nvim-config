@@ -358,17 +358,6 @@ return {
             {
               "filename",
               path = 1,
-              symbols = { modified = "" },
-              -- lualine appends " " when modified even if the symbol is empty
-              -- (#symbols>0), which shifts following components; trim it.
-              fmt = function(s) return (s:gsub("%s+$", "")) end,
-            },
-            {
-              function()
-                local ok, am = pcall(require, "agent-merge")
-                return ok and am.status() or ""
-              end,
-              -- [+] pending external change (autosave paused); [=]/[=N] conflict
             },
             codediff_added,
             codediff_removed,
