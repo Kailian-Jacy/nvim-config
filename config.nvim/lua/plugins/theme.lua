@@ -359,6 +359,12 @@ return {
               "filename",
               path = 1,
             },
+            {
+              function()
+                local ok, at = pcall(require, "agent-track")
+                return (ok and at.statusline) and at.statusline() or ""
+              end,
+            },
             codediff_added,
             codediff_removed,
           },
