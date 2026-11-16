@@ -1,0 +1,218 @@
+*agent-track.txt*   Shadow-ref subcommit streaming, review & sync for Neovim
+*agent-track*
+
+==============================================================================
+1. INTRODUCTION & WORKFLOW          *agent-track-intro* *agent-track-workflow*
+
+`agent-track` streams atomic shadow subcommits from a local or SSH agent
+worktree (`R`) into Neovim (`L`) for causal `codediff.nvim` review and
+fail-fast working-tree sync — built on Git 2.38+ plumbing with zero central
+server, zero `.git/index` or `HEAD` mutation, and zero conflict markers.
+
+Single-Writer Shadow-Ref Protocol~
+Session state lives under `<ref_prefix>/<S>/` (`refs/subcommits/default/`) and
+`refs/notes/<notes_prefix>/<S>` (`refs/notes/subcommits/default`):
+  `base`      Common ancestor commit SHA recorded at session init.
+  `agent`     Linear subcommit tip (`base..agent`) written via temp index.
+  `synced`    Exact agent tree materialized into `L` (`Applied-Subcommits`).
+  `approved`  Optional `1..k` prefix-approval watermark commit.
+  `undo`      Lossless `commit-tree` stack of pre-sync `L` working trees.
+  `state`     JSON blob `{ remote, session, applied_ids }`.
+  `notes`     Per-commit JSON `{ status, comment, subcommit_id, patch_id }`.
+
+Each subcommit carries `Subcommit-Id` (survives history rewrites; marks
+previously approved commits `"stale"` if `git patch-id --stable` changes) and
+`Touch-Order` (causal file reading sequence stepped with `]f` / `[f`).
+
+`.git/index` Invariance & `walk-commit` Synergy~
+`apply()` and `undo()` snapshot `L` via a temporary `GIT_INDEX_FILE`, run
+in-memory `git merge-tree --write-tree`, abort cleanly (`⚡` `would_conflict`)
+before touching disk on any overlap, and materialize changed paths via
+`git checkout-index -f` + `:checktime`. `HEAD` and `.git/index` stay untouched
+until finalized into clean Git commits via `walk-commit`.
+Session resolution: explicit arg -> active session -> `$AGENT_TRACK_SESSION`
+-> `default_session` (`"default"`).
+
+==============================================================================
+2. COMMANDS                               *agent-track-commands* *:AgentTrack*
+
+`:AgentTrack` with no arguments runs `:AgentTrack status`. Tab completion
+completes subcommands and `sync` targets (`approved`, `all`).
+
+:AgentTrack attach {remote} [session]                  *agent-track-attach*
+    *:AgentTrack-attach* Verify shared Git history with {remote} (`/path`,
+    `user@host:repo`, or `ssh://[user@]host[:port]/path`), initialize
+    `base`/`synced` refs, activate [session], fetch, and start watcher.
+
+:AgentTrack init [remote]                *:AgentTrack-init* *agent-track-init*
+    Initialize or activate the current session (optionally binding [remote]).
+
+:AgentTrack detach [session]         *:AgentTrack-detach* *agent-track-detach*
+    Stop background `fs_event` / poll / outbound `ssh tail -F` watcher.
+
+:AgentTrack fetch [session]            *:AgentTrack-fetch* *agent-track-fetch*
+    Fetch `+<ref_prefix>/<S>/agent` and `+refs/notes/<notes_prefix>/*` from
+    the session remote; fires |AgentTrackUpdated| when `agent` changes.
+
+:AgentTrack status [session]         *:AgentTrack-status* *agent-track-status*
+    Echo session name, remote, `synced/total`, `✓`/`·`/`✗` review counts, and
+    active watcher mode (`local`, `ssh`, `poll`, or `off`).
+
+:AgentTrack review [session]         *:AgentTrack-review* *agent-track-review*
+:AgentTrack list [session]                                 *:AgentTrack-list*
+    Open the `Snacks.picker` subcommit review panel (`vim.ui.select` fallback)
+    with sync (`●`/`○`), review (`✓`/`✓*`/`✗`/`~`/`·`), and `⚡` badges.
+
+:AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
+    Open target subcommit (default: first `pending`/`stale`, else latest) in
+    a single reused `[track]` `:CodeDiff` tab (scratch `diff` fallback).
+
+:AgentTrack approve [idx|sha|id] [--prefix]            *agent-track-approve*
+    *:AgentTrack-approve* Mark target (or first pending/stale) `"approved"`
+    and push notes. With `--prefix`, sets `<ref_prefix>/<S>/approved`
+    watermark (defaults to latest subcommit `1..#items` if target omitted).
+
+:AgentTrack reject [idx|sha|id] [reason...]             *agent-track-reject*
+    *:AgentTrack-reject* Mark subcommit `"rejected"` with `[reason...]`
+    comment and push review notes back to remote (`agent_track.py inbox`).
+
+:AgentTrack sync [approved|all|{idx|sha|id}]              *agent-track-sync*
+    *:AgentTrack-sync* Fail-fast 3-way merge into working tree (default
+    `approved`). Supports non-prefix cherry sync when earlier subcommits are
+    rejected/pending; `all` or `{idx|sha|id}` syncs prefix `1..k`. Saves
+    modified buffers (`auto_save_before_sync`) and pushes onto `undo`.
+
+:AgentTrack undo [session]               *:AgentTrack-undo* *agent-track-undo*
+    Pop `<ref_prefix>/<S>/undo` to restore the exact pre-sync working tree,
+    `synced` ref, and `applied_ids` without touching `.git/index`.
+
+:AgentTrack clean [session]            *:AgentTrack-clean* *agent-track-clean*
+    Detach watcher and delete session refs (`base`, `agent`, `synced`,
+    `approved`, `undo`, `state`) plus `refs/notes/<notes_prefix>/<S>`.
+
+==============================================================================
+3. KEYMAPS                            *agent-track-keymaps* *agent-track-keys*
+
+Global Keymaps (`lua/plugins/agent-track.lua`)~
+  LHS             Action ~
+  `<leader>atr`   `require("agent-track.reviewer").panel()` (Review panel)
+  `<leader>ato`   `require("agent-track.reviewer").open()` (`[track]` diff)
+  `<leader>ats`   `:AgentTrack sync approved`
+  `<leader>atu`   `:AgentTrack undo`
+  `<leader>atf`   `:AgentTrack fetch`
+  `<leader>ati`   `:AgentTrack status`
+
+`[track]` `:CodeDiff` Tab Buffer-Local Keys~           *agent-track-diff-keys*
+Installed in Normal mode on non-floating buffers inside the `[track]` tab:
+  LHS             Option                  Action ~
+  `]c` / `[c`     `next/prev_subcommit`   Next / prev chronological subcommit
+  `]f` / `[f`     `next/prev_touch_file`  Next / prev file in `Touch-Order`
+  `<leader>ta`    `approve`               Approve & open next pending/stale
+  `<leader>tA`    `approve_prefix`        Prefix-approve `1..current`
+  `<leader>tx`    `reject`                Prompt reason & reject subcommit
+  `<leader>ts`    `sync`                  Sync `approved` (else `1..current`)
+  `<leader>tp`    `panel`                 Open `Snacks.picker` review panel
+
+`Snacks.picker` Review Panel Keys (Normal Mode)~     *agent-track-picker-keys*
+Active in both `list` and `input` Normal mode inside `:AgentTrack review`:
+  Key         Action ~
+  `<CR>`      Close picker & open subcommit in `[track]` `:CodeDiff` tab
+  `a` / `A`   Approve selected / Prefix-approve `1..idx`
+  `x` / `c`   Prompt reason & reject / Clear status back to `"pending"`
+  `s` / `S`   Sync all `approved` / Sync prefix `1..idx` up to selected
+  `u` / `r`   Undo last sync / Fetch from remote & refresh picker
+
+==============================================================================
+4. AUTOCMDS & HOOKS                                     *agent-track-autocmds*
+
+`agent-track` emits `User` autocmds (`modeline = false`) and invokes matching
+`setup({ hooks = ... })` callbacks with the exact same `ev.data` table:
+
+*AgentTrackUpdated*  (`hooks.on_updated(data)`)
+    Fired by `fetch()` when `<ref_prefix>/<S>/agent` changes to a new SHA.
+    `ev.data`: `{ session = string, agent = string, previous = string|nil }`
+    (`previous` is `nil` on initial arrival).
+
+*AgentTrackReviewed*  (`hooks.on_reviewed(data)`)
+    Fired by `review()` after recording a review note or `--prefix` watermark.
+    `ev.data`: `{ session = string, sha = string, status = string,
+    prefix = boolean }` (`status`: `"approved"` | `"rejected"` | `"pending"`).
+
+*AgentTrackSynced*  (`hooks.on_synced(data)`)
+    Fired by `apply()` (when not `noop`) and by `undo()` on clean completion.
+    `apply()` `ev.data`: `{ session = string, synced = string, clean = true }`
+    `undo()`  `ev.data`: `{ session = string, undo = true, synced = string }`
+    (`synced` is the new or restored `<ref_prefix>/<S>/synced` commit SHA).
+>lua
+  vim.api.nvim_create_autocmd("User", {
+    pattern = { "AgentTrackUpdated", "AgentTrackReviewed",
+                "AgentTrackSynced" },
+    callback = function(ev) vim.print(ev.match, ev.data) end,
+  })
+<
+Internal Lifecycle Autocmds~
+  `VimLeavePre` (`AgentTrackWatchCleanup`) Detaches watchers & SSH streams.
+  `User CodeDiffOpen` (`once = true`)      Tags `ev.data.tabpage` `[track]`.
+  `BufEnter` (`AgentTrackReviewer`)        Scoped to `vim.t.agent_track_tab`;
+                                         keeps `t:tabname` & buffer keymaps.
+
+==============================================================================
+5. CONFIGURATION & STATUSLINE       *agent-track-config* *agent-track-setup*
+                                    *agent-track-statusline*
+>lua
+  require("agent-track").setup({
+    ref_prefix = "refs/subcommits", notes_prefix = "subcommits",
+    default_session = "default", git_cmd = { "git" },
+    ssh_cmd = { "ssh", "-o", "BatchMode=yes",
+                "-o", "ServerAliveInterval=15" },
+    watch = {
+      enabled = true, mode = "auto", -- "auto" | "local" | "ssh" | "poll"
+      poll_ms = 5000, debounce_ms = 150, reconnect_ms = 3000,
+      remote_tail_cmd = nil, -- string | string[] | fun(remote, session)
+    },
+    auto_save_before_sync = true, auto_sync_approved = false,
+    notify_on_arrival = true,
+    reviewer = {
+      tab_prefix = "[track]", reuse_tab = true,
+      keymaps = {
+        next_subcommit = "]c", prev_subcommit = "[c",
+        next_touch_file = "]f", prev_touch_file = "[f",
+        approve = "<leader>ta", approve_prefix = "<leader>tA",
+        reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp",
+      },
+    },
+    statusline = { enabled = true, format = nil },
+    hooks = { on_updated = nil, on_synced = nil, on_reviewed = nil },
+  })
+<
+`statusline()` returns `"[track <synced>/<total> ·<pending>]"` (or
+`"[track:<S> idle]"` when attached with 0 subcommits, else `""`).
+`statusline.format(info)` gets `{ session, remote, total, synced, pending }`.
+Highlights: `AgentTrack{Approved,Rejected,Stale,Pending,Synced,Conflict}`.
+
+==============================================================================
+6. LUA API & GRANTSOCKET RPC              *agent-track-api* *agent-track-rpc*
+
+Lua Module (`local at = require("agent-track")`)~
+  `at.setup(opts)` / `at.get_config()` / `at.statusline()`
+  `at.attach(remote, opts)` / `at.init_session(remote_or_opts, opts)`
+  `at.detach(session)` / `at.fetch(session, opts)` / `at.status(session)`
+  `at.list(session, { preview_conflicts = bool })`
+  `at.review(sha_or_idx, status, { comment, prefix, push, session })`
+  `at.apply(target, { mode = "prefix"|"cherry", session })`
+  `at.undo(session, opts)` / `at.clean(session, opts)`
+  `require("agent-track.reviewer")`: `panel(opts)`, `open(target, opts)`,
+  `close()`, `status()`, `next/prev_subcommit()`, `next/prev_touch_file()`.
+
+`:GrantSocket` RPC (`require("agent-track").rpc.dispatch(req)`)~
+Accepts JSON string or table `{ method = "<name>", args = { ... } }` and
+returns JSON `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`.
+Methods: `ping` (`info`), `init` (`init_session`), `attach`, `detach`,
+`fetch`, `status`, `list`, `review`, `approve`, `reject`, `apply` (`sync`),
+`undo`, `clean`, `open`, `panel`, `close`.
+>sh
+  nvim --server "$SOCK" --remote-expr \
+    'luaeval("require(\"agent-track\").rpc.dispatch(_A)",
+             "{\"method\":\"list\"}")'
+<
+vim:tw=78:ts=8:ft=help:norl:
