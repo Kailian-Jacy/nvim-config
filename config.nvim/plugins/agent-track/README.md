@@ -13,7 +13,7 @@ flowchart LR
     REF_N_R["refs/notes/subcommits/S"] -->|"agent_track.py inbox"| WT_R
   end
   subgraph L["Human Host L (Neovim + codediff.nvim)"]
-    WATCH["watch.lua (fs_event / ssh tail -F)"] -->|"git fetch +refs/subcommits/..."| REF_L["Local Shadow Refs"]
+    WATCH["watch.lua (fs_event / ssh for-each-ref)"] -->|"git fetch +refs/subcommits/*/{base,agent}"| REF_L["Local Shadow Refs"]
     REF_L --> REV["reviewer.lua (Snacks.picker + [track] CodeDiff)"]
     REV -->|"git push notes / approved"| REF_N_R
     REF_L -->|"sync.lua (fail-fast merge-tree + checkout-index)"| WT_L["Human Buffers (.git/index untouched)"]
@@ -21,8 +21,8 @@ flowchart LR
   REF_A -.->|"inotify/kqueue or outbound SSH"| WATCH
 ```
 
-- **Local Mode (`:AgentTrack attach /path/to/R`)**: watches `<R-git-common-dir>/logs/refs/subcommits/<S>/agent` via `vim.uv.new_fs_event` (+ `poll_ms` fallback) and runs debounced async `git fetch`.
-- **Outbound SSH Mode (`:AgentTrack attach user@devbox:/path/to/R` or `ssh://...`)**: `L` opens one multiplexed outbound `ssh` stream (`ControlMaster=auto`) resolving `git rev-parse --git-common-dir` (supporting standard repos, Git worktrees, and bare repos) and running `tail -n0 -F "$d/logs/refs/subcommits/<S>/agent"` with `ssh_poll_ms = 0` and fast-failure circuit-breaker backoff. `R` never needs inbound network access, credentials, or a central Git server back to `L`.
+- **Local Mode (`:AgentTrack attach /path/to/R`)**: watches `<R-git-common-dir>/logs/refs/subcommits` recursively via `vim.uv.new_fs_event` (+ `poll_ms` fallback) across all `<session>` names and runs debounced async wildcard `git fetch`.
+- **Outbound SSH Mode (`:AgentTrack attach user@devbox:/path/to/R` or `ssh://...`)**: `L` opens one multiplexed outbound `ssh` stream (`ControlMaster=auto`) running a lightweight in-remote `git for-each-ref` loop over `refs/subcommits/*/agent` and `refs/notes/subcommits/*` (works across standard repos, Git worktrees, bare repos, packed-refs, and any `<session>` name — even sessions created after `attach`!) with `ssh_poll_ms = 0` and fast-failure circuit-breaker backoff. `R` never needs inbound network access, credentials, or a central Git server back to `L`.
 
 ---
 
@@ -116,9 +116,10 @@ require("agent-track").setup({
 
 | Command | Global Key | Action |
 | :--- | :--- | :--- |
-| `:AgentTrack attach <remote> [session]` | — | Attach local path or SSH URL (`user@host:/repo`) & start watcher |
+| `:AgentTrack attach <remote> [session]` | — | Attach local path or SSH URL (`user@host:/repo`), wildcard-fetch sessions & start watcher |
+| `:AgentTrack session [name]` | — | List discovered sessions (`*` = active) or switch active `<session>` |
 | `:AgentTrack detach [session]` | — | Stop background watcher for session |
-| `:AgentTrack fetch [session]` | `<leader>atf` | Fetch latest `agent`, `base`, and `notes` refs |
+| `:AgentTrack fetch [session]` | `<leader>atf` | Wildcard-fetch latest `agent`, `base`, and `notes` refs (auto-switches if active session is empty) |
 | `:AgentTrack review` / `list` | `<leader>atr` | Open `Snacks.picker` subcommit review deck (`vim.ui.select` fallback) |
 | `:AgentTrack open [idx\|sha\|id]` | `<leader>ato` | Open subcommit in single reused `[track]` `:CodeDiff` tab |
 | `:AgentTrack approve [idx\|sha] [--prefix]` | — | Approve subcommit (or `1..k` watermark with `--prefix`) & push notes |
@@ -150,4 +151,4 @@ After running `:GrantSocket` in Neovim (`/tmp/nvim-$USER/nvim-<pid>.sock`), exte
 nvim --server <sock> --remote-expr 'luaeval("require(\"agent-track\").rpc.dispatch(_A)", "{\"method\":\"list\",\"args\":{\"session\":\"default\"}}")'
 ```
 
-**Supported `rpc.dispatch` methods**: `ping`/`info`, `init`/`init_session`, `attach`, `detach`, `fetch`, `status`, `list`, `review`, `approve`, `reject`, `apply`/`sync`, `undo`, `clean`, `open`, `panel`, `close`. Returns JSON `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`.
+**Supported `rpc.dispatch` methods**: `ping`/`info`, `init`/`init_session`, `attach`, `detach`, `session`, `sessions`, `fetch`, `status`, `list`, `review`, `approve`, `reject`, `apply`/`sync`, `undo`, `clean`, `open`, `panel`, `close`. Returns JSON `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`.

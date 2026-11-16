@@ -9,6 +9,7 @@
 :AgentTrack-open	agent-track.txt	/*:AgentTrack-open*
 :AgentTrack-reject	agent-track.txt	/*:AgentTrack-reject*
 :AgentTrack-review	agent-track.txt	/*:AgentTrack-review*
+:AgentTrack-session	agent-track.txt	/*:AgentTrack-session*
 :AgentTrack-status	agent-track.txt	/*:AgentTrack-status*
 :AgentTrack-sync	agent-track.txt	/*:AgentTrack-sync*
 :AgentTrack-undo	agent-track.txt	/*:AgentTrack-undo*
@@ -35,6 +36,7 @@ agent-track-picker-keys	agent-track.txt	/*agent-track-picker-keys*
 agent-track-reject	agent-track.txt	/*agent-track-reject*
 agent-track-review	agent-track.txt	/*agent-track-review*
 agent-track-rpc	agent-track.txt	/*agent-track-rpc*
+agent-track-session	agent-track.txt	/*agent-track-session*
 agent-track-setup	agent-track.txt	/*agent-track-setup*
 agent-track-status	agent-track.txt	/*agent-track-status*
 agent-track-statusline	agent-track.txt	/*agent-track-statusline*

@@ -102,7 +102,10 @@ local function ensure_setup()
     end
   end })
   vim.api.nvim_create_autocmd("User", { group = S.augroup, pattern = { "AgentTrackUpdated", "AgentTrackSynced", "AgentTrackReviewed" },
-    callback = function() if S.picker and not S.picker.closed then pcall(function() S.picker:find() end) end end })
+    callback = function(ev)
+      if ev.data and ev.data.session then S.session = ev.data.session end
+      if S.picker and not S.picker.closed then pcall(function() S.picker:find() end) end
+    end })
 end
 local function open_view(it, idx, total, touch_idx, file_only)
   ensure_setup()
@@ -148,7 +151,7 @@ local function open_view(it, idx, total, touch_idx, file_only)
   return { ok = true, sha = it.sha, index = idx, touch_index = touch_idx, file = cur_file, header = header, tab = S.tab }
 end
 function M.open(target, opts)
-  opts = opts or {}; local items = fetch_list(opts.session).items or {}; local it, idx = resolve_item(items, target)
+  opts = opts or {}; local items = fetch_list(opts.session or require("agent-track.config").resolve_session()).items or {}; local it, idx = resolve_item(items, target)
   if not it then vim.notify("agent-track: no matching subcommit", vim.log.levels.INFO); return { ok = false, error = "no matching subcommit" } end
   return open_view(it, idx, #items, opts.touch_idx or 1, opts.file_only == true)
 end
@@ -169,17 +172,22 @@ function M.close()
 end
 function M.panel(opts)
   opts = opts or {}; ensure_setup()
-  local session = opts.session or S.session; local init_res = fetch_list(session)
+  local session = opts.session or require("agent-track.config").resolve_session(); local init_res = fetch_list(session)
   local ok, items, prompt = init_res.ok ~= false, init_res.items or {}, summary_title(init_res)
   if type(_G.Snacks) == "table" and _G.Snacks.picker then
     local act_map = { a = "approve", A = "approve_prefix", x = "reject", c = "clear", s = "sync", S = "sync_prefix", u = "undo", r = "fetch" }
     local actions, keys = {}, {}
-    for k, op in pairs(act_map) do actions["sc_" .. op] = function(p, item) run_op(op, item and item._sc and item._sc.sha, session, function() if p and not p.closed then p:find() end end) end; keys[k] = { "sc_" .. op, mode = "n" } end
+    for k, op in pairs(act_map) do
+      actions["sc_" .. op] = function(p, item)
+        run_op(op, item and item._sc and item._sc.sha, op == "fetch" and opts.session or (opts.session or S.session), function() if p and not p.closed then p:find() end end)
+      end
+      keys[k] = { "sc_" .. op, mode = "n" }
+    end
     S.picker = (type(_G.Snacks.picker.pick) == "function" and _G.Snacks.picker.pick or _G.Snacks.picker)({
       title = prompt, focus = "list", on_close = function() S.picker = nil end, actions = actions, win = { input = { keys = keys }, list = { keys = keys } },
-      confirm = function(p, item) p:close(); if item and item._sc then M.open(item._sc.sha, { session = session }) end end,
+      confirm = function(p, item) p:close(); if item and item._sc then M.open(item._sc.sha, { session = opts.session or S.session }) end end,
       finder = function(_, ctx)
-        local res, p, out = init_res or fetch_list(session), (ctx and ctx.picker) or S.picker, {}; init_res = nil
+        local res, p, out = init_res or fetch_list(opts.session or S.session), (ctx and ctx.picker) or S.picker, {}; init_res = nil
         if p then p.title = summary_title(res); pcall(function() p:update_titles() end) end
         for i, it in ipairs(res.items or {}) do out[i] = { idx = i, text = format_row(it), _sc = it } end; return out
       end,

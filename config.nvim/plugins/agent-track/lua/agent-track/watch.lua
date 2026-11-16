@@ -27,24 +27,34 @@ function M.build_tail_argv(remote, session, cfg)
   if type(custom) == "table" then return git.resolve_bin(vim.deepcopy(custom)) end
   if type(custom) == "string" and custom ~= "" then return git.resolve_bin({ "sh", "-c", custom }) end
   local parsed = M.parse_ssh_remote(remote); if not parsed then return nil end
-  local sq, ref_rel = parsed.path:gsub("'", "'\\''"), config.ref(session, "agent")
+  local sq = parsed.path:gsub("'", "'\\''")
+  local rp = (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", ""):gsub("'", "'\\''")
+  local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", ""):gsub("'", "'\\''")
   local argv = vim.deepcopy(cfg.ssh_cmd or { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" })
   if parsed.port then vim.list_extend(argv, { "-p", tostring(parsed.port) }) end
   local cd_arg = parsed.path == "~" and '"$HOME"' or (parsed.path:sub(1, 2) == "~/" and ('"$HOME"\'' .. parsed.path:sub(2):gsub("'", "'\\''") .. "'") or ("'" .. sq .. "'"))
-  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && d=$(git rev-parse --git-common-dir) && f=\"$d/logs/%s\" && mkdir -p \"$(dirname \"$f\")\" && touch \"$f\" && exec tail -n0 -F \"$f\"", cd_arg, ref_rel) }))
+  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && prev=\"\" && while :; do cur=$(git for-each-ref --format='%%(refname)=%%(objectname)' '%s/*/agent' 'refs/notes/%s/*' 2>/dev/null); if [ \"$cur\" != \"$prev\" ]; then [ -n \"$prev\" ] && printf '%%s\\n' \"$cur\"; prev=\"$cur\"; fi; sleep 2; done", cd_arg, rp, np) }))
 end
 
 function M.detach(session)
-  local w = watchers[config.resolve_session(session)]; if not w then return false end
-  w.stopped, watchers[w.session] = true, nil
-  for _, k in ipairs({ "fse", "debounce_timer", "poll_timer", "reconnect_timer" }) do close_h(w[k]) end
-  if w.proc then pcall(function() w.proc:kill(9) end) end; return true
+  local keys = session and { config.resolve_session(session) } or vim.tbl_keys(watchers)
+  local had = false
+  for _, k in ipairs(keys) do
+    local w = watchers[k]
+    if w then
+      had, w.stopped, watchers[k] = true, true, nil
+      for _, tk in ipairs({ "fse", "debounce_timer", "poll_timer", "reconnect_timer" }) do close_h(w[tk]) end
+      if w.proc then pcall(function() w.proc:kill(9) end) end
+    end
+  end
+  return had
 end
-function M.detach_all() for _, s in ipairs(vim.tbl_keys(watchers)) do M.detach(s) end end
+function M.detach_all() M.detach(nil) end
 
 function M.attach(session, remote, on_change)
   local cfg, s = config.get(), config.resolve_session(session)
   local wcfg = cfg.watch or {}; M.detach(s)
+  for oses, ow in pairs(watchers) do if ow.remote == remote then M.detach(oses) end end
   if wcfg.enabled == false or not remote or remote == "" then return { ok = true, active = false, mode = "disabled" } end
   if not augroup_ready then augroup_ready = true; vim.api.nvim_create_autocmd("VimLeavePre", { group = vim.api.nvim_create_augroup("AgentTrackWatchCleanup", { clear = true }), callback = M.detach_all }) end
   local m = wcfg.mode or "auto"
@@ -55,7 +65,7 @@ function M.attach(session, remote, on_change)
   local function trigger() if not w.stopped and not w.debounce_timer:is_closing() then w.debounce_timer:stop(); w.debounce_timer:start(debounce_ms, 0, vim.schedule_wrap(function() if not w.stopped then on_change() end end)) end end
   if mode == "local" then
     local exp = vim.fn.expand(remote); local rinfo = git.root_info(exp)
-    local target_dir = (rinfo and rinfo.common_dir or (exp .. "/.git")) .. "/logs/" .. vim.fn.fnamemodify(config.ref(s, "agent"), ":h")
+    local target_dir = (rinfo and rinfo.common_dir or (exp .. "/.git")) .. "/logs/" .. (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", "")
     local function arm(force)
       local dir = not w.stopped and deepest_dir(target_dir) or nil; if not dir or (not force and w.watched_dir == dir) then return end
       close_h(w.fse); w.fse, w.watched_dir = vim.uv.new_fs_event(), dir
@@ -95,6 +105,7 @@ end
 
 function M.status(session)
   local s = config.resolve_session(session); local w = watchers[s]
+  if not w and not session then for _, v in pairs(watchers) do if not v.stopped then w = v; break end end end
   return (w and not w.stopped) and { active = true, session = s, remote = w.remote, mode = w.mode, poll = w.poll_timer ~= nil, failures = w.failures or 0 } or { active = false, session = s }
 end
 return M

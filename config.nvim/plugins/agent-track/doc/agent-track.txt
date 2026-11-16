@@ -37,22 +37,29 @@ Session resolution: explicit arg -> active session -> `$AGENT_TRACK_SESSION`
 2. COMMANDS                               *agent-track-commands* *:AgentTrack*
 
 `:AgentTrack` with no arguments runs `:AgentTrack status`. Tab completion
-completes subcommands and `sync` targets (`approved`, `all`).
+completes subcommands, discovered session names, and `sync` targets.
 
 :AgentTrack attach {remote} [session]                  *agent-track-attach*
     *:AgentTrack-attach* Verify shared Git history with {remote} (`/path`,
-    `user@host:repo`, or `ssh://[user@]host[:port]/path`), initialize
-    `base`/`synced` refs, activate [session], fetch, and start watcher.
+    `user@host:repo`, or `ssh://[user@]host[:port]/path`), save `remote` in
+    `agent-track.remote`, fetch all `<ref_prefix>/*/{base,agent}` & notes,
+    auto-switch to a non-empty remote session if [session] was omitted, and
+    start wildcard watcher (`fs_event` or single SSH `for-each-ref` stream).
+
+:AgentTrack session [name]         *:AgentTrack-session* *agent-track-session*
+    List discovered `<ref_prefix>/*/agent` sessions (marking active with `*`),
+    or switch active session to `[name]` (initializing `base`/`synced`).
 
 :AgentTrack init [remote]                *:AgentTrack-init* *agent-track-init*
     Initialize or activate the current session (optionally binding [remote]).
 
 :AgentTrack detach [session]         *:AgentTrack-detach* *agent-track-detach*
-    Stop background `fs_event` / poll / outbound `ssh tail -F` watcher.
+    Stop background `fs_event` / poll / outbound SSH watcher.
 
 :AgentTrack fetch [session]            *:AgentTrack-fetch* *agent-track-fetch*
-    Fetch `+<ref_prefix>/<S>/agent` and `+refs/notes/<notes_prefix>/*` from
-    the session remote; fires |AgentTrackUpdated| when `agent` changes.
+    Fetch `+<ref_prefix>/*/{agent,base}` and `+refs/notes/<notes_prefix>/*`
+    from the session remote, auto-switching if active session is empty and a
+    task-named session has subcommits; fires |AgentTrackUpdated| on updates.
 
 :AgentTrack status [session]         *:AgentTrack-status* *agent-track-status*
     Echo session name, remote, `synced/total`, `✓`/`·`/`✗` review counts, and
@@ -200,6 +207,7 @@ Highlights: `AgentTrack{Approved,Rejected,Stale,Pending,Synced,Conflict}`.
 Lua Module (`local at = require("agent-track")`)~
   `at.setup(opts)` / `at.get_config()` / `at.statusline()`
   `at.attach(remote, opts)` / `at.init_session(remote_or_opts, opts)`
+  `at.session(name, opts)` / `at.sessions(opts)`
   `at.detach(session)` / `at.fetch(session, opts)` / `at.status(session)`
   `at.list(session, { preview_conflicts = bool })`
   `at.review(sha_or_idx, status, { comment, prefix, push, session })`
@@ -212,8 +220,8 @@ Lua Module (`local at = require("agent-track")`)~
 Accepts JSON string or table `{ method = "<name>", args = { ... } }` and
 returns JSON `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`.
 Methods: `ping` (`info`), `init` (`init_session`), `attach`, `detach`,
-`fetch`, `status`, `list`, `review`, `approve`, `reject`, `apply` (`sync`),
-`undo`, `clean`, `open`, `panel`, `close`.
+`session`, `sessions`, `fetch`, `status`, `list`, `review`, `approve`,
+`reject`, `apply` (`sync`), `undo`, `clean`, `open`, `panel`, `close`.
 >sh
   nvim --server "$SOCK" --remote-expr \
     'luaeval("require(\"agent-track\").rpc.dispatch(_A)",

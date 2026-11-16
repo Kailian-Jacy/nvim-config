@@ -13,6 +13,26 @@ local function emit(pattern, hook_key, data)
   local hooks = config.get().hooks; if hooks and type(hooks[hook_key]) == "function" then pcall(hooks[hook_key], data) end
   pcall(vim.api.nvim_exec_autocmds, "User", { pattern = pattern, modeline = false, data = data })
 end
+local function ref_prefix() return (config.get().ref_prefix or "refs/subcommits"):gsub("/+$", "") end
+local function repo_remote(root, s)
+  local r = s and git.read_state(root, s).remote or nil; if r and r ~= "" then return r end
+  local cr = git.run(root, { "config", "--get", "agent-track.remote" }, { ident = false })
+  local v = cr.ok and vim.trim(cr.stdout) or ""; return v ~= "" and v or nil
+end
+local function discover_sessions(root)
+  local rp = ref_prefix()
+  local r, out, heads = git.run(root, { "for-each-ref", "--sort=-committerdate", "--format=%(refname)\t%(objectname)", rp .. "/*/agent" }, { ident = false }), {}, {}
+  local pat = "^" .. vim.pesc(rp) .. "/([^/]+)/agent$"
+  for line in (r.ok and r.stdout or ""):gmatch("[^\n]+") do
+    local ref, sha = line:match("^(%S+)\t(%x+)$"); local ses = ref and ref:match(pat)
+    if ses then out[#out + 1], heads[ses] = ses, sha end
+  end
+  return out, heads
+end
+local function has_subcommits(root, ses, agent_sha)
+  local a = agent_sha or git.rev_parse(root, config.ref(ses, "agent")); if not a then return false end
+  local b = git.rev_parse(root, config.ref(ses, "base")); return b ~= nil and b ~= a
+end
 local function ensure_base(root, s, remote, explicit_base, reset)
   local base_ref, synced_ref = config.ref(s, "base"), config.ref(s, "synced")
   local base = explicit_base and git.rev_parse(root, explicit_base) or (not reset and git.rev_parse(root, base_ref)) or nil
@@ -21,6 +41,12 @@ local function ensure_base(root, s, remote, explicit_base, reset)
   git.update_ref(root, base_ref, base, "init session base")
   if reset or not git.rev_parse(root, synced_ref) then git.update_ref(root, synced_ref, base, "init synced") end
   return base
+end
+local function activate_session(root, ses, remote)
+  config.set_active_session(ses)
+  local r = remote or repo_remote(root, ses)
+  ensure_base(root, ses, r)
+  if r and r ~= "" then local st = git.read_state(root, ses); if st.remote ~= r then st.remote = r; git.write_state(root, ses, st) end end
 end
 local function update_statusline(res)
   local cfg = config.get()
@@ -36,23 +62,38 @@ local function update_statusline(res)
 end
 function M.get_config() return config.get() end
 function M.attach(remote, opts) return M.init_session(remote, vim.tbl_extend("force", {}, opts or {}, { remote = remote })) end
-function M.detach(session) local s = config.resolve_session(session); watch.detach(s); return { ok = true, session = s, active = false } end
+function M.detach(session) local s = config.resolve_session(session); watch.detach(session); return { ok = true, session = s, active = false } end
 function M.statusline() local cfg = config.get(); return (cfg.statusline and cfg.statusline.enabled ~= false) and (sl_cache or "") or "" end
+function M.sessions(opts)
+  local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err, sessions = {} } end
+  return { ok = true, active = config.resolve_session(), sessions = (discover_sessions(info.root)) }
+end
+function M.session(name, opts)
+  local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
+  if not name or name == "" then return M.sessions(opts) end
+  activate_session(info.root, name, repo_remote(info.root, name))
+  local lres = M.list(name); return { ok = true, session = name, remote = lres.remote, base = lres.base, counts = lres.counts }
+end
 function M.init_session(remote_or_opts, maybe_opts)
   local opts = type(remote_or_opts) == "table" and remote_or_opts or (maybe_opts or {})
   local remote = type(remote_or_opts) == "table" and opts.remote or remote_or_opts
   local s, _, info, err = ctx_of(opts.session, opts); if not info then return { ok = false, error = err } end
-  local base_ref, r_head, r_base = config.ref(s, "base"), nil, nil
+  local rp, base_ref, r_any, r_match, r_base = ref_prefix(), config.ref(s, "base"), false, false, nil
   if remote and remote ~= "" then
-    local lr = git.run(info.root, { "ls-remote", remote, "HEAD", base_ref }, { ident = false })
+    local lr = git.run(info.root, { "ls-remote", remote, "HEAD", rp .. "/*/base", rp .. "/*/agent" }, { ident = false })
     if not lr.ok then local e = vim.trim(lr.stderr ~= "" and lr.stderr or ("cannot reach remote: " .. remote)); vim.notify("agent-track: " .. e, vim.log.levels.ERROR); return { ok = false, error = e } end
     for line in (lr.stdout or ""):gmatch("[^\n]+") do
-      local sha, ref = line:match("^(%x+)%s+(%S+)$"); if ref == "HEAD" then r_head = sha elseif ref == base_ref then r_base = sha end
+      local sha, ref = line:match("^(%x+)%s+(%S+)$")
+      if sha and ref then
+        r_any = true; if ref == base_ref then r_base = sha end
+        if not r_match and git.rev_parse(info.root, sha .. "^{commit}") then r_match = true end
+      end
     end
-    if (r_base or r_head) and not ((r_base and git.rev_parse(info.root, r_base .. "^{commit}")) or (r_head and git.rev_parse(info.root, r_head .. "^{commit}"))) then
+    if r_any and not r_match then
       local e = "remote does not share git history with current cwd repo (" .. info.root .. ")"
       vim.notify("agent-track: " .. e, vim.log.levels.ERROR); return { ok = false, error = e }
     end
+    git.run(info.root, { "config", "--local", "agent-track.remote", remote }, { ident = false })
   end
   config.set_active_session(s)
   local base = ensure_base(info.root, s, r_base and remote or nil, opts.base or (r_base and git.rev_parse(info.root, r_base .. "^{commit}")), opts.reset)
@@ -60,31 +101,56 @@ function M.init_session(remote_or_opts, maybe_opts)
   if remote and remote ~= "" and not r_base then git.push_refs(info.root, remote, { base_ref }) end
   local state = git.read_state(info.root, s); if opts.reset then state.applied_ids = {} end
   if remote and remote ~= "" then state.remote = remote end; git.write_state(info.root, s, state)
-  if state.remote and state.remote ~= "" then
-    M.fetch(s, { async = false, silent = true })
-    if opts.watch ~= false then watch.attach(s, state.remote, function() M.fetch(s, { async = true, silent = true }) end) end
+  local eff_remote = state.remote or repo_remote(info.root, s)
+  if eff_remote and eff_remote ~= "" then
+    M.fetch(opts.session, { async = false, silent = true, remote = eff_remote, only_session = opts.only_session })
+    s = config.resolve_session(opts.session)
+    if opts.watch ~= false then watch.attach(s, eff_remote, function() M.fetch(opts.only_session and s or nil, { async = true, silent = true, only_session = opts.only_session }) end) end
   end
-  M.list(s); return { ok = true, session = s, remote = state.remote, base = base }
+  local lres = M.list(s); return { ok = true, session = s, remote = lres.remote or eff_remote, base = lres.base or base }
 end
 function M.fetch(session, opts)
+  local explicit_s = type(session) == "table" and session.session or session
   local s, o, info, err = ctx_of(session, opts); if not info then return { ok = false, error = err } end
-  local remote = o.remote or git.read_state(info.root, s).remote; if not remote or remote == "" then return { ok = false, error = "no remote configured for session " .. s } end
+  local remote = o.remote or repo_remote(info.root, s); if not remote or remote == "" then return { ok = false, error = "no remote configured for session " .. s } end
   ensure_base(info.root, s, remote)
-  local cfg, agent_ref = config.get(), config.ref(s, "agent")
-  local np, old_agent = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", ""), git.rev_parse(info.root, agent_ref)
-  local fargs = { "fetch", remote, "+" .. agent_ref .. ":" .. agent_ref, "+refs/notes/" .. np .. "/*:refs/notes/" .. np .. "/*" }
+  local cfg, rp = config.get(), ref_prefix()
+  local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "")
+  local _, old_heads = discover_sessions(info.root); local old_s_head = old_heads[s]
+  local fargs = o.only_session and { "fetch", remote, "+" .. config.ref(s, "agent") .. ":" .. config.ref(s, "agent"), "+" .. config.ref(s, "base") .. ":" .. config.ref(s, "base"), "+refs/notes/" .. np .. "/*:refs/notes/" .. np .. "/*" }
+    or { "fetch", remote, "+" .. rp .. "/*/agent:" .. rp .. "/*/agent", "+" .. rp .. "/*/base:" .. rp .. "/*/base", "+refs/notes/" .. np .. "/*:refs/notes/" .. np .. "/*" }
   local function done(r)
-    local new_agent = git.rev_parse(info.root, agent_ref); local changed, lres = (new_agent ~= nil and new_agent ~= old_agent), M.list(s)
-    if changed then
-      if cfg.notify_on_arrival then vim.notify(string.format("agent-track [%s]: %d subcommits", s, #(lres.items or {})), vim.log.levels.INFO) end
-      emit("AgentTrackUpdated", "on_updated", { session = s, agent = new_agent, previous = old_agent })
-      if cfg.auto_sync_approved then M.apply("approved", { session = s }) end
+    local sessions, new_heads = discover_sessions(info.root)
+    local target_s, old_agent = s, old_s_head
+    if not o.only_session and not explicit_s then
+      local s_nonempty = has_subcommits(info.root, s, new_heads[s])
+      local changed_other
+      for _, cand in ipairs(sessions) do
+        if cand ~= s and new_heads[cand] ~= old_heads[cand] and has_subcommits(info.root, cand, new_heads[cand]) then changed_other = cand; break end
+      end
+      if not s_nonempty then
+        local best = changed_other
+        if not best then for _, cand in ipairs(sessions) do if has_subcommits(info.root, cand, new_heads[cand]) then best = cand; break end end end
+        if best and best ~= s then target_s, old_agent = best, old_heads[best]; activate_session(info.root, target_s, remote) end
+      elseif changed_other and new_heads[s] == old_s_head then
+        activate_session(info.root, changed_other, remote); target_s, old_agent = changed_other, old_heads[changed_other]
+      end
     end
-    return (not r.ok and not o.silent and not new_agent) and { ok = false, error = vim.trim(r.stderr) } or { ok = true, session = s, agent = new_agent, updated = changed, items = lres.items, counts = lres.counts }
+    if target_s == s then ensure_base(info.root, target_s, remote) end
+    local new_agent = new_heads[target_s] or git.rev_parse(info.root, config.ref(target_s, "agent"))
+    local changed = (new_agent ~= nil and new_agent ~= old_agent) or (target_s ~= s and has_subcommits(info.root, target_s, new_agent))
+    local lres = M.list(target_s)
+    if changed then
+      if cfg.notify_on_arrival then vim.notify(string.format("agent-track [%s]: %d subcommits", target_s, #(lres.items or {})), vim.log.levels.INFO) end
+      emit("AgentTrackUpdated", "on_updated", { session = target_s, agent = new_agent, previous = old_agent })
+      if cfg.auto_sync_approved then M.apply("approved", { session = target_s }) end
+    end
+    return (not r.ok and not o.silent and not new_agent) and { ok = false, error = vim.trim(r.stderr) } or { ok = true, session = target_s, agent = new_agent, updated = changed, items = lres.items, counts = lres.counts }
   end
+  local fkey = o.only_session and s or "*"
   if not o.async then return done(git.run(info.root, fargs, { reflog = true })) end
-  if fetch_inflight[s] then fetch_queued[s] = true; return { ok = true, async = true, queued = true } end; fetch_inflight[s] = true
-  git.run_async(info.root, fargs, { reflog = true }, function(r) fetch_inflight[s] = nil; done(r); if fetch_queued[s] then fetch_queued[s] = nil; M.fetch(s, o) end end)
+  if fetch_inflight[fkey] then fetch_queued[fkey] = true; return { ok = true, async = true, queued = true } end; fetch_inflight[fkey] = true
+  git.run_async(info.root, fargs, { reflog = true }, function(r) fetch_inflight[fkey] = nil; done(r); if fetch_queued[fkey] then fetch_queued[fkey] = nil; M.fetch(session, o) end end)
   return { ok = true, async = true }
 end
 
@@ -114,7 +180,7 @@ function M.list(session, opts)
     if it.synced then counts.synced = counts.synced + 1 end; counts[st] = (counts[st] or 0) + 1
   end
   if o.preview_conflicts and #items > 0 then local pmap = sync.preview_conflicts(info, base, synced, items); for _, it in ipairs(items) do it.would_conflict = pmap[it.sha] == true end end
-  local out = { ok = true, session = s, remote = state.remote, base = base, synced = synced, approved_prefix = approved_prefix, items = items, counts = counts }
+  local out = { ok = true, session = s, remote = state.remote or repo_remote(info.root, s), base = base, synced = synced, approved_prefix = approved_prefix, items = items, counts = counts }
   update_statusline(out); return out
 end
 
@@ -151,18 +217,30 @@ function M.undo(session, opts)
   local res = sync.undo(info, s); M.list(s); if res.ok then emit("AgentTrackSynced", "on_synced", { session = s, undo = true, synced = res.restored_synced }) end; return res
 end
 function M.clean(session, opts)
-  local s, _, info, err = ctx_of(session, opts); watch.detach(s); if not info then return { ok = false, error = err } end
+  local s, _, info, err = ctx_of(session, opts); watch.detach(session); if not info then return { ok = false, error = err } end
   for _, name in ipairs({ "base", "agent", "synced", "approved", "undo", "state" }) do git.delete_ref(info.root, config.ref(s, name)) end
   git.delete_ref(info.root, config.notes_ref(s)); sl_cache = ""; return { ok = true, session = s, cleaned = true }
 end
 function M.status(session)
   local lres = M.list(config.resolve_session(session)); if not lres.ok then return lres end
-  return { ok = true, session = lres.session, remote = lres.remote, base = lres.base, synced = lres.synced, approved_prefix = lres.approved_prefix, counts = lres.counts, watcher = watch.status(lres.session) }
+  return { ok = true, session = lres.session, remote = lres.remote, base = lres.base, synced = lres.synced, approved_prefix = lres.approved_prefix, counts = lres.counts, watcher = watch.status(session) }
 end
 
+local SESS_SUB = { session = true, status = true, fetch = true, list = true, review = true, detach = true, undo = true, clean = true }
 local CMD = {
   init = function(f) M.init_session(f[2]) end, detach = function(f) M.detach(f[2]) end, fetch = function(f) M.fetch(f[2]) end,
   attach = function(f) if f[2] then M.attach(f[2], { session = f[3] }) else vim.notify("Usage: :AgentTrack attach <remote> [session]", vim.log.levels.ERROR) end end,
+  session = function(f)
+    if f[2] then
+      local r = M.session(f[2]); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.ERROR) end
+      local c = r.counts or { synced = 0, total = 0, pending = 0, stale = 0 }
+      vim.notify(string.format("agent-track: active session -> %s (%d/%d synced, %d pending)", r.session, c.synced, c.total, c.pending + c.stale), vim.log.levels.INFO)
+    else
+      local r = M.sessions(); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
+      local list = vim.tbl_map(function(x) return (x == r.active and "*" or "") .. x end, r.sessions)
+      vim.notify(string.format("agent-track sessions (active=%s): %s", r.active, #list > 0 and table.concat(list, ", ") or "(none)"))
+    end
+  end,
   status = function(f)
     local st = M.status(f[2]); if not st.ok then return vim.notify("agent-track: " .. tostring(st.error), vim.log.levels.WARN) end; local c = st.counts
     vim.notify(string.format("agent-track [%s] remote=%s synced=%d/%d ✓%d ·%d ✗%d watch=%s", st.session, st.remote or "-", c.synced, c.total, c.approved, c.pending + c.stale, c.rejected, st.watcher.active and st.watcher.mode or "off"))
@@ -179,7 +257,13 @@ local function register_commands()
     nargs = "*", desc = "AgentTrack subcommit workflow commands",
     complete = function(lead, line)
       local p = vim.split(line, "%s+", { trimempty = true })
-      local opts = (#p <= 1 or (#p == 2 and line:sub(-1) ~= " ")) and SUB or (p[2] == "sync" and { "approved", "all" } or {})
+      local arg_idx = #p + (line:sub(-1):match("%s") and 1 or 0)
+      local opts = {}
+      if arg_idx <= 2 then opts = SUB
+      elseif arg_idx == 3 and p[2] == "sync" then opts = { "approved", "all" }
+      elseif (arg_idx == 3 and SESS_SUB[p[2]]) or (arg_idx == 4 and p[2] == "attach") then
+        local info = git.root_info(); opts = info and (discover_sessions(info.root)) or {}
+      end
       return vim.tbl_filter(function(s) return s:find(lead, 1, true) == 1 end, opts)
     end,
   })
