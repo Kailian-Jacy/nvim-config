@@ -163,11 +163,15 @@ Internal Lifecycle Autocmds~
   require("agent-track").setup({
     ref_prefix = "refs/subcommits", notes_prefix = "subcommits",
     default_session = "default", git_cmd = { "git" },
-    ssh_cmd = { "ssh", "-o", "BatchMode=yes",
-                "-o", "ServerAliveInterval=15" },
+    ssh_cmd = {
+      "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto",
+      "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600",
+      "-o", "ServerAliveInterval=30",
+    },
     watch = {
       enabled = true, mode = "auto", -- "auto" | "local" | "ssh" | "poll"
-      poll_ms = 5000, debounce_ms = 150, reconnect_ms = 3000,
+      poll_ms = 5000, ssh_poll_ms = 0, debounce_ms = 150,
+      reconnect_ms = 3000, max_retries = 3,
       remote_tail_cmd = nil, -- string | string[] | fun(remote, session)
     },
     auto_save_before_sync = true, auto_sync_approved = false,

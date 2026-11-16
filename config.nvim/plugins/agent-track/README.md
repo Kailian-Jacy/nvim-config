@@ -22,7 +22,7 @@ flowchart LR
 ```
 
 - **Local Mode (`:AgentTrack attach /path/to/R`)**: watches `<R-git-common-dir>/logs/refs/subcommits/<S>/agent` via `vim.uv.new_fs_event` (+ `poll_ms` fallback) and runs debounced async `git fetch`.
-- **Outbound SSH Mode (`:AgentTrack attach user@devbox:/path/to/R` or `ssh://...`)**: `L` opens one outbound `ssh` stream running `tail -n0 -F '<path>/.git/logs/refs/subcommits/<S>/agent'`. `R` never needs inbound network access, credentials, or a central Git server back to `L`.
+- **Outbound SSH Mode (`:AgentTrack attach user@devbox:/path/to/R` or `ssh://...`)**: `L` opens one multiplexed outbound `ssh` stream (`ControlMaster=auto`) resolving `git rev-parse --git-common-dir` (supporting standard repos, Git worktrees, and bare repos) and running `tail -n0 -F "$d/logs/refs/subcommits/<S>/agent"` with `ssh_poll_ms = 0` and fast-failure circuit-breaker backoff. `R` never needs inbound network access, credentials, or a central Git server back to `L`.
 
 ---
 
@@ -70,13 +70,19 @@ require("agent-track").setup({
   notes_prefix = "subcommits",
   default_session = "default",
   git_cmd = { "git" },
-  ssh_cmd = { "ssh", "-o", "BatchMode=yes", "-o", "ServerAliveInterval=15" },
+  ssh_cmd = {
+    "ssh", "-o", "BatchMode=yes",
+    "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C",
+    "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30",
+  },
   watch = {
     enabled = true,
     mode = "auto",          -- "auto" | "local" | "ssh" | "poll"
-    poll_ms = 5000,
+    poll_ms = 5000,         -- fallback poll interval for local/poll modes
+    ssh_poll_ms = 0,        -- 0 disables periodic git fetch polling over SSH
     debounce_ms = 150,
     reconnect_ms = 3000,
+    max_retries = 3,        -- fast-failure circuit breaker before detaching SSH watcher
     remote_tail_cmd = nil,  -- optional custom argv override for SSH tail
   },
   auto_save_before_sync = true,

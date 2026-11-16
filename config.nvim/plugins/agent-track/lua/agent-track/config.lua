@@ -1,8 +1,9 @@
 local M = {}
 local DEFAULTS = {
   ref_prefix = "refs/subcommits", notes_prefix = "subcommits", default_session = "default",
-  git_cmd = { "git" }, ssh_cmd = { "ssh", "-o", "BatchMode=yes", "-o", "ServerAliveInterval=15" },
-  watch = { enabled = true, mode = "auto", poll_ms = 5000, debounce_ms = 150, reconnect_ms = 3000, remote_tail_cmd = nil },
+  git_cmd = { "git" },
+  ssh_cmd = { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" },
+  watch = { enabled = true, mode = "auto", poll_ms = 5000, ssh_poll_ms = 0, debounce_ms = 150, reconnect_ms = 3000, max_retries = 3, remote_tail_cmd = nil },
   auto_save_before_sync = true, auto_sync_approved = false, notify_on_arrival = true,
   reviewer = {
     tab_prefix = "[track]", reuse_tab = true,

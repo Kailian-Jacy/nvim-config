@@ -20,16 +20,18 @@ local function deepest_dir(dir)
     local p = vim.fn.fnamemodify(dir, ":h"); if p == dir then break end; dir = p
   end
 end
-local function build_tail_argv(remote, session, cfg)
+function M.build_tail_argv(remote, session, cfg)
+  cfg = cfg or config.get()
   local custom = cfg.watch and cfg.watch.remote_tail_cmd
   if type(custom) == "function" then custom = custom(remote, session) end
   if type(custom) == "table" then return git.resolve_bin(vim.deepcopy(custom)) end
   if type(custom) == "string" and custom ~= "" then return git.resolve_bin({ "sh", "-c", custom }) end
   local parsed = M.parse_ssh_remote(remote); if not parsed then return nil end
   local sq, ref_rel = parsed.path:gsub("'", "'\\''"), config.ref(session, "agent")
-  local argv = vim.deepcopy(cfg.ssh_cmd or { "ssh", "-o", "BatchMode=yes", "-o", "ServerAliveInterval=15" })
+  local argv = vim.deepcopy(cfg.ssh_cmd or { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" })
   if parsed.port then vim.list_extend(argv, { "-p", tostring(parsed.port) }) end
-  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("tail -n0 -F '%s/.git/logs/%s' 2>/dev/null || tail -n0 -F '%s/logs/%s'", sq, ref_rel, sq, ref_rel) }))
+  local cd_arg = parsed.path == "~" and '"$HOME"' or (parsed.path:sub(1, 2) == "~/" and ('"$HOME"\'' .. parsed.path:sub(2):gsub("'", "'\\''") .. "'") or ("'" .. sq .. "'"))
+  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && d=$(git rev-parse --git-common-dir) && f=\"$d/logs/%s\" && mkdir -p \"$(dirname \"$f\")\" && touch \"$f\" && exec tail -n0 -F \"$f\"", cd_arg, ref_rel) }))
 end
 
 function M.detach(session)
@@ -48,7 +50,8 @@ function M.attach(session, remote, on_change)
   local m = wcfg.mode or "auto"
   local mode = (m == "ssh" or wcfg.remote_tail_cmd ~= nil) and "ssh" or ((m == "local" or m == "poll") and m or (M.is_ssh_remote(remote) and "ssh" or "local"))
   local debounce_ms, poll_ms, reconnect_ms = tonumber(wcfg.debounce_ms) or 150, tonumber(wcfg.poll_ms) or 5000, tonumber(wcfg.reconnect_ms) or 3000
-  local w = { session = s, remote = remote, mode = mode, stopped = false, debounce_timer = vim.uv.new_timer() }; watchers[s] = w
+  local eff_poll = (mode == "ssh") and (tonumber(wcfg.ssh_poll_ms) or 0) or poll_ms
+  local w = { session = s, remote = remote, mode = mode, stopped = false, failures = 0, debounce_timer = vim.uv.new_timer() }; watchers[s] = w
   local function trigger() if not w.stopped and not w.debounce_timer:is_closing() then w.debounce_timer:stop(); w.debounce_timer:start(debounce_ms, 0, vim.schedule_wrap(function() if not w.stopped then on_change() end end)) end end
   if mode == "local" then
     local exp = vim.fn.expand(remote); local rinfo = git.root_info(exp)
@@ -62,20 +65,36 @@ function M.attach(session, remote, on_change)
     arm(true)
   elseif mode == "ssh" then
     local function start_stream()
-      local argv = not w.stopped and build_tail_argv(remote, s, cfg) or nil; if not argv then return end
-      w.proc = vim.system(argv, { text = true, stdin = false, stderr = false, stdout = function(e, d) if not e and d and d ~= "" then vim.schedule(trigger) end end }, vim.schedule_wrap(function()
+      local argv = not w.stopped and M.build_tail_argv(remote, s, cfg) or nil; if not argv then return end
+      local started = vim.uv.now()
+      local ok, proc = pcall(vim.system, argv, { text = true, stdin = false, stderr = false, stdout = function(e, d) if not e and d and d ~= "" then vim.schedule(trigger) end end }, vim.schedule_wrap(function()
         w.proc = nil; if w.stopped then return end
-        close_h(w.reconnect_timer); w.reconnect_timer = vim.uv.new_timer(); w.reconnect_timer:start(reconnect_ms, 0, vim.schedule_wrap(function() if not w.stopped then on_change(); start_stream() end end))
+        close_h(w.reconnect_timer)
+        if vim.uv.now() - started >= 15000 then
+          w.failures = 0
+          w.reconnect_timer = vim.uv.new_timer()
+          w.reconnect_timer:start(reconnect_ms, 0, vim.schedule_wrap(function() if not w.stopped then on_change(); start_stream() end end))
+        else
+          w.failures = w.failures + 1
+          if w.failures >= (tonumber(wcfg.max_retries) or 3) then
+            M.detach(s)
+            vim.notify("agent-track: SSH watcher failed repeatedly and was stopped (:AgentTrack attach to retry)", vim.log.levels.ERROR)
+            return
+          end
+          w.reconnect_timer = vim.uv.new_timer()
+          w.reconnect_timer:start(reconnect_ms * (2 ^ w.failures), 0, vim.schedule_wrap(function() if not w.stopped then start_stream() end end))
+        end
       end))
+      if ok then w.proc = proc else M.detach(s); vim.notify("agent-track: SSH watcher failed repeatedly and was stopped (:AgentTrack attach to retry)", vim.log.levels.ERROR) end
     end
     start_stream()
   end
-  if poll_ms > 0 then w.poll_timer = vim.uv.new_timer(); w.poll_timer:start(poll_ms, poll_ms, vim.schedule_wrap(function() if not w.stopped then on_change() end end)) end
-  return { ok = true, active = true, session = s, remote = remote, mode = mode }
+  if eff_poll > 0 then w.poll_timer = vim.uv.new_timer(); w.poll_timer:start(eff_poll, eff_poll, vim.schedule_wrap(function() if not w.stopped then on_change() end end)) end
+  return { ok = true, active = not w.stopped, session = s, remote = remote, mode = mode }
 end
 
 function M.status(session)
   local s = config.resolve_session(session); local w = watchers[s]
-  return (w and not w.stopped) and { active = true, session = s, remote = w.remote, mode = w.mode } or { active = false, session = s }
+  return (w and not w.stopped) and { active = true, session = s, remote = w.remote, mode = w.mode, poll = w.poll_timer ~= nil, failures = w.failures or 0 } or { active = false, session = s }
 end
 return M
