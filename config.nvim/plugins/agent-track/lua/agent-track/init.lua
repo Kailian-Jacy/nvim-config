@@ -15,7 +15,7 @@ local function emit(pattern, hook_key, data)
 end
 local function ensure_base(root, s, remote, explicit_base, reset)
   local base_ref, synced_ref = config.ref(s, "base"), config.ref(s, "synced")
-  local base = explicit_base and git.rev_parse(root, explicit_base) or git.rev_parse(root, base_ref)
+  local base = explicit_base and git.rev_parse(root, explicit_base) or (not reset and git.rev_parse(root, base_ref)) or nil
   if not base and remote and remote ~= "" then git.run(root, { "fetch", remote, "+" .. base_ref .. ":" .. base_ref }, { reflog = true }); base = git.rev_parse(root, base_ref) end
   base = base or git.rev_parse(root, "HEAD"); if not base then return nil end
   git.update_ref(root, base_ref, base, "init session base")
@@ -41,8 +41,23 @@ function M.statusline() local cfg = config.get(); return (cfg.statusline and cfg
 function M.init_session(remote_or_opts, maybe_opts)
   local opts = type(remote_or_opts) == "table" and remote_or_opts or (maybe_opts or {})
   local remote = type(remote_or_opts) == "table" and opts.remote or remote_or_opts
-  local s, _, info, err = ctx_of(opts.session, opts); config.set_active_session(s); if not info then return { ok = false, error = err } end
-  local base = ensure_base(info.root, s, remote, opts.base, opts.reset); if not base then return { ok = false, error = "cannot resolve base commit" } end
+  local s, _, info, err = ctx_of(opts.session, opts); if not info then return { ok = false, error = err } end
+  local base_ref, r_head, r_base = config.ref(s, "base"), nil, nil
+  if remote and remote ~= "" then
+    local lr = git.run(info.root, { "ls-remote", remote, "HEAD", base_ref }, { ident = false })
+    if not lr.ok then local e = vim.trim(lr.stderr ~= "" and lr.stderr or ("cannot reach remote: " .. remote)); vim.notify("agent-track: " .. e, vim.log.levels.ERROR); return { ok = false, error = e } end
+    for line in (lr.stdout or ""):gmatch("[^\n]+") do
+      local sha, ref = line:match("^(%x+)%s+(%S+)$"); if ref == "HEAD" then r_head = sha elseif ref == base_ref then r_base = sha end
+    end
+    if (r_base or r_head) and not ((r_base and git.rev_parse(info.root, r_base .. "^{commit}")) or (r_head and git.rev_parse(info.root, r_head .. "^{commit}"))) then
+      local e = "remote does not share git history with current cwd repo (" .. info.root .. ")"
+      vim.notify("agent-track: " .. e, vim.log.levels.ERROR); return { ok = false, error = e }
+    end
+  end
+  config.set_active_session(s)
+  local base = ensure_base(info.root, s, r_base and remote or nil, opts.base or (r_base and git.rev_parse(info.root, r_base .. "^{commit}")), opts.reset)
+  if not base then return { ok = false, error = "cannot resolve base commit" } end
+  if remote and remote ~= "" and not r_base then git.push_refs(info.root, remote, { base_ref }) end
   local state = git.read_state(info.root, s); if opts.reset then state.applied_ids = {} end
   if remote and remote ~= "" then state.remote = remote end; git.write_state(info.root, s, state)
   if state.remote and state.remote ~= "" then
