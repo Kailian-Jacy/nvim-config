@@ -30,10 +30,10 @@ function M.build_tail_argv(remote, session, cfg)
   local sq = parsed.path:gsub("'", "'\\''")
   local rp = (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", ""):gsub("'", "'\\''")
   local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", ""):gsub("'", "'\\''")
-  local argv = vim.deepcopy(cfg.ssh_cmd or { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" })
+  local argv = vim.deepcopy(cfg.ssh_cmd or config.get().ssh_cmd)
   if parsed.port then vim.list_extend(argv, { "-p", tostring(parsed.port) }) end
   local cd_arg = parsed.path == "~" and '"$HOME"' or (parsed.path:sub(1, 2) == "~/" and ('"$HOME"\'' .. parsed.path:sub(2):gsub("'", "'\\''") .. "'") or ("'" .. sq .. "'"))
-  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && prev=\"\" && while :; do cur=$(git for-each-ref --format='%%(refname)=%%(objectname)' '%s/*/agent' 'refs/notes/%s/*' 2>/dev/null); if [ \"$cur\" != \"$prev\" ]; then [ -n \"$prev\" ] && printf '%%s\\n' \"$cur\"; prev=\"$cur\"; fi; sleep 2; done", cd_arg, rp, np) }))
+  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && q() { git for-each-ref --format='%%(refname)=%%(objectname)' '%s/*/agent' 'refs/notes/%s/*' 2>/dev/null; }; prev=$(q) && while :; do sleep 2; cur=$(q); if [ \"$cur\" != \"$prev\" ]; then printf 'changed\\n'; prev=\"$cur\"; fi; done", cd_arg, rp, np) }))
 end
 
 function M.detach(session)

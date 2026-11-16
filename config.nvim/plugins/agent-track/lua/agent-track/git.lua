@@ -50,6 +50,14 @@ function M.push_refs(root, remote, refs)
   local pr = #specs > 0 and M.run(root, vim.list_extend({ "push", remote }, specs)) or nil
   return pr ~= nil and pr.ok, (pr and not pr.ok) and vim.trim(pr.stderr) or nil
 end
+function M.push_refs_async(root, remote, refs, cb)
+  local specs = {}
+  for _, r in ipairs((remote and remote ~= "") and refs or {}) do if M.rev_parse(root, r) then specs[#specs + 1] = "+" .. r .. ":" .. r end end
+  if #specs == 0 then if cb then vim.schedule(function() cb(false, nil) end) end; return nil end
+  return M.run_async(root, vim.list_extend({ "push", remote }, specs), nil, function(pr)
+    if cb then cb(pr.ok, not pr.ok and vim.trim(pr.stderr) or nil) end
+  end)
+end
 function M.read_state(root, session)
   local s = config.resolve_session(session); local sha = M.rev_parse(root, config.ref(s, "state"))
   local ok, dec = pcall(vim.json.decode, sha and M.run(root, { "cat-file", "-p", sha }, { ident = false }).stdout or "")

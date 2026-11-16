@@ -6,7 +6,7 @@ local HL = { approved = "AgentTrackApproved", rejected = "AgentTrackRejected", s
 local DEF_HL = { AgentTrackApproved = "DiagnosticOk", AgentTrackRejected = "DiagnosticError", AgentTrackStale = "DiagnosticWarn", AgentTrackPending = "Comment", AgentTrackSynced = "DiagnosticOk", AgentTrackConflict = "DiagnosticError" }
 local DEF_KEYS = { next_subcommit = "]c", prev_subcommit = "[c", next_touch_file = "]f", prev_touch_file = "[f",
   approve = "<leader>ta", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" }
-local S = { session = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
+local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
 local function track() return require("agent-track") end
 local function get_cfg()
   local ok, t = pcall(track); local c = ok and t.get_config and t.get_config() or {}; local r = c.reviewer or {}
@@ -38,7 +38,9 @@ local function summary_title(res)
 end
 local function fetch_list(session)
   local res = track().list(session or S.session, { preview_conflicts = true }) or { ok = false, items = {} }
-  if res.session then S.session = res.session end; return res
+  if res.session then S.session = res.session end
+  if res.root then S.root = res.root end
+  return res
 end
 local function resolve_item(items, target)
   if target == nil or target == "" then
@@ -51,7 +53,9 @@ local function resolve_item(items, target)
   return n and items[n] or nil, n or 0
 end
 local function git_diff(parent, sha)
-  local r = vim.system(vim.list_extend(vim.deepcopy((select(2, get_cfg())).git_cmd or { "git" }), { "diff", "--no-color", parent, sha }), { text = true }):wait()
+  local argv = vim.deepcopy((select(2, get_cfg())).git_cmd or { "git" })
+  if S.root and S.root ~= "" then vim.list_extend(argv, { "-C", S.root }) end
+  local r = vim.system(vim.list_extend(argv, { "diff", "--no-color", parent, sha }), { text = true }):wait()
   return (r.code == 0 and r.stdout) or ""
 end
 local function close_prev_tab(keep)
@@ -63,10 +67,10 @@ local function close_prev_tab(keep)
   end
 end
 local OPS = {
-  approve = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { session = s })); cb() end end,
-  approve_prefix = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { prefix = true, session = s })); cb() end end,
-  clear = function(t, sha, s, cb) if sha then check(t.review(sha, "pending", { comment = "", session = s })); cb() end end,
-  reject = function(t, sha, s, cb) if sha then ask("Reject reason: ", function(r) if r ~= nil then check(t.review(sha, "rejected", { comment = r, session = s })); cb() end end) end end,
+  approve = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { session = s, async_push = true })); cb() end end,
+  approve_prefix = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { prefix = true, session = s, async_push = true })); cb() end end,
+  clear = function(t, sha, s, cb) if sha then check(t.review(sha, "pending", { comment = "", session = s, async_push = true })); cb() end end,
+  reject = function(t, sha, s, cb) if sha then ask("Reject reason: ", function(r) if r ~= nil then check(t.review(sha, "rejected", { comment = r, session = s, async_push = true })); cb() end end) end end,
   sync = function(t, _, s, cb) check(t.apply("approved", { session = s })); cb() end,
   sync_prefix = function(t, sha, s, cb) if sha then check(t.apply(sha, { session = s })); cb() end end,
   undo = function(t, _, s, cb) check(t.undo(s)); cb() end, fetch = function(t, _, s, cb) check(t.fetch(s)); cb() end,
@@ -133,7 +137,8 @@ local function open_view(it, idx, total, touch_idx, file_only)
     vim.api.nvim_create_autocmd("User", { group = grp, pattern = "CodeDiffOpen", once = true, callback = function(ev)
       if ev.data and ev.data.tabpage and vim.api.nvim_tabpage_is_valid(ev.data.tabpage) then opened = true; finish(ev.data.tabpage) end
     end })
-    local ok, err = pcall(vim.cmd, (file_only and cur_file) and ("CodeDiff file " .. parent .. " " .. it.sha .. " " .. vim.fn.fnameescape(cur_file)) or ("CodeDiff " .. parent .. " " .. it.sha))
+    local abs_file = cur_file and ((S.root and S.root ~= "") and (S.root:gsub("/+$", "") .. "/" .. cur_file) or cur_file) or nil
+    local ok, err = pcall(vim.cmd, (file_only and abs_file) and ("CodeDiff file " .. parent .. " " .. it.sha .. " " .. vim.fn.fnameescape(abs_file)) or ("CodeDiff " .. parent .. " " .. it.sha))
     if not ok then pcall(vim.api.nvim_del_augroup_by_id, grp); return { ok = false, error = tostring(err) } end
     local cur = vim.api.nvim_get_current_tabpage()
     if not opened and not before[cur] then finish(cur) elseif not opened and not package.loaded["codediff"] then S.tab, S.in_place = cur, true; tag_tab(cur) end

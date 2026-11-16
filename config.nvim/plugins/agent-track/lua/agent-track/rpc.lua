@@ -26,6 +26,7 @@ local H = {
   open = function(_, a) return require("agent-track.reviewer").open(tgt_of(a), { session = a.session }) end,
   panel = function(_, a) return require("agent-track.reviewer").panel({ session = pick(a, 1, "session") }) end,
   close = function() return require("agent-track.reviewer").close() end,
+  reload = function(t) return t.reload() end,
 }
 H.info, H.init_session, H.sync = H.ping, H.init, H.apply
 function M.dispatch(req)

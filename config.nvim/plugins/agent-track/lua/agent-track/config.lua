@@ -1,8 +1,16 @@
 local M = {}
+local function ensure_ssh_dir()
+  local dir = ((vim.env.XDG_RUNTIME_DIR and vim.env.XDG_RUNTIME_DIR ~= "") and vim.env.XDG_RUNTIME_DIR or ("/tmp/nvim-" .. ((vim.env.USER and vim.env.USER ~= "") and vim.env.USER or "user"))):gsub("/+$", "")
+  pcall(vim.fn.mkdir, dir, "p", "0700")
+  return dir
+end
+local function default_ssh_cmd()
+  return { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=" .. ensure_ssh_dir() .. "/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" }
+end
 local DEFAULTS = {
   ref_prefix = "refs/subcommits", notes_prefix = "subcommits", default_session = "default",
   git_cmd = { "git" },
-  ssh_cmd = { "ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/at-ssh-%C", "-o", "ControlPersist=600", "-o", "ServerAliveInterval=30" },
+  ssh_cmd = default_ssh_cmd(),
   watch = { enabled = true, mode = "auto", poll_ms = 5000, ssh_poll_ms = 0, debounce_ms = 150, reconnect_ms = 3000, max_retries = 3, remote_tail_cmd = nil },
   auto_save_before_sync = true, auto_sync_approved = false, notify_on_arrival = true,
   reviewer = {
@@ -12,9 +20,15 @@ local DEFAULTS = {
   },
   statusline = { enabled = true, format = nil }, hooks = { on_updated = nil, on_synced = nil, on_reviewed = nil },
 }
-local current, active_session = vim.deepcopy(DEFAULTS), nil
-function M.setup(opts) current = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), opts or {}); return current end
+local current, active_session, user_opts = vim.deepcopy(DEFAULTS), nil, nil
+function M.setup(opts)
+  user_opts = opts and vim.deepcopy(opts) or nil
+  DEFAULTS.ssh_cmd = default_ssh_cmd()
+  current = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), opts or {})
+  return current
+end
 function M.get() return current end
+function M.get_user_opts() return user_opts end
 function M.set_active_session(s) active_session = (s and s ~= "") and s or nil end
 function M.resolve_session(s)
   if type(s) == "string" and s ~= "" then return s end
