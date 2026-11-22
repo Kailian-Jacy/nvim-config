@@ -149,6 +149,7 @@ require("agent-track").setup({
 | | `<leader>ts` / `<leader>tp` | Sync / Open review panel |
 | **Subcommit pane** | `<CR>` / `o` | Open the subcommit under the cursor |
 | | `a` / `C` / `x` | Approve / Approve with a comment / Reject the row under the cursor |
+| | `p` | Float with the full message (subject, why/body, trailers, review comment); closes on cursor move |
 | | `R` | Re-list (also automatic on `AgentTrack{Updated,Reviewed,Synced}`) |
 
 ### Subcommit Pane

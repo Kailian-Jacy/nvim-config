@@ -91,7 +91,14 @@ local function new_buf(tab)
     if prompt then vim.ui.input({ prompt = prompt }, go) else go("") end
   end) end
   local open = act(function(it, p) require("agent-track.reviewer").open(it.sha, { session = p.session }) end)
-  local maps = { ["<CR>"] = open, o = open, ["<2-LeftMouse>"] = open, a = review("approved"), C = review("approved", "Approve comment: "),
+  local function message(it) -- p: the full message (subject, why/body, trailers, review comment) in a float
+    local out = { string.format("#%d %s  %s%s", it.index or 0, it.short_sha or (it.sha or ""):sub(1, 7), it.review_status or "pending", it.would_conflict and "  ⚡ would conflict on sync" or ""), "", it.subject or "" }
+    local body = vim.trim(it.body or "")
+    if body ~= "" then out[#out + 1] = ""; vim.list_extend(out, vim.split(body, "\n", { plain = true })) end
+    if (it.comment or "") ~= "" then vim.list_extend(out, { "", "Review: " .. it.comment }) end
+    vim.lsp.util.open_floating_preview(out, "gitcommit", { border = "rounded", max_width = 100, wrap = true, focus_id = "agent_track_message" })
+  end
+  local maps = { ["<CR>"] = open, o = open, ["<2-LeftMouse>"] = open, p = act(message), a = review("approved"), C = review("approved", "Approve comment: "),
     x = review("rejected", "Reject reason: "), R = function() M.refresh(tab) end }
   for lhs, fn in pairs(maps) do vim.keymap.set("n", lhs, fn, { buffer = b, silent = true, nowait = true, desc = "AgentTrack pane" }) end
   return b

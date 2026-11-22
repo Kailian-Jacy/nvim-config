@@ -158,6 +158,7 @@ conflict).
 It hides/returns with the explorer, keeps manual resizes, stays closed after
 `:q` in that tab, and uses a left column when there is no explorer. Keys:
   `<CR>` / `o`    Open the subcommit under the cursor
+  `p`             Float with the full message, body and review comment
   `a` / `C` / `x` Approve / Approve with comment / Reject the row under cursor
   `R`             Re-list (automatic on `AgentTrack{Updated,Reviewed,Synced}`)
 Options: `reviewer.pane = { enabled = true, max_height = 10 }`. Highlights:

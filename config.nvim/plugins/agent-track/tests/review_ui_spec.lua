@@ -147,7 +147,11 @@ eq(inbox.items[1].comment, "LGTM; rename backoff later", "agent inbox shows the 
 check(api.nvim_buf_get_lines(pane.get().buf, 1, 2, false)[1]:find("✓", 1, true) ~= nil, "pane marks #1 approved")
 
 -- 5. pane-local keys act on the row under the cursor
-P = pane.get(); api.nvim_set_current_win(P.win); api.nvim_win_set_cursor(P.win, { 4, 0 })
+P = pane.get(); api.nvim_set_current_win(P.win); api.nvim_win_set_cursor(P.win, { 2, 0 }); press(P.buf, "p")
+local fl = vim.tbl_filter(function(w) return api.nvim_win_get_config(w).relative ~= "" end, api.nvim_tabpage_list_wins(0))
+check(#fl == 1 and table.concat(api.nvim_buf_get_lines(api.nvim_win_get_buf(fl[1]), 0, -1, false), "\n"):find("with jitter and caps", 1, true) ~= nil, "pane p shows the full (untruncated) message in a float")
+for _, w in ipairs(fl) do api.nvim_win_close(w, true) end
+api.nvim_set_current_win(P.win); api.nvim_win_set_cursor(P.win, { 4, 0 })
 vim.ui.input = function(_, cb) cb("docs ok") end
 press(P.buf, "C"); eq((note(L, items[3].sha) or {}).comment, "docs ok", "pane C comment-approves the row under cursor")
 api.nvim_win_set_cursor(P.win, { 4, 0 }); press(P.buf, "<CR>"); check(opened(items[3].sha), "pane <CR> opens the row under cursor")
