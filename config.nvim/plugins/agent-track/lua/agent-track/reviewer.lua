@@ -103,6 +103,22 @@ local function install_buf_keymaps(buf)
     end
   end
 end
+local function select_in_explorer(tab, path) -- show `path` inside the tab's CodeDiff explorer instead of opening a new tab
+  local okl, lc = pcall(require, "codediff.ui.lifecycle")
+  local ex = (okl and path and tab and vim.api.nvim_tabpage_is_valid(tab)) and lc.get_explorer(tab) or nil
+  if not (ex and ex.tree and type(ex.on_file_select) == "function") then return false end
+  local function find(nodes)
+    for _, n in ipairs(nodes or {}) do
+      if n.data and not n.data.type and n.data.path == path then return n end
+      local hit = n:has_children() and find(vim.tbl_map(function(id) return ex.tree:get_node(id) end, n:get_child_ids())); if hit then return hit end
+    end
+  end
+  local ok, node = pcall(find, ex.tree:get_nodes()); if not (ok and node) then return false end
+  if ex.winid and vim.api.nvim_win_is_valid(ex.winid) and ex.bufnr and vim.api.nvim_buf_is_valid(ex.bufnr) then
+    for l = 1, vim.api.nvim_buf_line_count(ex.bufnr) do if ex.tree:get_node(l) == node then pcall(vim.api.nvim_win_set_cursor, ex.winid, { l, 0 }); break end end
+  end
+  return (pcall(ex.on_file_select, node.data))
+end
 local function ensure_setup()
   for g, tgt in pairs(DEF_HL) do vim.api.nvim_set_hl(0, g, { link = tgt, default = true }) end
   if S.augroup then return end
@@ -140,10 +156,16 @@ local function open_view(it, idx, total, touch_idx, file_only)
   end
   local parent = (it.parent and it.parent ~= "") and it.parent or EMPTY_TREE
   if vim.fn.exists(":CodeDiff") == 2 then
+    if file_only and S.tab and vim.api.nvim_tabpage_is_valid(S.tab) and vim.t[S.tab].agent_track_sha == it.sha and select_in_explorer(S.tab, cur_file) then
+      tag_tab(S.tab); return { ok = true, sha = it.sha, index = idx, touch_index = touch_idx, file = cur_file, header = header, tab = S.tab }
+    end
     if rcfg.reuse_tab then close_prev_tab(nil) end
     local before, opened, grp = {}, false, vim.api.nvim_create_augroup("AgentTrackCodeDiffOpen", { clear = true })
     for _, t in ipairs(vim.api.nvim_list_tabpages()) do before[t] = true end
-    local function finish(tab) if rcfg.reuse_tab then close_prev_tab(tab) end; S.tab, S.in_place = tab, false; tag_tab(tab) end
+    local function finish(tab)
+      if rcfg.reuse_tab then close_prev_tab(tab) end; S.tab, S.in_place = tab, false; tag_tab(tab)
+      if not file_only and cur_file then vim.schedule(function() select_in_explorer(tab, cur_file) end) end -- start at Touch-Order #k, not the alphabetical first file
+    end
     vim.api.nvim_create_autocmd("User", { group = grp, pattern = "CodeDiffOpen", once = true, callback = function(ev)
       if ev.data and ev.data.tabpage and vim.api.nvim_tabpage_is_valid(ev.data.tabpage) then opened = true; finish(ev.data.tabpage) end
     end })
