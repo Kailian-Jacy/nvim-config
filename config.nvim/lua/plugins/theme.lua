@@ -306,6 +306,25 @@ return {
         end
         return added, removed
       end
+      -- CodeDiff names git revisions codediff:///<root>///<rev>/<path> (lualine shows that URI, shortened to
+      -- noise like c////U/z/...), and its explorer / the agent-track pane are scratch buffers. Show
+      -- "<path> @<rev>" instead, and the file under review while the explorer or pane has focus.
+      local function codediff_filename(str)
+        local rev, path = vim.api.nvim_buf_get_name(0):match("^codediff://.-///([^/]+)/(.+)$")
+        if path then
+          return path .. " @" .. rev:sub(1, 7)
+        end
+        if vim.bo.filetype == "codediff-explorer" or vim.bo.filetype == "agent-track-pane" then
+          local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
+          local s = ok and lifecycle.get_session(vim.api.nvim_get_current_tabpage()) or nil
+          local p = s and ((s.modified_path or "") ~= "" and s.modified_path or s.original_path) or ""
+          if p ~= "" then
+            local r = s.modified_revision
+            return (p:sub(1, 1) == "/" and vim.fn.fnamemodify(p, ":~:.") or p) .. ((r and r ~= "WORKING") and (" @" .. r:sub(1, 7)) or "")
+          end
+        end
+        return str
+      end
       -- Resolve a foreground color from the first existing highlight group.
       local function hl_fg(groups, fallback)
         for _, g in ipairs(groups) do
@@ -358,6 +377,7 @@ return {
             {
               "filename",
               path = 1,
+              fmt = codediff_filename,
             },
             {
               function()
