@@ -94,6 +94,17 @@ vim.g.agent_track_qf_prefix = "review://"; rv.qflist({ items[1] }, { session = "
 eq(vim.fn.bufname(vim.fn.getqflist({ items = 0 }).items[1].bufnr), "review://demo/" .. items[1].sha, "quickfix prefix comes from g:agent_track_qf_prefix (options.lua)")
 vim.cmd("cclose")
 
+-- 0b. :AgentTrack list: every session with accept/reject/pending, printed and offered in a picker
+local ov = at.overview()
+eq(#ov.sessions, 1, "overview lists the one session"); eq(ov.sessions[1].session, "demo", "overview session name")
+eq(ov.sessions[1].total, 3, "overview counts subcommits"); eq(ov.sessions[1].pending, 3, "overview counts pending")
+local picked; local real_select = vim.ui.select
+vim.ui.select = function(list, o, cb) picked = vim.tbl_map(o.format_item, list); cb(nil) end
+local real_uis = api.nvim_list_uis; api.nvim_list_uis = function() return { {} } end
+vim.cmd("AgentTrack list"); api.nvim_list_uis, vim.ui.select = real_uis, real_select
+check(vim.fn.execute("messages"):find("demo%s+✓0%s+✗0%s+·3%s+%(3%)") ~= nil, ":AgentTrack list prints accept/reject/pending per session")
+check(picked and #picked == 1 and picked[1]:find("demo", 1, true) ~= nil, ":AgentTrack list opens a session picker")
+
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")
 eq(require("codediff.config").options.diff.layout, "inline", "git.lua makes inline (unified) the default diff layout")

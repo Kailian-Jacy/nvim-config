@@ -68,9 +68,13 @@ completes subcommands, discovered session names, and `sync` targets.
     active watcher mode (`local`, `ssh`, `poll`, or `off`).
 
 :AgentTrack review [session]         *:AgentTrack-review* *agent-track-review*
-:AgentTrack list [session]                                 *:AgentTrack-list*
     Open the `Snacks.picker` subcommit review panel (`vim.ui.select` fallback)
     with review badges (`✓`/`✓*`/`✗`/`~`/`·`).
+
+:AgentTrack list                                           *:AgentTrack-list*
+    Print every session (`refs/subcommits/*/agent`) with `✓` approved,
+    `✗` rejected and `·` pending counts (`*` = active), then pick one with
+    `vim.ui.select` to make it active and open its review deck.
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in

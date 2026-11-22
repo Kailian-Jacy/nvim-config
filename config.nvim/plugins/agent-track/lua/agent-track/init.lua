@@ -100,6 +100,38 @@ function M.sessions(opts)
   local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err, sessions = {} } end
   return { ok = true, active = config.resolve_session(), sessions = (discover_sessions(info.root)) }
 end
+--- Every trackable session (<ref_prefix>/*/agent) with review counts, newest first.
+function M.overview(opts)
+  opts = opts or {}
+  local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err, sessions = {} } end
+  local active, keep_sl, out = config.resolve_session(), sl_cache, {}
+  local names, heads = discover_sessions(info.root)
+  for _, s in ipairs(names) do
+    local r = M.list(s, { cwd = info.root })
+    if r.ok then
+      local c = r.counts
+      out[#out + 1] = { session = s, active = s == active, total = c.total, approved = c.approved, rejected = c.rejected, pending = c.pending + c.stale, agent = heads[s], remote = r.remote }
+    end
+  end
+  sl_cache = keep_sl -- list() rewrites the statusline per session; keep the active one's text
+  return { ok = true, active = active, root = info.root, sessions = out }
+end
+local function overview_line(x)
+  return string.format("%s%-24s ✓%-3d ✗%-3d ·%-3d (%d)", x.active and "*" or " ", x.session, x.approved, x.rejected, x.pending, x.total)
+end
+--- :AgentTrack list — print every session's accept/reject/pending, then a picker; <CR> opens its review panel.
+function M.list_sessions(opts)
+  local r = M.overview(opts)
+  if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
+  if #r.sessions == 0 then return vim.notify("agent-track: no subcommit sessions in this repo", vim.log.levels.INFO) end
+  local lines = vim.tbl_map(overview_line, r.sessions)
+  vim.api.nvim_echo({ { "agent-track sessions (✓ approved  ✗ rejected  · pending)\n" .. table.concat(lines, "\n") } }, true, {})
+  if #vim.api.nvim_list_uis() == 0 then return r end
+  vim.ui.select(r.sessions, { prompt = "AgentTrack sessions", format_item = overview_line }, function(x)
+    if x then M.session(x.session); require("agent-track.reviewer").panel({ session = x.session }) end
+  end)
+  return r
+end
 function M.session(name, opts)
   local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
   if not name or name == "" then return M.sessions(opts) end
@@ -307,7 +339,7 @@ function M.reload()
   return { ok = true, reloaded = true, session = prev_s }
 end
 
-local SESS_SUB = { session = true, status = true, fetch = true, list = true, review = true, detach = true, undo = true, clean = true }
+local SESS_SUB = { session = true, status = true, fetch = true, review = true, detach = true, undo = true, clean = true }
 local CMD = {
   init = function(f) M.init_session(f[2]) end, detach = function(f) M.detach(f[2]) end, fetch = function(f) M.fetch(f[2]) end,
   reload = function() M.reload(); vim.notify("agent-track: reloaded", vim.log.levels.INFO) end,
@@ -336,12 +368,13 @@ local CMD = {
     local st = M.status(f[2]); if not st.ok then return vim.notify("agent-track: " .. tostring(st.error), vim.log.levels.WARN) end; local c = st.counts
     vim.notify(string.format("agent-track [%s] remote=%s synced=%d/%d ✓%d ·%d ✗%d watch=%s", st.session, st.remote or "-", c.synced, c.total, c.approved, c.pending + c.stale, c.rejected, st.watcher.active and st.watcher.mode or "off"))
   end,
-  list = function(f) require("agent-track.reviewer").panel({ session = f[2] }) end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
+  list = function() M.list_sessions() end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
+  review = function(f) require("agent-track.reviewer").panel({ session = f[2] }) end,
   approve = function(f) M.review(f[2] ~= "--prefix" and f[2] or nil, "approved", { prefix = (f[2] == "--prefix" or f[3] == "--prefix") }) end,
   reject = function(f) M.review(f[2], "rejected", { comment = table.concat(vim.list_slice(f, 3), " ") }) end,
   sync = function(f) M.apply(f[2] or "approved") end, undo = function(f) M.undo(f[2]) end, clean = function(f) M.clean(f[2]) end,
 }
-CMD.review = CMD.list; local SUB = vim.tbl_keys(CMD); table.sort(SUB)
+local SUB = vim.tbl_keys(CMD); table.sort(SUB)
 local function register_commands()
   if cmd_registered then return end; cmd_registered = true
   vim.api.nvim_create_user_command("AgentTrack", function(c) local sub = c.fargs[1] or "status"; if CMD[sub] then CMD[sub](c.fargs) else vim.notify("Unknown :AgentTrack subcommand: " .. sub, vim.log.levels.ERROR) end end, {

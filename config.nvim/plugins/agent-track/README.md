@@ -124,7 +124,8 @@ require("agent-track").setup({
 | `:AgentTrack session [name]` | — | List discovered sessions (`*` = active) or switch active `<session>` |
 | `:AgentTrack detach [session]` | — | Stop background watcher for session |
 | `:AgentTrack fetch [session]` | `<leader>atf` | Wildcard-fetch latest `agent`, `base`, and `notes` refs (auto-switches if active session is empty) |
-| `:AgentTrack review` / `list` | `<leader>atr` | Open `Snacks.picker` subcommit review deck (`vim.ui.select` fallback) |
+| `:AgentTrack review [session]` | `<leader>atr` | Open `Snacks.picker` subcommit review deck (`vim.ui.select` fallback) |
+| `:AgentTrack list` | — | Print every session in this repo with `✓` approved / `✗` rejected / `·` pending counts, then pick one (`vim.ui.select`) to open its review deck |
 | `:AgentTrack open [idx\|sha\|id]` | `<leader>ato` | Open subcommit in single reused `[track]` `:CodeDiff` tab |
 | `:AgentTrack approve [idx\|sha] [--prefix]` | — | Approve subcommit (or `1..k` watermark with `--prefix`) & push notes |
 | `:AgentTrack reject <idx\|sha> <reason>` | — | Reject subcommit with comment & push notes to `R` |
