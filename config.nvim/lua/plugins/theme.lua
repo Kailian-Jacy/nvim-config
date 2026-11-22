@@ -123,6 +123,20 @@ return {
         cmdline = {
           view = "cmdline",
         },
+        -- Neovim 0.11 emits `:!cmd` output as msg_show kinds shell_out /
+        -- shell_err / shell_ret. noice's default routes don't list them, so
+        -- the output was silently dropped. Route them explicitly.
+        routes = {
+          {
+            filter = { event = "msg_show", kind = { "shell_out", "shell_err", "shell_ret" }, min_height = 10 },
+            view = "split",
+          },
+          {
+            filter = { event = "msg_show", kind = { "shell_out", "shell_err", "shell_ret" } },
+            view = "notify",
+            opts = { merge = true, title = "Shell" },
+          },
+        },
         views = {
           mini = {
             win_options = {
