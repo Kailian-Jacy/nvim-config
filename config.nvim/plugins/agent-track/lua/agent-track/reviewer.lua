@@ -4,8 +4,8 @@ local BUILTIN_SELECT, BUILTIN_INPUT = vim.ui.select, vim.ui.input
 local BADGE = { approved = "✓", rejected = "✗", stale = "~", pending = "·" }
 local HL = { approved = "AgentTrackApproved", rejected = "AgentTrackRejected", stale = "AgentTrackStale", pending = "AgentTrackPending" }
 local DEF_HL = { AgentTrackApproved = "DiagnosticOk", AgentTrackRejected = "DiagnosticError", AgentTrackStale = "DiagnosticWarn", AgentTrackPending = "Comment", AgentTrackSynced = "DiagnosticOk", AgentTrackConflict = "DiagnosticError" }
-local DEF_KEYS = { next_subcommit = "]c", prev_subcommit = "[c", next_touch_file = "]f", prev_touch_file = "[f",
-  approve = "<leader>ta", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" }
+local DEF_KEYS = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
+  approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" }
 local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
 local function track() return require("agent-track") end
 local function get_cfg()
@@ -68,6 +68,7 @@ local function close_prev_tab(keep)
 end
 local OPS = {
   approve = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { session = s, async_push = true })); cb() end end,
+  approve_comment = function(t, sha, s, cb) if sha then ask("Approve comment: ", function(r) if r ~= nil then check(t.review(sha, "approved", { comment = r, session = s, async_push = true })); cb() end end) end end,
   approve_prefix = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { prefix = true, session = s, async_push = true })); cb() end end,
   clear = function(t, sha, s, cb) if sha then check(t.review(sha, "pending", { comment = "", session = s, async_push = true })); cb() end end,
   reject = function(t, sha, s, cb) if sha then ask("Reject reason: ", function(r) if r ~= nil then check(t.review(sha, "rejected", { comment = r, session = s, async_push = true })); cb() end end) end end,
@@ -79,21 +80,26 @@ local function run_op(op, sha, s, cb) OPS[op](track(), sha, s, cb or function() 
 local function install_buf_keymaps(buf)
   if not buf or not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype == "prompt" or (vim.bo[buf].filetype or ""):find("^snacks_") then return end
   local km, refresh = (get_cfg()).keymaps, function() if S.sha then M.open(S.sha, { session = S.session }) end end
-  local binds = {
-    [km.next_subcommit] = M.next_subcommit, [km.prev_subcommit] = M.prev_subcommit, [km.next_touch_file] = M.next_touch_file, [km.prev_touch_file] = M.prev_touch_file,
-    [km.approve_prefix] = function() run_op("approve_prefix", S.sha, S.session, refresh) end, [km.reject] = function() run_op("reject", S.sha, S.session, refresh) end,
-    [km.panel] = function() M.panel({ session = S.session }) end,
-    [km.sync] = function()
+  local function advance() -- after approving: open the next pending/stale subcommit, else re-open the current one
+    local items = fetch_list(S.session).items or {}
+    for step = 1, #items do local it = items[((S.index - 1 + step) % #items) + 1]; if it.review_status == "pending" or it.review_status == "stale" then return M.open(it.sha, { session = S.session }) end end
+    refresh()
+  end
+  local acts = {
+    next_subcommit = M.next_subcommit, prev_subcommit = M.prev_subcommit, next_touch_file = M.next_touch_file, prev_touch_file = M.prev_touch_file,
+    approve = function() run_op("approve", S.sha, S.session, advance) end, approve_comment = function() run_op("approve_comment", S.sha, S.session, advance) end,
+    approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, refresh) end,
+    panel = function() M.panel({ session = S.session }) end,
+    sync = function()
       local app = vim.iter(fetch_list(S.session).items or {}):any(function(x) return x.review_status == "approved" end)
       run_op(app and "sync" or "sync_prefix", S.sha, S.session, refresh)
     end,
-    [km.approve] = function() run_op("approve", S.sha, S.session, function()
-      local items = fetch_list(S.session).items or {}
-      for step = 1, #items do local it = items[((S.index - 1 + step) % #items) + 1]; if it.review_status == "pending" or it.review_status == "stale" then return M.open(it.sha, { session = S.session }) end end
-      refresh()
-    end) end,
   }
-  for lhs, fn in pairs(binds) do if lhs and lhs ~= "" then vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true }) end end
+  for name, fn in pairs(acts) do -- each keymap option is one lhs or a list of lhs
+    for _, lhs in ipairs(type(km[name]) == "table" and km[name] or { km[name] }) do
+      if type(lhs) == "string" and lhs ~= "" then vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true, desc = "AgentTrack: " .. (name:gsub("_", " ")) }) end
+    end
+  end
 end
 local function ensure_setup()
   for g, tgt in pairs(DEF_HL) do vim.api.nvim_set_hl(0, g, { link = tgt, default = true }) end
@@ -180,7 +186,7 @@ function M.panel(opts)
   local session = opts.session or require("agent-track.config").resolve_session(); local init_res = fetch_list(session)
   local ok, items, prompt = init_res.ok ~= false, init_res.items or {}, summary_title(init_res)
   if type(_G.Snacks) == "table" and _G.Snacks.picker then
-    local act_map = { a = "approve", A = "approve_prefix", x = "reject", c = "clear", s = "sync", S = "sync_prefix", u = "undo", r = "fetch" }
+    local act_map = { a = "approve", C = "approve_comment", A = "approve_prefix", x = "reject", c = "clear", s = "sync", S = "sync_prefix", u = "undo", r = "fetch" }
     local actions, keys = {}, {}
     for k, op in pairs(act_map) do
       actions["sc_" .. op] = function(p, item)
@@ -203,7 +209,7 @@ function M.panel(opts)
       end,
       preview = function(ctx)
         local it = ctx.item and ctx.item._sc; if not it then return ctx.preview:set_lines({ "No subcommits" }) end
-        local out = { string.format("Subcommit #%d  %s  [%s]", it.index or 0, it.sha, it.review_status or "pending"), "Keys: <CR> diff  a/A approve  x reject  c clear  s/S sync  u undo  r fetch" }
+        local out = { string.format("Subcommit #%d  %s  [%s]", it.index or 0, it.sha, it.review_status or "pending"), "Keys: <CR> diff  a/A approve  C approve+comment  x reject  c clear  s/S sync  u undo  r fetch" }
         if (it.comment or "") ~= "" then out[#out + 1] = "Comment: " .. it.comment end
         if vim.trim(it.body or "") ~= "" then out[#out + 1] = "\n" .. vim.trim(it.body) end
         out[#out + 1] = "\nTouch-Order:"; for i, f in ipairs(ordered_files(it)) do out[#out + 1] = string.format("  %d. %s", i, f) end
