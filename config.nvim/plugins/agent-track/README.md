@@ -93,7 +93,7 @@ require("agent-track").setup({
     tab_prefix = "[track]",
     reuse_tab = true,
     open_on_attach = true,                       -- :AgentTrack attach opens the first pending subcommit
-    pane = { enabled = true, max_height = 10 }, -- subcommit list docked under the CodeDiff explorer
+    pane = { enabled = true, position = "bottom", max_height = 12 }, -- full-width bottom list; "explorer" = under the file tree
     keymaps = {                                  -- each value: one lhs or a list of lhs
       next_subcommit = { "<leader>tj", "]c" },
       prev_subcommit = { "<leader>tk", "[c" },
@@ -154,22 +154,20 @@ require("agent-track").setup({
 
 ### Subcommit Pane
 
-The `[track]` tab docks a compact list of every subcommit in the session directly under the CodeDiff file explorer (same column and width, explorer-style header and selection colors), so the whole chain stays visible while reading one slice:
+The `[track]` tab shows every subcommit of the session in a full-width bottom split, like `:botright copen` (explorer-style header and selection colors), so the whole chain stays visible while reading one slice:
 
 ```text
- Changes (3)                            <- codediff explorer (directory tree by default)
-└ config.nvim/plugins/agent-track/lua/
-  ├ config.lua                       M
-  ├ pane.lua                         A
-  └ reviewer.lua                     M
-────────────────────────────────────────
- Subcommits (8)                   ✓2 ·6   <- agent-track pane
- ✓ 1 feat(codediff): show the explorer…
- ✓ 2 feat(agent-track): add <leader>t…
- · 3 feat(agent-track): dock a subcom…   <- open subcommit (selection color)
+ Changes (3)                            │ <old side>           │ <new side>
+└ config.nvim/plugins/agent-track/lua/  │                      │
+  ├ pane.lua                         A  │                      │
+────────────────────────────────────────┴──────────────────────┴──────────────
+ Subcommits (8)                                                         ✓2 ·6
+ ✓ 1 805c14b feat(codediff): show the explorer as a directory tree by default
+ ✓ 2 8cf23e5 feat(agent-track): add <leader>tj/tk jumps and <leader>tc comment+approve
+ · 3 e329445 feat(agent-track): dock a subcommit pane ...   <- open subcommit (selection color)
 ```
 
-Each row is the review badge (`✓` approved, `✗` rejected, `~` stale, `·` pending), the index (plus short SHA when the column is ≥ 56 wide) and the subject truncated to the column; `p` shows the full message. The pane hides and returns with the explorer (`toggle_explorer`), keeps a manual resize, stays closed once you `:q` it in that tab, and falls back to a left column when no explorer exists. It is purely additive: it finds the explorer by its `codediff-explorer` filetype, follows `WinNew`/`WinClosed`, and never patches codediff. Disable with `reviewer.pane.enabled = false`; restyle via `AgentTrackPane{Header,Current,Dim}` (default links: `CodeDiffExplorerTreeGroup`, `CodeDiffExplorerSelected`, `Comment`).
+Each row is the review badge (`✓` approved, `✗` rejected, `~` stale, `·` pending), the index, the short SHA (when ≥ 56 columns wide) and the subject (truncated only if it does not fit); `p` shows the full message. The pane stays at the bottom across `toggle_explorer`, keeps a manual resize (up to `max_height` rows by content), and stays closed once you `:q` it in that tab. `position = "explorer"` instead docks it under the file tree (same column, hides and returns with the explorer). It is purely additive: it follows `WinNew`/`WinClosed` and never patches codediff. Disable with `reviewer.pane.enabled = false`; restyle via `AgentTrackPane{Header,Current,Dim}` (default links: `CodeDiffExplorerTreeGroup`, `CodeDiffExplorerSelected`, `Comment`).
 
 ---
 

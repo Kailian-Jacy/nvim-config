@@ -1,6 +1,6 @@
--- Subcommit pane: a quiet list of every subcommit docked under the CodeDiff explorer
--- of the [track] tab. Add-on only: finds the explorer by buffer filetype, follows it
--- through WinNew/WinClosed, borrows codediff's own highlights, never patches codediff.
+-- Subcommit pane: a list of every subcommit in the [track] tab, as a full-width bottom split (like
+-- botright copen) or, with position = "explorer", under the CodeDiff file tree. Add-on only: finds the
+-- explorer by buffer filetype, follows WinNew/WinClosed, borrows codediff's highlights, never patches it.
 local M = {}
 local NS = vim.api.nvim_create_namespace("agent_track_pane")
 local BADGE = { approved = "✓", rejected = "✗", stale = "~", pending = "·" }
@@ -10,7 +10,7 @@ local WO = { number = false, relativenumber = false, cursorline = true, wrap = f
 local P, group = {}, nil -- P[tabpage] = { win, buf, session, root, sha, items, anchored, h, user_closed, closing }
 
 local function track() return require("agent-track") end
-local function opts() local ok, t = pcall(track); local r = ok and t.get_config and (t.get_config().reviewer or {}) or {}; return vim.tbl_extend("force", { enabled = true, max_height = 10 }, r.pane or {}) end
+local function opts() local ok, t = pcall(track); local r = ok and t.get_config and (t.get_config().reviewer or {}) or {}; return vim.tbl_extend("force", { enabled = true, position = "bottom", max_height = 12 }, r.pane or {}) end
 local function valid(w) return w ~= nil and vim.api.nvim_win_is_valid(w) end
 local function dw(s) return vim.fn.strdisplaywidth(s) end
 local function explorer_win(tab)
@@ -55,7 +55,7 @@ local function render(tab)
   if cur > 0 then vim.api.nvim_buf_set_extmark(p.buf, NS, cur, 0, { line_hl_group = "AgentTrackPaneCurrent" }) end
   if not valid(p.win) then return end
   local want = math.max(2, math.min(#lines, opts().max_height)) -- only resize when the list grows/shrinks, so manual resizes stick
-  if p.anchored and p.h ~= want then p.h = want; pcall(vim.api.nvim_win_set_height, p.win, want) end
+  if p.sized and p.h ~= want then p.h = want; pcall(vim.api.nvim_win_set_height, p.win, want) end
   if cur > 0 and (vim.api.nvim_get_current_win() ~= p.win or p.shown_sha ~= p.sha) then pcall(vim.api.nvim_win_set_cursor, p.win, { cur + 1, 0 }) end
   p.shown_sha = p.sha
 end
@@ -103,14 +103,17 @@ local function open_win(tab)
   local ex, okc, cdc = explorer_win(tab), pcall(require, "codediff.config")
   local ecfg = (okc and type(cdc.options) == "table" and cdc.options.explorer) or {}
   local h = math.max(2, math.min(#(p.items or {}) + 1, c.max_height))
-  local wc
-  if ex then wc = ecfg.position == "bottom" and { split = "right", win = ex, width = c.width or 50 } or { split = "below", win = ex, height = h }
-  elseif tab == vim.api.nvim_get_current_tabpage() then wc = { split = "left", win = -1, width = ecfg.width or 40 } -- no explorer: same left column
+  local cur, wc, mode = tab == vim.api.nvim_get_current_tabpage(), nil, nil
+  if c.position ~= "explorer" and cur then wc, mode = { split = "below", win = -1, height = h }, "bottom" -- full width, like botright copen
+  elseif c.position == "explorer" and ex then
+    wc, mode = ecfg.position == "bottom" and { split = "right", win = ex, width = c.width or 50 } or { split = "below", win = ex, height = h }, "explorer"
+  elseif cur then wc, mode = { split = "left", win = -1, width = ecfg.width or 40 }, "left" -- explorer mode without an explorer
   else return end
   if not (p.buf and vim.api.nvim_buf_is_valid(p.buf)) then p.buf = new_buf(tab) end
   local ok, w = pcall(vim.api.nvim_open_win, p.buf, false, wc); if not ok then return end
-  p.win, p.anchored, p.h = w, ex ~= nil, h
+  p.win, p.mode, p.anchored, p.sized, p.h = w, mode, mode == "explorer", mode ~= "left", h
   for k, v in pairs(WO) do pcall(function() vim.wo[w][k] = v end) end
+  if mode == "bottom" then vim.wo[w].winfixwidth = false end
   if ex then for _, k in ipairs({ "winhighlight", "statuscolumn" }) do pcall(function() vim.wo[w][k] = vim.wo[ex][k] end) end end
   render(tab)
 end
@@ -122,6 +125,9 @@ local function reconcile()
       local ex, shown = explorer_win(tab), valid(p.win)
       if shown and not ex then p.closing = true; pcall(vim.api.nvim_win_close, p.win, true); p.closing, p.win = false, nil
       elseif ex and not shown then open_win(tab) end
+    elseif p.mode == "bottom" and not p.user_closed and valid(p.win) and tab == vim.api.nvim_get_current_tabpage()
+      and vim.api.nvim_win_get_width(p.win) < vim.o.columns then -- a re-shown explorer column squeezed it: back to full width
+      p.closing = true; pcall(vim.api.nvim_win_close, p.win, true); p.closing, p.win = false, nil; open_win(tab)
     end
   end
 end

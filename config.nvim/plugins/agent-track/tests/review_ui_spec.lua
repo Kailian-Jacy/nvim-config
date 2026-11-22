@@ -98,14 +98,14 @@ local tab, ex, P = cur(), explorer(), pane.get()
 check(wait(function() return #vim.tbl_filter(function(n) return n.data and n.data.type == "directory" end, (function()
   local out = {}; for l = 1, api.nvim_buf_line_count(ex.bufnr) do out[#out + 1] = ex.tree:get_node(l) end; return out end)()) > 0 end), "explorer renders directory nodes (tree view)")
 local ep, pp = api.nvim_win_get_position(ex.winid), api.nvim_win_get_position(P.win)
-eq(pp[2], ep[2], "pane shares the explorer column"); check(pp[1] > ep[1], "pane sits below the explorer")
-eq(api.nvim_win_get_width(P.win), api.nvim_win_get_width(ex.winid), "pane width = explorer width")
+local function at_bottom(w) local q = api.nvim_win_get_position(w); return q[2] == 0 and api.nvim_win_get_width(w) == vim.o.columns end
+check(at_bottom(P.win) and pp[1] > ep[1] + api.nvim_win_get_height(ex.winid) - 1, "pane is a full-width bottom split (like botright copen)")
 eq(api.nvim_win_get_height(P.win), 4, "pane height = header + 3 rows")
 eq(vim.wo[P.win].number, false, "pane has no number column"); eq(vim.wo[P.win].winfixheight, true, "pane height is fixed")
 local lines = api.nvim_buf_get_lines(P.buf, 0, -1, false)
 check(lines[1]:find("^ Subcommits %(3%)") ~= nil, "pane header: " .. lines[1])
 check(lines[2]:find("core: add retry", 1, true) and lines[4]:find("docs: describe retry", 1, true), "pane rows in order")
-check(lines[2]:find("…", 1, true) and vim.fn.strdisplaywidth(lines[2]) <= api.nvim_win_get_width(P.win), "long subjects are truncated to the column width")
+check(lines[2]:find(items[1].short_sha .. " core: add retry backoff math with jitter and caps", 1, true) ~= nil, "full width shows the sha and the whole subject")
 check(lines[2]:find("^ · 1 ") ~= nil, "row starts with the review badge (no sync circle)")
 check(vim.iter({ "⚡", "○", "●" }):all(function(g) return not table.concat(lines, "\n"):find(g, 1, true) end), "no ⚡ / sync circles in the pane")
 local cur_rows = vim.tbl_map(function(m) return m[2] end, vim.tbl_filter(function(m) return m[4].line_hl_group ~= nil end,
@@ -158,11 +158,11 @@ press(P.buf, "C"); eq((note(L, items[3].sha) or {}).comment, "docs ok", "pane C 
 api.nvim_win_set_cursor(P.win, { 4, 0 }); press(P.buf, "<CR>"); check(opened(items[3].sha), "pane <CR> opens the row under cursor")
 vim.ui.input = orig_input
 
--- 6. pane follows the explorer through <leader>b hide/show; a user-closed pane stays closed
+-- 6. the bottom pane survives <leader>b hide/show (re-shown full-height explorer column -> back to full width); a user-closed pane stays closed
 tab, ex = cur(), explorer()
-require("codediff.ui.explorer").toggle_visibility(ex); check(wait(function() return pane.get(tab).win == nil end), "pane hides with the explorer")
+require("codediff.ui.explorer").toggle_visibility(ex); vim.wait(150); check(pane.get(tab).win and at_bottom(pane.get(tab).win), "pane stays at the bottom while the explorer is hidden")
 require("codediff.ui.explorer").toggle_visibility(ex)
-check(wait(function() local w = pane.get(tab).win; return w and api.nvim_win_get_position(w)[2] == api.nvim_win_get_position(ex.winid)[2] end), "pane returns under the explorer")
+check(wait(function() local w = pane.get(tab).win; return w and at_bottom(w) end), "pane is full width again after the explorer returns")
 api.nvim_win_close(pane.get(tab).win, true); vim.wait(100)
 require("codediff.ui.explorer").toggle_visibility(ex); require("codediff.ui.explorer").toggle_visibility(ex); vim.wait(200)
 check(pane.get(tab).win == nil and pane.get(tab).user_closed, "user-closed pane is not resurrected")
