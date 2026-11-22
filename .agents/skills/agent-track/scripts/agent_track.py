@@ -122,13 +122,17 @@ def cmd_subcommit(ctx: Ctx, args) -> dict:
         ctx.git("read-tree", parent, env_extra=env); ctx.git("add", "-A", "--", *(files or ["."]), env_extra=env)
         tree = ctx.git("write-tree", env_extra=env).stdout.strip()
     if tree == ctx.rev(f"{parent}^{{tree}}") and not args.allow_empty: raise TrackError("no changes to subcommit relative to parent subcommit")
-    changed, ins, dels = [], 0, 0
-    for l in ctx.git("diff-tree", "-r", "--numstat", "-M", parent, tree).stdout.splitlines():
-        if len(p := l.split("\t", 2)) == 3: ins, dels = ins + (int(p[0]) if p[0].isdigit() else 0), dels + (int(p[1]) if p[1].isdigit() else 0); changed.append(p[2])
+    changed, renamed, ins, dels = [], {}, 0, 0
+    toks, i = ctx.git("diff-tree", "-r", "--numstat", "-M", "-z", parent, tree).stdout.split("\x00"), 0
+    while i < len(toks) and len(p := toks[i].split("\t", 2)) == 3:  # -z: "a\td\tpath\0"; renames "a\td\t\0old\0new\0" (keep new path)
+        if p[2]: path, i = p[2], i + 1
+        else: path, i = (toks[i + 2] if i + 2 < len(toks) else ""), i + 3; renamed[toks[i - 2]] = path
+        ins, dels = ins + (int(p[0]) if p[0].isdigit() else 0), dels + (int(p[1]) if p[1].isdigit() else 0)
+        if path: changed.append(path)
     coaching = f"subcommit touches {len(changed)} files (+{ins}/-{dels}), exceeding atomic guideline (<=5 files, <=150 lines); split with --files." if ins + dels > 150 or len(changed) > 5 else None
     if coaching and args.strict: raise TrackError(coaching)
     if coaching: print(f"[agent-track coaching] {coaching}", file=sys.stderr)
-    ord_req = [p for p in (ctx.relpath(x) for x in _csv(args.order)) if p]
+    ord_req = [renamed.get(p, p) for p in (ctx.relpath(x) for x in _csv(args.order)) if p]
     touch = list(dict.fromkeys(([p for p in ord_req if p in changed] or ord_req) + changed))
     sid = args.id or reused_id or f"sc-{time.strftime('%Y%m%d%H%M%S')}-{os.urandom(2).hex()}"
     subj, body = args.message.strip(), (args.why or "").strip()
