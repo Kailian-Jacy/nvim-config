@@ -153,6 +153,10 @@ check(wait(function() local n = note(R, items[1].sha); return n and n.comment ==
 local inbox = vim.json.decode(sh({ "python3", AT, "--no-nvim", "-C", R, "inbox", "--session", "demo", "--json" }))
 eq(inbox.items[1].comment, "LGTM; rename backoff later", "agent inbox shows the approval comment")
 check(api.nvim_buf_get_lines(pane.get().buf, 1, 2, false)[1]:find("✓", 1, true) ~= nil, "pane marks #1 approved")
+vim.ui.input = function(_, cb) cb("split the test change out") end
+press(explorer().bufnr, "<leader>tx")
+eq((note(L, items[2].sha) or {}).status, "rejected", "<leader>tx rejects the open subcommit")
+check(opened(items[3].sha), "<leader>tx advances to the next pending subcommit")
 
 -- 5. pane-local keys act on the row under the cursor
 P = pane.get(); api.nvim_set_current_win(P.win); api.nvim_win_set_cursor(P.win, { 2, 0 }); press(P.buf, "p")

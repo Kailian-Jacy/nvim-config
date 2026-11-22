@@ -98,7 +98,7 @@ local function install_buf_keymaps(buf)
   local acts = {
     next_subcommit = M.next_subcommit, prev_subcommit = M.prev_subcommit, next_touch_file = M.next_touch_file, prev_touch_file = M.prev_touch_file,
     approve = function() run_op("approve", S.sha, S.session, advance) end, approve_comment = function() run_op("approve_comment", S.sha, S.session, advance) end,
-    approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, refresh) end,
+    approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, advance) end,
     panel = function() M.panel({ session = S.session }) end,
     sync = function()
       local app = vim.iter(fetch_list(S.session).items or {}):any(function(x) return x.review_status == "approved" end)

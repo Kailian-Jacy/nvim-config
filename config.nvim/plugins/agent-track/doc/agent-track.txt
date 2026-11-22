@@ -121,7 +121,7 @@ Installed in Normal mode on non-floating buffers inside the `[track]` tab
   `<leader>ta`   Approve & open next pending/stale (`approve`)
   `<leader>tc`   Prompt comment, approve & open next (`approve_comment`)
   `<leader>tA`   Prefix-approve `1..current` (`approve_prefix`)
-  `<leader>tx`   Prompt reason & reject subcommit (`reject`)
+  `<leader>tx`   Prompt reason, reject & open next (`reject`)
   `<leader>ts`   Sync `approved`, else `1..current` (`sync`)
   `<leader>tp`   Open `Snacks.picker` review panel (`panel`)
 A subcommit opens at its `Touch-Order` #1 file; `]f`/`[f` stay in the same tab.

@@ -145,7 +145,7 @@ require("agent-track").setup({
 | **`[track]` Diff Tab** | `<leader>tj` / `<leader>tk` (also `]c` / `[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
 | | `]f` / `[f` | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
 | | `<leader>ta` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
-| | `<leader>tA` / `<leader>tx` | Prefix-approve `1..k` / Reject with comment |
+| | `<leader>tA` / `<leader>tx` | Prefix-approve `1..k` / Reject with a reason (prompt), then open the next pending subcommit |
 | | `<leader>ts` / `<leader>tp` | Sync / Open review panel |
 | **Subcommit pane** | `<CR>` / `o` | Open the subcommit under the cursor |
 | | `a` / `C` / `x` | Approve / Approve with a comment / Reject the row under the cursor |
