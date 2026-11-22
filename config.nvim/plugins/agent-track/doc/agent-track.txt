@@ -45,6 +45,8 @@ completes subcommands, discovered session names, and `sync` targets.
     `agent-track.remote`, fetch all `<ref_prefix>/*/{base,agent}` & notes,
     auto-switch to a non-empty remote session if [session] was omitted, and
     start wildcard watcher (`fs_event` or single SSH `for-each-ref` stream).
+    Then opens the first `pending`/`stale` subcommit in the `[track]` diff
+    (`reviewer.open_on_attach = false` disables; Lua/RPC attach never opens).
 
 :AgentTrack session [name]         *:AgentTrack-session* *agent-track-session*
     List discovered `<ref_prefix>/*/agent` sessions (marking active with `*`),
@@ -219,7 +221,7 @@ Internal Lifecycle Autocmds~
     auto_save_before_sync = true, auto_sync_approved = false,
     notify_on_arrival = true,
     reviewer = {
-      tab_prefix = "[track]", reuse_tab = true,
+      tab_prefix = "[track]", reuse_tab = true, open_on_attach = true,
       pane = { enabled = true, max_height = 10 },
       keymaps = { -- each value: one lhs or a list of lhs
         next_subcommit = { "<leader>tj", "]c" },

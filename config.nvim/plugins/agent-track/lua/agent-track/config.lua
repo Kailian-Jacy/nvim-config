@@ -14,7 +14,7 @@ local DEFAULTS = {
   watch = { enabled = true, mode = "auto", poll_ms = 5000, ssh_poll_ms = 0, debounce_ms = 150, reconnect_ms = 3000, max_retries = 3, remote_tail_cmd = nil },
   auto_save_before_sync = true, auto_sync_approved = false, notify_on_arrival = true,
   reviewer = {
-    tab_prefix = "[track]", reuse_tab = true,
+    tab_prefix = "[track]", reuse_tab = true, open_on_attach = true, -- :AgentTrack attach opens the first pending subcommit
     pane = { enabled = true, max_height = 10 }, -- subcommit list docked under the CodeDiff explorer
     keymaps = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
       approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" },

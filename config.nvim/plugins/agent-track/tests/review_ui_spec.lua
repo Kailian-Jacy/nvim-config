@@ -62,10 +62,13 @@ local function note(repo, sha)
   return r.code == 0 and vim.json.decode(r.stdout) or nil
 end
 
-local ar = at.attach(R, { session = "demo" })
-check(ar.ok, "attach local agent repo: " .. tostring(ar.error))
+vim.cmd("AgentTrack attach " .. vim.fn.fnameescape(R) .. " demo")
+local ar = { ok = at.list("demo").ok }
+check(ar.ok, "attach local agent repo")
 local items = at.list("demo").items
 eq(#items, 3, "three subcommits fetched into L")
+check(opened(items[1].sha), ":AgentTrack attach opens the first pending subcommit's [track] diff")
+rv.close(); api.nvim_set_current_win(api.nvim_list_wins()[1])
 
 -- 0. review picker <c-q> (its qflist action) -> quickfix list whose <CR> / :cnext open subcommit diffs.
 --    Snacks is stubbed: the spec captures the picker opts and runs the action <c-q> resolves to (a real snacks

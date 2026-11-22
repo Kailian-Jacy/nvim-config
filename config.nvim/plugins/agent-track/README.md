@@ -92,6 +92,7 @@ require("agent-track").setup({
   reviewer = {
     tab_prefix = "[track]",
     reuse_tab = true,
+    open_on_attach = true,                       -- :AgentTrack attach opens the first pending subcommit
     pane = { enabled = true, max_height = 10 }, -- subcommit list docked under the CodeDiff explorer
     keymaps = {                                  -- each value: one lhs or a list of lhs
       next_subcommit = { "<leader>tj", "]c" },
@@ -119,7 +120,7 @@ require("agent-track").setup({
 
 | Command | Global Key | Action |
 | :--- | :--- | :--- |
-| `:AgentTrack attach <remote> [session]` | — | Attach local path or SSH URL (`user@host:/repo`), wildcard-fetch sessions & start watcher |
+| `:AgentTrack attach <remote> [session]` | — | Attach local path or SSH URL (`user@host:/repo`), wildcard-fetch sessions, start watcher, then open the first pending subcommit's `[track]` diff (`reviewer.open_on_attach`) |
 | `:AgentTrack session [name]` | — | List discovered sessions (`*` = active) or switch active `<session>` |
 | `:AgentTrack detach [session]` | — | Stop background watcher for session |
 | `:AgentTrack fetch [session]` | `<leader>atf` | Wildcard-fetch latest `agent`, `base`, and `notes` refs (auto-switches if active session is empty) |

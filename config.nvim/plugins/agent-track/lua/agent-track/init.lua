@@ -311,7 +311,16 @@ local SESS_SUB = { session = true, status = true, fetch = true, list = true, rev
 local CMD = {
   init = function(f) M.init_session(f[2]) end, detach = function(f) M.detach(f[2]) end, fetch = function(f) M.fetch(f[2]) end,
   reload = function() M.reload(); vim.notify("agent-track: reloaded", vim.log.levels.INFO) end,
-  attach = function(f) if f[2] then M.attach(f[2], { session = f[3] }) else vim.notify("Usage: :AgentTrack attach <remote> [session]", vim.log.levels.ERROR) end end,
+  attach = function(f)
+    if not f[2] then return vim.notify("Usage: :AgentTrack attach <remote> [session]", vim.log.levels.ERROR) end
+    local r = M.attach(f[2], { session = f[3] })
+    -- :AgentTrack attach (interactive only; the Lua/RPC attach stays headless) jumps straight into the first
+    -- pending/stale subcommit's [track] diff. reviewer.open_on_attach = false turns this off.
+    local c = r and r.ok and r.counts or nil
+    if c and (c.pending or 0) + (c.stale or 0) > 0 and (config.get().reviewer or {}).open_on_attach ~= false then
+      require("agent-track.reviewer").open(nil, { session = r.session })
+    end
+  end,
   session = function(f)
     if f[2] then
       local r = M.session(f[2]); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.ERROR) end
