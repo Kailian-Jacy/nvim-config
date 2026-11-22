@@ -324,9 +324,8 @@ return {
     },
     opts = {
       diff = {
-        -- @AI: inline by default
-        layout = "side-by-side",
-        original_position = "left", -- old/original on the left, like diffview
+        layout = "inline", -- unified view by default; `t` toggles side-by-side
+        original_position = "left", -- old/original on the left in side-by-side, like diffview
       },
       explorer = {
         view_mode = "tree", -- left file panel as a directory tree (`i` toggles the flat list)
@@ -360,6 +359,26 @@ return {
     },
     config = function(_, opts)
       require("codediff").setup(opts)
+
+      -- CodeDiff loads git revisions into codediff:///<root>///<rev>/<path> buffers and deliberately leaves
+      -- their filetype empty (to keep LSP off the custom URI), so ftplugins / filetype-driven features never
+      -- run there: both panes of side-by-side and added/deleted files in inline. Set it from the path; LSP
+      -- still skips these buffers (lspconfig only takes "/..." names; vim.lsp.enable only buftype "").
+      vim.api.nvim_create_autocmd("User", {
+        group = vim.api.nvim_create_augroup("CodeDiffVirtualFiletype", { clear = true }),
+        pattern = "CodeDiffVirtualFileLoaded",
+        callback = function(ev)
+          local buf = ev.data and ev.data.buf
+          if not (buf and vim.api.nvim_buf_is_valid(buf)) or vim.bo[buf].filetype ~= "" then
+            return
+          end
+          local path = vim.api.nvim_buf_get_name(buf):match("^codediff://.-///[^/]+/(.+)$")
+          local ft = path and vim.filetype.match({ filename = path, buf = buf })
+          if ft then
+            vim.bo[buf].filetype = ft
+          end
+        end,
+      })
 
       -- Name the diff tabpage "[diff]<original_tab_name>" so the custom
       -- tabline (vim.g.tabname) shows where the diff came from. The origin

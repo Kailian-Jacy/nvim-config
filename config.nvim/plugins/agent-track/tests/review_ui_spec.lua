@@ -49,7 +49,7 @@ vim.opt.rtp:prepend(CODEDIFF); vim.opt.rtp:prepend(PLUGIN); vim.cmd("runtime! pl
 local cd_spec
 vim.g.modules = vim.g.modules or {} -- git.lua reads vim.g.modules.svn at load time
 for _, s in ipairs(dofile(REPO .. "/config.nvim/lua/plugins/git.lua")) do if s[1] == "esmuellert/codediff.nvim" then cd_spec = s end end
-require("codediff").setup(cd_spec and cd_spec.opts or {})
+vim.cmd("filetype on"); if cd_spec then cd_spec.config(cd_spec, cd_spec.opts) else require("codediff").setup({}) end -- real config(): opts + autocmds
 vim.cmd.cd(L)
 local at, pane, rv, lc = require("agent-track").setup({ notify_on_arrival = false }), require("agent-track.pane"), require("agent-track.reviewer"), require("codediff.ui.lifecycle")
 local function cur() return api.nvim_get_current_tabpage() end
@@ -93,6 +93,7 @@ check(ph > 0 and not vim.bo[ph].buflisted and not api.nvim_buf_is_loaded(ph), "q
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")
+eq(require("codediff.config").options.diff.layout, "inline", "git.lua makes inline (unified) the default diff layout")
 rv.open(1, { session = "demo" }); check(opened(items[1].sha), "subcommit #1 opens with explorer + pane")
 local tab, ex, P = cur(), explorer(), pane.get()
 check(wait(function() return #vim.tbl_filter(function(n) return n.data and n.data.type == "directory" end, (function()
@@ -126,6 +127,12 @@ tab = cur(); rv.next_touch_file()
 check(wait(function() return explorer().current_file_path == "src/ui/view.lua" end), "]f selects Touch-Order #2 inside the explorer")
 eq(cur(), tab, "]f keeps the same tab (tree + pane stay visible)")
 check(pane.get(tab).win ~= nil, "pane survives ]f")
+local function diff_ft(side) local s = lc.get_session(cur()); local w = s and s[side .. "_win"]; return (w and api.nvim_win_is_valid(w)) and vim.bo[api.nvim_win_get_buf(w)].filetype or nil end
+check(wait(function() return diff_ft("modified") == "lua" end), "inline diff buffer keeps the file's filetype (lua)")
+require("codediff.ui.view").toggle_layout(tab)
+check(wait(function() return lc.get_session(tab).layout == "side-by-side" and diff_ft("original") == "lua" and diff_ft("modified") == "lua" end),
+  "side-by-side codediff:// revision buffers get a filetype on both sides")
+require("codediff.ui.view").toggle_layout(tab); check(wait(function() return lc.get_session(tab).layout == "inline" end), "t toggles back to inline")
 press(explorer().bufnr, "<leader>tk"); check(opened(items[1].sha), "<leader>tk goes back to #1")
 -- a file-only open that cannot select in place (another subcommit's tab) reopens the explorer at that file; it used to
 -- run `:CodeDiff file <rev> <rev> <path>` (a codediff usage error) after closing the tab, leaving a [No Name] buffer
