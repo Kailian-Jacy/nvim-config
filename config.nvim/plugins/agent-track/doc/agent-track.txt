@@ -161,7 +161,7 @@ the file tree instead (hides/returns with the explorer). Keys:
   `p`             Float with the full message, body and review comment
   `a` / `C` / `x` Approve / Approve with comment / Reject the row under cursor
   `R`             Re-list (automatic on `AgentTrack{Updated,Reviewed,Synced}`)
-Options: `reviewer.pane = { enabled, position = "bottom", max_height = 12 }`.
+Options: `reviewer.pane = { enabled, position = "bottom", max_height = 5 }`.
 Highlights:
 `AgentTrackPane{Header,Current,Dim}` (links: `CodeDiffExplorerTreeGroup`,
 `CodeDiffExplorerSelected`, `Comment`).
@@ -224,7 +224,7 @@ Internal Lifecycle Autocmds~
     notify_on_arrival = true,
     reviewer = {
       tab_prefix = "[track]", reuse_tab = true, open_on_attach = true,
-      pane = { enabled = true, position = "bottom", max_height = 12 },
+      pane = { enabled = true, position = "bottom", max_height = 5 },
       keymaps = { -- each value: one lhs or a list of lhs
         next_subcommit = { "<leader>tj", "]c" },
         prev_subcommit = { "<leader>tk", "[c" },

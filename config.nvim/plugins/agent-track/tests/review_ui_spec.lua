@@ -182,6 +182,11 @@ check(pane.get(tab).win == nil and pane.get(tab).user_closed, "user-closed pane 
 write("src/ui/view.lua", "return { render = function() return 'v3' end }\n"); subcommit("ui: tidy view", "src/ui/view.lua")
 at.fetch("demo", { async = false }); rv.open(4, { session = "demo" })
 check(wait(function() local p = pane.get(); return p and p.win and api.nvim_buf_get_lines(p.buf, 0, 1, false)[1]:find("%(4%)") end), "pane lists the streamed 4th subcommit")
+eq(api.nvim_win_get_height(pane.get().win), 5, "pane is 5 rows tall at most by default (header + 4)")
+write("README.md", "# demo\n\nmore\n"); subcommit("docs: more", "README.md"); at.fetch("demo", { async = false }); rv.open(5, { session = "demo" })
+check(wait(function() local p = pane.get(); return p and p.win and api.nvim_buf_get_lines(p.buf, 0, 1, false)[1]:find("%(5%)") end), "pane lists a 5th subcommit")
+eq(api.nvim_win_get_height(pane.get().win), 5, "pane stays at max_height = 5 with more subcommits")
+eq(api.nvim_win_get_cursor(pane.get().win)[1], 6, "the open subcommit's row is kept in view (row 6 = #5)")
 
 at.detach("demo")
 io.write(string.format("review_ui_spec: %d passed, %d failed\n", passed, failed))

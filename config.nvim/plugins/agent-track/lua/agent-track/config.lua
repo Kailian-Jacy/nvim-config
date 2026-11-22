@@ -15,7 +15,7 @@ local DEFAULTS = {
   auto_save_before_sync = true, auto_sync_approved = false, notify_on_arrival = true,
   reviewer = {
     tab_prefix = "[track]", reuse_tab = true, open_on_attach = true, -- :AgentTrack attach opens the first pending subcommit
-    pane = { enabled = true, position = "bottom", max_height = 12 }, -- subcommit list: full-width bottom ("explorer": under the file tree)
+    pane = { enabled = true, position = "bottom", max_height = 5 }, -- subcommit list: full-width bottom ("explorer": under the file tree)
     keymaps = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
       approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" },
   },

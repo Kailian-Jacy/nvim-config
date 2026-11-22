@@ -10,7 +10,7 @@ local WO = { number = false, relativenumber = false, cursorline = true, wrap = f
 local P, group = {}, nil -- P[tabpage] = { win, buf, session, root, sha, items, anchored, h, user_closed, closing }
 
 local function track() return require("agent-track") end
-local function opts() local ok, t = pcall(track); local r = ok and t.get_config and (t.get_config().reviewer or {}) or {}; return vim.tbl_extend("force", { enabled = true, position = "bottom", max_height = 12 }, r.pane or {}) end
+local function opts() local ok, t = pcall(track); local r = ok and t.get_config and (t.get_config().reviewer or {}) or {}; return vim.tbl_extend("force", { enabled = true, position = "bottom", max_height = 5 }, r.pane or {}) end
 local function valid(w) return w ~= nil and vim.api.nvim_win_is_valid(w) end
 local function dw(s) return vim.fn.strdisplaywidth(s) end
 local function explorer_win(tab)
