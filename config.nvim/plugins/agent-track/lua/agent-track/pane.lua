@@ -5,7 +5,7 @@ local M = {}
 local NS = vim.api.nvim_create_namespace("agent_track_pane")
 local BADGE = { approved = "✓", rejected = "✗", stale = "~", pending = "·" }
 local HL = { approved = "AgentTrackApproved", rejected = "AgentTrackRejected", stale = "AgentTrackStale", pending = "AgentTrackPending" }
-local DEF_HL = { AgentTrackPaneHeader = "CodeDiffExplorerTreeGroup", AgentTrackPaneCurrent = "CodeDiffExplorerSelected", AgentTrackPaneDim = "Comment" }
+local DEF_HL = { AgentTrackComment = "DiagnosticVirtualTextInfo", AgentTrackPaneHeader = "CodeDiffExplorerTreeGroup", AgentTrackPaneCurrent = "CodeDiffExplorerSelected", AgentTrackPaneDim = "Comment" }
 local WO = { number = false, relativenumber = false, cursorline = true, wrap = false, list = false, spell = false, signcolumn = "no", foldcolumn = "0", statuscolumn = "", winfixwidth = true, winfixheight = true }
 local P, group = {}, nil -- P[tabpage] = { win, buf, session, root, sha, items, anchored, h, user_closed, closing }
 
@@ -46,7 +46,9 @@ local function render(tab)
   for _, it in ipairs(items) do -- review badge (✓ ✗ ~ ·) + index + subject, like a file row in the explorer above
     local l = { { " " }, { BADGE[it.review_status] or "·", HL[it.review_status] or "AgentTrackPending" }, { string.format(" %" .. iw .. "d ", it.index or 0), "AgentTrackPaneDim" } }
     if width >= 56 then l[#l + 1] = { (it.short_sha or (it.sha or ""):sub(1, 7)) .. " ", "AgentTrackPaneDim" } end
-    l[#l + 1] = { trunc(it.subject or "", width - cells(l) - 1) }
+    local nc = #(it.comments or {}); local tail = nc > 0 and { "  💬" .. nc, "AgentTrackComment" } or nil
+    l[#l + 1] = { trunc(it.subject or "", width - cells(l) - 1 - (tail and dw(tail[1]) or 0)) }
+    if tail then l[#l + 1] = tail end
     row(l)
   end
   vim.bo[p.buf].modifiable = true; vim.api.nvim_buf_set_lines(p.buf, 0, -1, false, lines); vim.bo[p.buf].modifiable = false
@@ -89,7 +91,11 @@ local function new_buf(tab)
     local out = { string.format("#%d %s  %s", it.index or 0, it.short_sha or (it.sha or ""):sub(1, 7), it.review_status or "pending"), "", it.subject or "" }
     local body = vim.trim(it.body or "")
     if body ~= "" then out[#out + 1] = ""; vim.list_extend(out, vim.split(body, "\n", { plain = true })) end
-    if (it.comment or "") ~= "" then vim.list_extend(out, { "", "Review: " .. it.comment }) end
+    for i, c in ipairs(it.comments or {}) do
+      if i == 1 then out[#out + 1] = "" end
+      local loc = c.path and (c.path .. ":" .. tostring(c.line) .. (c.end_line and ("-" .. c.end_line) or "") .. (c.side == "old" and " (old)" or "")) or "(subcommit)"
+      out[#out + 1] = "💬 " .. loc .. ": " .. (c.body or "")
+    end
     vim.lsp.util.open_floating_preview(out, "gitcommit", { border = "rounded", max_width = 100, wrap = true, focus_id = "agent_track_message" })
   end
   local maps = { ["<CR>"] = open, o = open, ["<2-LeftMouse>"] = open, p = act(message), a = review("approved"), C = review("approved", "Approve comment: "),

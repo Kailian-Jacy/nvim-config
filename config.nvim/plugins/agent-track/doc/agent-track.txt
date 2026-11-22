@@ -133,10 +133,24 @@ Installed in Normal mode on non-floating buffers inside the `[track]` tab
   `<leader>ta`   Approve & open next pending/stale (`approve`)
   `<leader>tc`   Prompt comment, approve & open next (`approve_comment`)
   `<leader>tA`   Prefix-approve `1..current` (`approve_prefix`)
-  `<leader>tx`   Prompt reason, reject & open next (`reject`)
+  `<leader>tx`   Reject (optional reason) & open next (`reject`)
+  `<leader>tq`   Comment on line / visual selection (`comment`)
   `<leader>ts`   Sync `approved`, else `1..current` (`sync`)
   `<leader>tp`   Open `Snacks.picker` review panel (`panel`)
 A subcommit opens at its `Touch-Order` #1 file; `]f`/`[f` stay in the same tab.
+
+Line Comments~                                   *agent-track-comments*
+`<leader>tq` in a diff window comments the cursor line, or in Visual mode the
+selected lines. Inline (and the right side of side-by-side) is the subcommit's
+`new` side; the left side of side-by-side is its parent (`old`). Each comment is
+appended to the note as one JSON line, so a subcommit can carry any number,
+independent of approve/reject. Comments show as end-of-line virtual text
+(`AgentTrackComment`), as a `💬n` count in the pane and in the `p` float.
+Notes are append-only JSONL: >
+  {"t":"review","status":"approved","at":...,"subcommit_id":...}
+  {"t":"comment","path":"a.lua","side":"new","line":3,"end_line":5,"body":...}
+<On fetch both sides' lines are merged (`git notes merge -s cat_sort_uniq`) and
+notes are pushed without force. Legacy one-object notes still read.
 
 `Snacks.picker` Review Panel Keys (Normal Mode)~     *agent-track-picker-keys*
 Active in both `list` and `input` Normal mode inside `:AgentTrack review`:
@@ -245,6 +259,7 @@ Internal Lifecycle Autocmds~
         approve = "<leader>ta", approve_comment = "<leader>tc",
         approve_prefix = "<leader>tA",
         reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp",
+        comment = "<leader>tq",
       },
     },
     statusline = { enabled = true, format = nil },

@@ -24,6 +24,7 @@ agent-track-attach	agent-track.txt	/*agent-track-attach*
 agent-track-autocmds	agent-track.txt	/*agent-track-autocmds*
 agent-track-clean	agent-track.txt	/*agent-track-clean*
 agent-track-commands	agent-track.txt	/*agent-track-commands*
+agent-track-comments	agent-track.txt	/*agent-track-comments*
 agent-track-config	agent-track.txt	/*agent-track-config*
 agent-track-detach	agent-track.txt	/*agent-track-detach*
 agent-track-diff-keys	agent-track.txt	/*agent-track-diff-keys*

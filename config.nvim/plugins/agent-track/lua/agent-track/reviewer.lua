@@ -3,9 +3,10 @@ local EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 local BUILTIN_SELECT, BUILTIN_INPUT = vim.ui.select, vim.ui.input
 local BADGE = { approved = "✓", rejected = "✗", stale = "~", pending = "·" }
 local HL = { approved = "AgentTrackApproved", rejected = "AgentTrackRejected", stale = "AgentTrackStale", pending = "AgentTrackPending" }
-local DEF_HL = { AgentTrackApproved = "DiagnosticOk", AgentTrackRejected = "DiagnosticError", AgentTrackStale = "DiagnosticWarn", AgentTrackPending = "Comment", AgentTrackSynced = "DiagnosticOk", AgentTrackConflict = "DiagnosticError" }
+local DEF_HL = { AgentTrackComment = "DiagnosticVirtualTextInfo", AgentTrackApproved = "DiagnosticOk", AgentTrackRejected = "DiagnosticError", AgentTrackStale = "DiagnosticWarn", AgentTrackPending = "Comment", AgentTrackSynced = "DiagnosticOk", AgentTrackConflict = "DiagnosticError" }
 local DEF_KEYS = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
-  approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" }
+  approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp",
+  comment = "<leader>tq" }
 local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
 local function track() return require("agent-track") end
 local function pane() return require("agent-track.pane") end
@@ -81,7 +82,7 @@ local OPS = {
   approve_comment = function(t, sha, s, cb) if sha then ask("Approve comment: ", function(r) if r ~= nil then check(t.review(sha, "approved", { comment = r, session = s, async_push = true })); cb() end end) end end,
   approve_prefix = function(t, sha, s, cb) if sha then check(t.review(sha, "approved", { prefix = true, session = s, async_push = true })); cb() end end,
   clear = function(t, sha, s, cb) if sha then check(t.review(sha, "pending", { comment = "", session = s, async_push = true })); cb() end end,
-  reject = function(t, sha, s, cb) if sha then ask("Reject reason: ", function(r) if r ~= nil then check(t.review(sha, "rejected", { comment = r, session = s, async_push = true })); cb() end end) end end,
+  reject = function(t, sha, s, cb) if sha then ask("Reject reason (optional): ", function(r) if r ~= nil then check(t.review(sha, "rejected", { comment = r, session = s, async_push = true })); cb() end end) end end,
   sync = function(t, _, s, cb) check(t.apply("approved", { session = s })); cb() end,
   sync_prefix = function(t, sha, s, cb) if sha then check(t.apply(sha, { session = s })); cb() end end,
   undo = function(t, _, s, cb) check(t.undo(s)); cb() end, fetch = function(t, _, s, cb) check(t.fetch(s)); cb() end,
@@ -100,6 +101,7 @@ local function install_buf_keymaps(buf)
     approve = function() run_op("approve", S.sha, S.session, advance) end, approve_comment = function() run_op("approve_comment", S.sha, S.session, advance) end,
     approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, advance) end,
     panel = function() M.panel({ session = S.session }) end,
+    comment = function() M.comment_here() end,
     sync = function()
       local app = vim.iter(fetch_list(S.session).items or {}):any(function(x) return x.review_status == "approved" end)
       run_op(app and "sync" or "sync_prefix", S.sha, S.session, refresh)
@@ -107,7 +109,10 @@ local function install_buf_keymaps(buf)
   }
   for name, fn in pairs(acts) do -- each keymap option is one lhs or a list of lhs
     for _, lhs in ipairs(type(km[name]) == "table" and km[name] or { km[name] }) do
-      if type(lhs) == "string" and lhs ~= "" then vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true, desc = "AgentTrack: " .. (name:gsub("_", " ")) }) end
+      if type(lhs) == "string" and lhs ~= "" then
+        vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true, desc = "AgentTrack: " .. (name:gsub("_", " ")) })
+        if name == "comment" then vim.keymap.set("x", lhs, function() M.comment_here(true) end, { buffer = buf, silent = true, desc = "AgentTrack: comment on selected lines" }) end
+      end
     end
   end
 end
@@ -127,6 +132,12 @@ local function select_in_explorer(tab, path) -- show `path` inside the tab's Cod
   end
   return (pcall(ex.on_file_select, node.data))
 end
+local function render_comments(tab)
+  tab = tab or S.tab; if not (tab and vim.api.nvim_tabpage_is_valid(tab) and vim.t[tab].agent_track_sha) then return end
+  local sha = vim.t[tab].agent_track_sha
+  local it = vim.iter(S.items or {}):find(function(x) return x.sha == sha end)
+  vim.schedule(function() pcall(require("agent-track.comments").render, tab, it and it.comments or {}) end)
+end
 local function ensure_setup()
   for g, tgt in pairs(DEF_HL) do vim.api.nvim_set_hl(0, g, { link = tgt, default = true }) end
   if S.augroup then return end
@@ -141,7 +152,11 @@ local function ensure_setup()
     callback = function(ev)
       if ev.data and ev.data.session then S.session = ev.data.session end
       if S.picker and not S.picker.closed then pcall(function() S.picker:find() end) end
+      if S.tab and vim.api.nvim_tabpage_is_valid(S.tab) then fetch_list(S.session); render_comments(S.tab) end
     end })
+  vim.api.nvim_create_autocmd("User", { group = S.augroup, pattern = "CodeDiffFileSelect", callback = function()
+    local tab = vim.api.nvim_get_current_tabpage(); if vim.t[tab].agent_track_tab then vim.defer_fn(function() render_comments(tab) end, 50) end
+  end })
   vim.api.nvim_create_autocmd("BufReadCmd", { group = S.augroup, pattern = qf_prefix() .. "*", callback = function(ev) -- <CR>/:cc/:cnext on M.qflist() entries
     local buf, s, sha = ev.buf, ev.match:match("^" .. vim.pesc(qf_prefix()) .. "(.+)/(%x+)$")
     for k, v in pairs({ buftype = "nofile", bufhidden = "unload", buflisted = false, swapfile = false, modifiable = false }) do vim.bo[buf][k] = v end
@@ -183,6 +198,7 @@ local function open_view(it, idx, total, touch_idx, file_only)
     vim.t[tab].agent_track_tab, vim.t[tab].agent_track_header, vim.t[tab].agent_track_tabname, vim.t[tab].agent_track_sha, vim.t[tab].agent_track_touch_file = true, header, tname, it.sha, cur_file
     vim.fn.settabvar(vim.api.nvim_tabpage_get_number(tab), "tabname", tname)
     local okp, perr = pcall(function() pane().show(tab, { session = S.session, root = S.root, sha = it.sha, items = S.items }) end)
+    render_comments(tab)
     if not okp then vim.notify("agent-track pane: " .. tostring(perr), vim.log.levels.WARN) end
     for _, w in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do install_buf_keymaps(vim.api.nvim_win_get_buf(w)) end
     vim.schedule(function() if vim.api.nvim_tabpage_is_valid(tab) then vim.fn.settabvar(vim.api.nvim_tabpage_get_number(tab), "tabname", tname); vim.cmd("redrawtabline") end end)
@@ -221,6 +237,24 @@ local function open_view(it, idx, total, touch_idx, file_only)
     tag_tab(S.tab)
   end
   return { ok = true, sha = it.sha, index = idx, touch_index = touch_idx, file = cur_file, header = header, tab = S.tab }
+end
+--- <leader>tq: comment on the cursor line (normal) or the selected lines (visual) of the open subcommit.
+function M.comment_here(visual)
+  local range
+  if visual then
+    local a, b = vim.fn.line("v"), vim.fn.line("."); range = { math.min(a, b), math.max(a, b) }
+    vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false)
+  end
+  local sha = vim.t.agent_track_sha
+  if not sha then return vim.notify("agent-track: open a subcommit first", vim.log.levels.WARN) end
+  local loc = require("agent-track.comments").anchor(range)
+  if not loc then return vim.notify("agent-track: put the cursor in a diff window (inline/new side or side-by-side old side)", vim.log.levels.WARN) end
+  local where = loc.path .. ":" .. loc.line .. (loc.end_line and ("-" .. loc.end_line) or "") .. (loc.side == "old" and " (old)" or "")
+  ask("Comment " .. where .. ": ", function(body)
+    if body == nil or vim.trim(body) == "" then return end
+    check(track().comment(sha, body, loc, { session = S.session }))
+    fetch_list(S.session); render_comments(vim.api.nvim_get_current_tabpage())
+  end)
 end
 function M.open(target, opts)
   opts = opts or {}; local items = fetch_list(opts.session or require("agent-track.config").resolve_session()).items or {}; local it, idx = resolve_item(items, target)
@@ -275,7 +309,9 @@ function M.panel(opts)
       preview = function(ctx)
         local it = ctx.item and ctx.item._sc; if not it then return ctx.preview:set_lines({ "No subcommits" }) end
         local out = { string.format("Subcommit #%d  %s  [%s]", it.index or 0, it.sha, it.review_status or "pending"), "Keys: <CR> diff  a/A approve  C approve+comment  x reject  c clear  s/S sync  u undo  r fetch  <c-q> quickfix" }
-        if (it.comment or "") ~= "" then out[#out + 1] = "Comment: " .. it.comment end
+        for _, c in ipairs(it.comments or {}) do
+          out[#out + 1] = "💬 " .. (c.path and (c.path .. ":" .. tostring(c.line) .. (c.end_line and ("-" .. c.end_line) or "") .. (c.side == "old" and " (old)" or "")) or "(subcommit)") .. ": " .. (c.body or "")
+        end
         if vim.trim(it.body or "") ~= "" then out[#out + 1] = "\n" .. vim.trim(it.body) end
         out[#out + 1] = "\nTouch-Order:"; for i, f in ipairs(ordered_files(it)) do out[#out + 1] = string.format("  %d. %s", i, f) end
         local d = git_diff((it.parent or "") ~= "" and it.parent or EMPTY_TREE, it.sha); if d ~= "" then out[#out + 1] = "\n" .. d end

@@ -184,7 +184,34 @@ check(api.nvim_buf_get_name(0) ~= "", "the review tab never leaves you on a [No 
 eq(#vim.tbl_filter(function(t) return vim.t[t].agent_track_tab end, api.nvim_list_tabpages()), 1, "file-only reopen still keeps one [track] tab")
 rv.open(items[1].sha, { session = "demo" }); check(opened(items[1].sha), "back on #1")
 
+-- 3b. <leader>tq line comments: select-and-comment, append-only, any number, independent of approve/reject
 local orig_input = vim.ui.input
+local cmt = require("agent-track.comments")
+local function diff_win(side) local s = lc.get_session(cur()); return s and s[side .. "_win"] end
+wait(function() local w = diff_win("modified"); return w and api.nvim_win_is_valid(w) and api.nvim_buf_line_count(api.nvim_win_get_buf(w)) >= 1 end)
+local mw = diff_win("modified"); api.nvim_set_current_win(mw); local cpath = cmt.locate(mw).path
+vim.ui.input = function(_, cb) cb("why this name?") end
+api.nvim_win_set_cursor(mw, { 1, 0 }); press(api.nvim_win_get_buf(mw), "<leader>tq")
+local nq = note(L, items[1].sha)
+eq(nq and #nq.comments, 1, "<leader>tq appends one comment"); eq(nq and nq.status, nil, "a comment does not set a review status")
+eq(nq and nq.comments[1].path, cpath, "comment anchors the file path"); eq(nq and nq.comments[1].line, 1, "comment anchors the cursor line")
+eq(nq and nq.comments[1].side, "new", "inline window comments the new side")
+check(wait(function() return #api.nvim_buf_get_extmarks(api.nvim_win_get_buf(mw), cmt.ns, 0, -1, {}) == 1 end), "comment shows as virtual text on its line")
+local xm = vim.fn.maparg("<leader>tq", "x", false, true); check(xm.buffer == 1 and xm.callback ~= nil, "<leader>tq is mapped in visual mode")
+local nl = api.nvim_buf_line_count(api.nvim_win_get_buf(mw))
+vim.ui.input = function(_, cb) cb("this block needs a test") end
+api.nvim_set_current_win(mw); api.nvim_win_set_cursor(mw, { 1, 0 })
+api.nvim_feedkeys("V" .. (nl > 1 and (nl - 1) .. "j" or ""), "nx", false) -- linewise selection over lines 1..nl, then the real visual map
+xm.callback()
+nq = note(L, items[1].sha)
+eq(#nq.comments, 2, "a second comment is appended, the first is kept"); eq(nq.comments[2].end_line, nl > 1 and nl or nil, "range comments keep end_line")
+check(nq.raw:find("why this name?", 1, true) ~= nil, "earlier comment lines are never rewritten")
+require("codediff.ui.view").toggle_layout(cur()) -- side-by-side creates the old-side window on re-render
+wait(function() local w = diff_win("original"); return lc.get_session(cur()).layout == "side-by-side" and w and api.nvim_win_is_valid(w) end)
+local ow = diff_win("original"); local oloc = ow and cmt.locate(ow)
+eq(oloc and oloc.side, "old", "side-by-side left window comments the old side")
+require("codediff.ui.view").toggle_layout(cur()); wait(function() return lc.get_session(cur()).layout == "inline" end)
+check(wait(function() local p = pane.get(); return p and api.nvim_buf_get_lines(p.buf, 1, 2, false)[1]:find("💬2", 1, true) end), "pane row shows the comment count")
 
 -- 4. <leader>tc: comment + approve, note reaches R, then advance to next pending
 vim.ui.input = function(_, cb) cb("LGTM; rename backoff later") end
