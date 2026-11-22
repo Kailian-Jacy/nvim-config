@@ -41,13 +41,34 @@ def _patch_ids(ctx: Ctx, spec: str) -> dict[str, str]:
     raw = ctx.git("log", "-p", spec, check=False).stdout
     return {p[1]: p[0] for l in (ctx.git("patch-id", "--stable", inp=raw, check=False).stdout.splitlines() if raw else []) if len(p := l.split()) >= 2}
 
+def parse_note(raw: str) -> dict:
+    """Append-only JSONL note: {"t":"review",...} (latest wins) and {"t":"comment","path","side","line","end_line","body"} events.
+    A legacy single-object note {"status","comment",...} reads as one review (+ one file-less comment)."""
+    ev = []
+    for ln in (raw or "").splitlines():
+        try: o = json.loads(ln.strip())
+        except json.JSONDecodeError: continue
+        if not isinstance(o, dict): continue
+        if o.get("t") in ("review", "comment"): ev.append(o)
+        elif o.get("status"):
+            at = int(o.get("updated_at") or 0)
+            ev.append({"t": "review", "status": o["status"], "at": at, "subcommit_id": o.get("subcommit_id"), "patch_id": o.get("patch_id")})
+            if o.get("comment"): ev.append({"t": "comment", "body": o["comment"], "at": at})
+    ev = [e for _, e in sorted(enumerate(ev), key=lambda p: (int(p[1].get("at") or 0), p[0]))]
+    review = next((e for e in reversed(ev) if e["t"] == "review"), None)
+    return {"review": review, "comments": [e for e in ev if e["t"] == "comment"], "subcommit_id": (review or {}).get("subcommit_id")}
+
+def comment_loc(c: dict) -> str:
+    if not c.get("path"): return ""
+    ln = c.get("line"); rng = f"{ln}-{c['end_line']}" if c.get("end_line") else f"{ln}"
+    return f"{c['path']}:{rng}" + (" (old)" if c.get("side") == "old" else "")
+
 def _orphan_notes(ctx: Ctx) -> dict[str, dict]:
     blobs = [l.split()[0] for l in ctx.git("notes", f"--ref={ctx.notes_ref}", "list", check=False).stdout.splitlines() if l.strip()] if ctx.rev(ctx.notes_ref) else []
     by_id: dict[str, dict] = {}
     for ch in (ctx.git("cat-file", "--batch=\x1e", inp="\n".join(blobs) + "\n").stdout.split("\x1e\n")[1:] if blobs else []):
-        try:
-            if (sid := (n := json.loads(ch.strip())).get("subcommit_id")) and n.get("updated_at", 0) >= by_id.get(sid, {}).get("updated_at", -1): by_id[sid] = n
-        except json.JSONDecodeError: pass
+        r = parse_note(ch).get("review")
+        if r and (sid := r.get("subcommit_id")) and int(r.get("at") or 0) >= int(by_id.get(sid, {}).get("at", -1)): by_id[sid] = r
     return by_id
 
 def collect_items(ctx: Ctx) -> dict:
@@ -64,19 +85,19 @@ def collect_items(ctx: Ctx) -> dict:
             sha, parents, at, subj, sid, tord, nraw = f[:7]
             parent, sid = (parents.split()[0] if parents.strip() else base), sid.strip().split(",")[0].strip()
             touch = [p.strip() for p in tord.replace("\n", ",").split(",") if p.strip()]
-            status, via, comment, note = "pending", "none", "", None
-            if nraw.strip():
-                try: note = json.loads(nraw.strip())
-                except json.JSONDecodeError: comment = nraw.strip()
-            if note and note.get("status"): status, via, comment = note["status"], "note", note.get("comment", "")
+            status, via = "pending", "none"
+            pn = parse_note(nraw) if nraw.strip() else {"review": None, "comments": []}
+            comments, note = pn["comments"], pn["review"]
+            if note and note.get("status"): status, via = note["status"], "note"
             elif sid and sid in orphans:
                 on = orphans[sid]
                 status = on["status"] if (on.get("patch_id") and pids.get(sha) == on.get("patch_id")) or on.get("status") != "approved" else "stale"
-                via, comment = "rewrite", on.get("comment", "")
+                via = "rewrite"
             elif app_ref and ctx.is_anc(sha, app_ref): status, via = "approved", "prefix"
+            comment = comments[-1].get("body", "") if comments else ""
             items.append({"index": idx, "sha": sha, "short_sha": sha[:7], "parent": parent, "author_time": int(at or 0), "subject": subj,
                           "subcommit_id": sid, "touch_order": touch, "status": status, "review_status": status,
-                          "review_via": via, "comment": comment, "synced": bool((synced and ctx.is_anc(sha, synced)) or (sid and sid in applied))})
+                          "review_via": via, "comment": comment, "comments": comments, "synced": bool((synced and ctx.is_anc(sha, synced)) or (sid and sid in applied))})
     counts = {**{k: sum(1 for i in items if i["review_status"] == k) for k in ("approved", "rejected", "stale", "pending")}, "total": len(items)}
     return {"ok": True, "repo": ctx.repo, "session": ctx.session, "remote": st.get("remote"), "base": base, "agent": agent, "synced": synced,
             "approved_prefix": app_ref, "counts": counts, "items": items, **{k: [i for i in items if i["review_status"] == k] for k in ("rejected", "stale")}}
@@ -146,6 +167,7 @@ def cmd_subcommit(ctx: Ctx, args) -> dict:
         except TrackError: pass
     ib = collect_items(ctx)
     alerts = [f"  - [REJECTED] {r['short_sha']} ({r['subcommit_id']}): {r['comment'] or r['subject']}" for r in ib["rejected"]]
+    alerts += [f"  - [COMMENT] {i['short_sha']} ({i['subcommit_id']}) {comment_loc(c) or '(subcommit)'}: {c.get('body','')}" for i in ib["items"] for c in i.get("comments", []) if c.get("at", 0) and i["review_status"] != "approved"]
     if alerts: print("[agent-track inbox] Action required:\n" + "\n".join(alerts), file=sys.stderr)
     return {"ok": True, "session": ctx.session, "sha": new_sha, "short_sha": new_sha[:7], "parent": parent, "subcommit_id": sid, "touch_order": touch,
             "files": len(changed), "insertions": ins, "deletions": dels, "branch_mode": args.branch_mode, "notified_nvim": notified,
@@ -182,8 +204,10 @@ def _pick(items: list[dict], tgt: str | None, pending: bool = True) -> dict:
     raise TrackError(f"subcommit not found: {tgt}")
 
 def _write_note(ctx: Ctx, it: dict, status: str, comment: str, remote: str | None):
-    note = {"status": status, "comment": comment, "subcommit_id": it["subcommit_id"], "patch_id": _patch_ids(ctx, f"{it['parent']}..{it['sha']}").get(it["sha"], ""), "updated_at": int(time.time())}
-    ctx.git("notes", f"--ref={ctx.notes_ref}", "add", "-f", "-m", json.dumps(note), it["sha"])
+    now = int(time.time())
+    ev = [{"t": "review", "status": status, "at": now, "subcommit_id": it["subcommit_id"], "patch_id": _patch_ids(ctx, f"{it['parent']}..{it['sha']}").get(it["sha"], "")}]
+    if comment: ev.append({"t": "comment", "body": comment, "at": now, "subcommit_id": it["subcommit_id"]})
+    for e in ev: ctx.git("notes", f"--ref={ctx.notes_ref}", "append", "--no-separator", "-m", json.dumps(e, ensure_ascii=False), it["sha"])
     if remote: ctx.git("push", remote, f"+{ctx.notes_ref}:{ctx.notes_ref}", check=False)
 
 def _host_git(ctx: Ctx, cmd: str, args) -> dict:
@@ -280,7 +304,9 @@ def main() -> int:
     elif isinstance(res, dict) and "items" in res:
         c = res.get("counts", {})
         print(f"session={res['session']} total={c.get('total',0)} approved={c.get('approved',0)} rejected={c.get('rejected',0)} stale={c.get('stale',0)} pending={c.get('pending',0)}")
-        for i in res["items"]: print(f"  {'●' if i['synced'] else '○'} [{i['index']}] {i['short_sha']} ({i['review_status']}) {i['subject']}  Touch: {', '.join(i['touch_order'])}" + (f"\n        note: {i['comment']}" if i.get("comment") else ""))
+        for i in res["items"]:
+            print(f"  {'●' if i['synced'] else '○'} [{i['index']}] {i['short_sha']} ({i['review_status']}) {i['subject']}  Touch: {', '.join(i['touch_order'])}")
+            for c in i.get("comments", []): print(f"        comment {comment_loc(c) or '(subcommit)'}: {c.get('body', '')}")
     elif isinstance(res, dict) and "diff" in res: print(res["diff"])
     else: print(json.dumps(res, ensure_ascii=False))
     return 0

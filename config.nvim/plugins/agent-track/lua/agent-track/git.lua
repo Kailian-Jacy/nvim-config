@@ -44,15 +44,28 @@ function M.rev_parse(root, rev)
   local r = (rev and rev ~= "") and M.run(root, { "rev-parse", "--verify", "--quiet", rev }, { ident = false }) or nil
   local sha = (r and r.ok) and vim.trim(r.stdout) or ""; return sha ~= "" and sha or nil
 end
+-- Notes are append-only and both sides append, so they are never force-pushed: a rejected push means the remote
+-- gained lines; the caller merges (M.merge_remote_notes) and retries. Other refs keep force semantics.
+local function spec(r) return (r:find("^refs/notes/") and "" or "+") .. r .. ":" .. r end
+M.REMOTE_NOTES = "refs/agent-track/remote-notes/"
+--- After fetching notes into REMOTE_NOTES<np>/*, union them into the local refs/notes/<np>/* (cat_sort_uniq).
+function M.merge_remote_notes(root, np)
+  local r = M.run(root, { "for-each-ref", "--format=%(refname)", M.REMOTE_NOTES .. np .. "/" }, { ident = false })
+  for ref in (r.ok and r.stdout or ""):gmatch("[^\n]+") do
+    local name = ref:sub(#M.REMOTE_NOTES + 1); local lref = "refs/notes/" .. name
+    if not M.rev_parse(root, lref) then M.update_ref(root, lref, M.rev_parse(root, ref), "agent-track: notes from remote")
+    elseif M.rev_parse(root, lref) ~= M.rev_parse(root, ref) then M.run(root, { "notes", "--ref=" .. name, "merge", "-q", "-s", "cat_sort_uniq", ref }) end
+  end
+end
 function M.push_refs(root, remote, refs)
   local specs = {}
-  for _, r in ipairs((remote and remote ~= "") and refs or {}) do if M.rev_parse(root, r) then specs[#specs + 1] = "+" .. r .. ":" .. r end end
+  for _, r in ipairs((remote and remote ~= "") and refs or {}) do if M.rev_parse(root, r) then specs[#specs + 1] = spec(r) end end
   local pr = #specs > 0 and M.run(root, vim.list_extend({ "push", remote }, specs)) or nil
   return pr ~= nil and pr.ok, (pr and not pr.ok) and vim.trim(pr.stderr) or nil
 end
 function M.push_refs_async(root, remote, refs, cb)
   local specs = {}
-  for _, r in ipairs((remote and remote ~= "") and refs or {}) do if M.rev_parse(root, r) then specs[#specs + 1] = "+" .. r .. ":" .. r end end
+  for _, r in ipairs((remote and remote ~= "") and refs or {}) do if M.rev_parse(root, r) then specs[#specs + 1] = spec(r) end end
   if #specs == 0 then if cb then vim.schedule(function() cb(false, nil) end) end; return nil end
   return M.run_async(root, vim.list_extend({ "push", remote }, specs), nil, function(pr)
     if cb then cb(pr.ok, not pr.ok and vim.trim(pr.stderr) or nil) end
@@ -77,12 +90,46 @@ function M.patch_ids(root, shas)
   end
   for _, s in ipairs(shas or {}) do map[s] = map[s] or "" end; return map
 end
+--- Review notes are append-only JSONL, one event per line (git notes append; union-merged on fetch):
+---   {"t":"review","status":"approved|rejected|pending","at":<epoch>,"subcommit_id":..,"patch_id":..}   latest wins
+---   {"t":"comment","path":"a/b.lua","side":"new|old","line":12,"end_line":14,"body":"..","at":<epoch>}
+--- Comments are independent of the review status; a subcommit may carry any number of them.
+--- A legacy single-object note {"status","comment",...} still reads as one review (+ one file-less comment).
+function M.parse_note(raw)
+  local ev = {}
+  for line in (raw or ""):gmatch("[^\n]+") do
+    local ok, o = pcall(vim.json.decode, vim.trim(line))
+    if ok and type(o) == "table" then
+      if o.t == "review" or o.t == "comment" then ev[#ev + 1] = o
+      elseif o.status then
+        local at = tonumber(o.updated_at) or 0
+        ev[#ev + 1] = { t = "review", status = o.status, at = at, subcommit_id = o.subcommit_id, patch_id = o.patch_id }
+        if (o.comment or "") ~= "" then ev[#ev + 1] = { t = "comment", body = o.comment, at = at } end
+      end
+    end
+  end
+  for i, e in ipairs(ev) do e._i = i end
+  table.sort(ev, function(a, b) local x, y = tonumber(a.at) or 0, tonumber(b.at) or 0; if x ~= y then return x < y end; return a._i < b._i end)
+  local review, comments = nil, {}
+  for _, e in ipairs(ev) do e._i = nil; if e.t == "review" then review = e else comments[#comments + 1] = e end end
+  return { review = review, comments = comments, subcommit_id = review and review.subcommit_id or nil }
+end
+--- Append one event line to sha's note (creates the note if absent). Never rewrites earlier lines.
+function M.append_note(root, notes_arg, sha, event)
+  event.at = event.at or os.time()
+  return M.run(root, { "notes", "--ref=" .. notes_arg, "append", "--no-separator", "-m", vim.json.encode(event), sha }) -- notes commit: needs an ident
+end
 function M.notes_by_subcommit_id(root, notes_arg)
   local nref, by_id = "refs/notes/" .. notes_arg, {}
-  for line in (M.rev_parse(root, nref) and M.run(root, { "grep", "--no-color", "-h", ".", nref }, { ident = false }).stdout or ""):gmatch("[^\n]+") do
-    local ok, obj = pcall(vim.json.decode, vim.trim(line))
-    local id = ok and type(obj) == "table" and obj.subcommit_id or nil
-    if type(id) == "string" and id ~= "" and (not by_id[id] or (tonumber(obj.updated_at) or 0) >= (tonumber(by_id[id].updated_at) or 0)) then by_id[id] = obj end
+  if not M.rev_parse(root, nref) then return by_id end
+  local listed = M.run(root, { "notes", "--ref=" .. notes_arg, "list" }, { ident = false })
+  local blobs = {}
+  for line in (listed.ok and listed.stdout or ""):gmatch("[^\n]+") do local b = line:match("^(%x+)"); if b then blobs[#blobs + 1] = b end end
+  if #blobs == 0 then return by_id end
+  local cat = M.run(root, { "cat-file", "--batch=\30%(objectname)" }, { stdin = table.concat(blobs, "\n") .. "\n", ident = false })
+  for chunk in (cat.ok and cat.stdout or ""):gmatch("\30%x+\n([^\30]*)") do
+    local n = M.parse_note(chunk); local id = n.subcommit_id
+    if type(id) == "string" and id ~= "" and n.review and (not by_id[id] or (tonumber(n.review.at) or 0) >= (tonumber(by_id[id].at) or 0)) then by_id[id] = n.review end
   end
   return by_id
 end
@@ -114,10 +161,10 @@ function M.log_subcommits(root, base, agent, notes_arg)
       end
       for _, p in ipairs(vim.split(f[8] or "", ",", { plain = true, trimempty = true })) do add_f(p, true) end
       local fill = #touch == 0; for _, p in ipairs(changed) do add_f(p, fill) end
-      local nraw = vim.trim(f[9] or ""); local okn, nobj = pcall(vim.json.decode, nraw)
+      local nraw = vim.trim(f[9] or ""); local note = nraw ~= "" and M.parse_note(nraw) or nil
       items[#items + 1] = { index = #items + 1, sha = f[1], short_sha = f[2], parent = vim.split(vim.trim(f[3] or ""), " ", { plain = true, trimempty = true })[1] or base,
         author_time = tonumber(f[4]) or 0, subject = f[5] or "", body = vim.trim(f[6] or ""), subcommit_id = last_tok(f[7]),
-        touch_order = touch, direct_note = (nraw ~= "" and okn and type(nobj) == "table") and nobj or nil, files = files }
+        touch_order = touch, direct_note = note and note.review or nil, comments = note and note.comments or {}, files = files }
     end
   end
   return items

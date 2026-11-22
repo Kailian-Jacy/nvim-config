@@ -71,6 +71,11 @@ local function queue_push(root, remote, refs, on_done)
   end
   push_inflight[key] = true
   local started = git.push_refs_async(root, remote, refs, function(ok, perr)
+    if not ok then -- notes rejected as non-fast-forward: merge the remote's lines and push once more (inline, single retry)
+      local np = (config.get().notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "")
+      local f = git.run(root, { "fetch", remote, "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }, { reflog = true })
+      if f.ok then git.merge_remote_notes(root, np); ok, perr = git.push_refs(root, remote, refs) end
+    end
     push_inflight[key] = nil
     if not ok and perr and perr ~= "" then vim.notify("agent-track: note push failed: " .. perr, vim.log.levels.WARN) end
     if on_done then on_done(ok, perr) end
@@ -243,9 +248,10 @@ function M.fetch(session, opts)
   local cfg, rp = config.get(), ref_prefix()
   local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "")
   local _, old_heads = discover_sessions(info.root); local old_s_head = old_heads[s]
-  local fargs = o.only_session and { "fetch", remote, "+" .. config.ref(s, "agent") .. "*:" .. config.ref(s, "agent") .. "*", "+" .. config.ref(s, "base") .. "*:" .. config.ref(s, "base") .. "*", "+refs/notes/" .. np .. "/*:refs/notes/" .. np .. "/*" }
-    or { "fetch", remote, "+" .. rp .. "/*/agent:" .. rp .. "/*/agent", "+" .. rp .. "/*/base:" .. rp .. "/*/base", "+refs/notes/" .. np .. "/*:refs/notes/" .. np .. "/*" }
+  local fargs = o.only_session and { "fetch", remote, "+" .. config.ref(s, "agent") .. "*:" .. config.ref(s, "agent") .. "*", "+" .. config.ref(s, "base") .. "*:" .. config.ref(s, "base") .. "*", "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }
+    or { "fetch", remote, "+" .. rp .. "/*/agent:" .. rp .. "/*/agent", "+" .. rp .. "/*/base:" .. rp .. "/*/base", "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }
   local function done(r)
+    if r.ok then git.merge_remote_notes(info.root, np) end -- union remote note lines into ours (append-only on both sides)
     if not r.ok and not o.silent then
       local ferr = vim.trim(r.stderr ~= "" and r.stderr or ("git fetch failed from " .. remote))
       vim.notify("agent-track: " .. ferr, vim.log.levels.ERROR)
@@ -299,13 +305,16 @@ function M.list(session, opts)
   if #need_rw > 0 then notes_by_id = git.notes_by_subcommit_id(info.root, notes_arg); if next(notes_by_id) then pids = git.patch_ids(info.root, need_rw) end end
   local is_synced, counts = sync.synced_lookup(info.root, base, synced, state), { total = #items, synced = 0, approved = 0, rejected = 0, pending = 0, stale = 0 }
   for i, it in ipairs(items) do
-    local st, via, cm = "pending", "none", ""
-    if it.direct_note then st = it.direct_note.status or "pending"; via, cm = (st == "pending" and "none" or "note"), it.direct_note.comment or ""
+    local st, via = "pending", "none"
+    if it.direct_note then st = it.direct_note.status or "pending"; via = (st == "pending" and "none" or "note")
     elseif it.subcommit_id and notes_by_id[it.subcommit_id] then
       local n = notes_by_id[it.subcommit_id]
-      if n.patch_id and n.patch_id == (pids[it.sha] or "") then st = n.status or "pending"; via, cm = (st == "pending" and "none" or "note"), n.comment or ""
-      elseif n.status == "approved" then st, via, cm = "stale", "note", n.comment or "" end
+      if n.patch_id and n.patch_id == (pids[it.sha] or "") then st = n.status or "pending"; via = (st == "pending" and "none" or "note")
+      elseif n.status == "approved" then st, via = "stale", "note" end
     end
+    -- it.comments: every comment event on this subcommit (append-only, independent of the review status);
+    -- it.comment: the newest comment body, kept for one-line displays.
+    local cm = (it.comments and #it.comments > 0) and (it.comments[#it.comments].body or "") or ""
     if st == "pending" and via == "none" and not it.direct_note and approved_prefix and ((prefix_idx > 0 and i <= prefix_idx) or (prefix_idx == 0 and git.is_ancestor(info.root, it.sha, approved_prefix))) then st, via = "approved", "prefix" end
     it.review_status, it.review_via, it.comment, it.direct_note, it.synced, it.would_conflict = st, via, cm, nil, is_synced(it), false
     if it.synced then counts.synced = counts.synced + 1 end; counts[st] = (counts[st] or 0) + 1
@@ -316,6 +325,21 @@ function M.list(session, opts)
   return out
 end
 
+--- Append a line comment to a subcommit (independent of approve/reject; any number per subcommit).
+--- loc = { path = "a/b.lua", side = "new"|"old", line = n, end_line = m } (all optional: a file-less comment is fine).
+function M.comment(sha_or_idx, body, loc, opts)
+  opts, loc = opts or {}, loc or {}
+  if (body or "") == "" then return { ok = false, error = "empty comment" } end
+  local s, _, info, err = ctx_of(opts.session, opts); if not info then return { ok = false, error = err } end
+  local lres = M.list(s, { cwd = info.root }); local it = git.find_item(lres.items or {}, sha_or_idx)
+  if not it then return { ok = false, error = "subcommit not found: " .. tostring(sha_or_idx) } end
+  local ev = { t = "comment", body = body, subcommit_id = it.subcommit_id or "", path = loc.path, side = loc.path and (loc.side or "new") or nil,
+    line = loc.line, end_line = (loc.end_line and loc.end_line ~= loc.line) and loc.end_line or nil }
+  local nr = git.append_note(info.root, config.notes_arg(s), it.sha, ev); if not nr.ok then return { ok = false, error = vim.trim(nr.stderr) } end
+  if opts.push ~= false then queue_push(info.root, lres.remote, { config.notes_ref(s) }, opts.on_pushed) end
+  M.list(s, { cwd = info.root }); emit("AgentTrackReviewed", "on_reviewed", { session = s, sha = it.sha, comment = true })
+  return { ok = true, session = s, sha = it.sha, comment = ev }
+end
 function M.review(sha_or_idx, status, opts)
   opts = opts or {}
   if not ({ approved = true, rejected = true, pending = true })[status] then return { ok = false, error = "invalid review status: " .. tostring(status) } end
@@ -325,11 +349,15 @@ function M.review(sha_or_idx, status, opts)
   local it = git.find_item(items, sha_or_idx) or ((sha_or_idx == nil or sha_or_idx == "") and (opts.prefix and items[#items] or vim.iter(items):find(function(c) return c.review_status == "pending" or c.review_status == "stale" end) or items[#items]) or nil)
   if not it then return { ok = false, error = "subcommit not found: " .. tostring(sha_or_idx) } end
   local approved_ref, notes_arg, notes_ref = config.ref(s, "approved"), config.notes_arg(s), config.notes_ref(s)
-  local function write_note(cm)
-    return git.run(info.root, { "notes", "--ref=" .. notes_arg, "add", "-f", "-m", vim.json.encode({ status = status, comment = cm or "", subcommit_id = it.subcommit_id or "", patch_id = git.patch_ids(info.root, { it.sha })[it.sha] or "", updated_at = os.time() }), it.sha })
+  local function append(ev) return git.append_note(info.root, notes_arg, it.sha, ev) end
+  -- review status and comments are separate append-only events; an optional comment rides along as its own event
+  local function write_review()
+    local nr = append({ t = "review", status = status, subcommit_id = it.subcommit_id or "", patch_id = git.patch_ids(info.root, { it.sha })[it.sha] or "" })
+    if nr.ok and (opts.comment or "") ~= "" then nr = append({ t = "comment", body = opts.comment, subcommit_id = it.subcommit_id or "" }) end
+    return nr
   end
-  if opts.prefix and status == "approved" then git.update_ref(info.root, approved_ref, it.sha, "approve prefix"); if opts.comment and opts.comment ~= "" then write_note(opts.comment) end
-  else local nr = write_note(opts.comment); if not nr.ok then return { ok = false, error = vim.trim(nr.stderr) } end end
+  if opts.prefix and status == "approved" then git.update_ref(info.root, approved_ref, it.sha, "approve prefix"); if (opts.comment or "") ~= "" then append({ t = "comment", body = opts.comment, subcommit_id = it.subcommit_id or "" }) end
+  else local nr = write_review(); if not nr.ok then return { ok = false, error = vim.trim(nr.stderr) } end end
   local pushed, push_async = false, false
   if opts.push ~= false then
     if opts.async_push then push_async = queue_push(info.root, lres.remote, { notes_ref, approved_ref }, opts.on_pushed)

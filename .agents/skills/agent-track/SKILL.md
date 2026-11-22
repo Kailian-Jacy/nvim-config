@@ -46,7 +46,9 @@ $AT inbox [--session default] [--json]
   - Either emit a corrective follow-up `subcommit`, amend the tip (`$AT subcommit --amend -m "..."`), or rewrite the chain (`--parent <sha>`) preserving `--id <sc-...>`:
     - Unchanged patches (`git patch-id --stable` match) automatically **retain** `approved` / `rejected` across rewrites.
     - Modified patches on a previously `approved` `Subcommit-Id` automatically transition to `stale` so the human re-verifies only what changed.
-- **Approved with a comment** (`<leader>tc` in Neovim): `status` is `approved` and `comment` holds a non-blocking suggestion; fold it into later slices or mention it in the hand-off, and don't block on it.
+- **Line comments** (`<leader>tq` in Neovim, on a line or a visual selection): each item in `inbox --json` has `comments: [{path, side, line, end_line, body, at}]` (`side` is `new` = this subcommit's version, `old` = its parent). Comments are independent of the review status and a subcommit may have many; the plain `inbox`/`list` output prints them as `comment path:line: body`. Address them with a follow-up subcommit (subcommits are immutable; never rewrite an approved one to answer a comment).
+- **Approved with a comment** (`<leader>tc`): `status` is `approved` and the comment is a non-blocking suggestion; fold it into later slices or mention it in the hand-off, and don't block on it.
+- **Note format** (`refs/notes/subcommits/<S>`): append-only JSONL, one event per line: `{"t":"review","status",...}` (latest wins) and `{"t":"comment",...}`. Never `git notes add -f` (that drops the human's lines); append with `git notes append --no-separator`.
 - **Reviewing an existing MR/PR instead of live work?** Use the `agent-track-mr` skill: it replays the MR as session `mr-<N>` and prints the `:AgentTrack attach ssh://<host>/<repo> mr-<N>` command.
 
 ### Step 4 — Finalize Clean Branch Commits (`walk-commit` Synergy)

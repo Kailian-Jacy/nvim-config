@@ -57,9 +57,11 @@ local function explorer() return lc.get_explorer(cur()) end
 local function map(buf, lhs) return api.nvim_buf_call(buf, function() return vim.fn.maparg(lhs, "n", false, true) end) end
 local function press(buf, lhs) local m = map(buf, lhs); check(m.buffer == 1 and m.callback ~= nil, "buffer-local mapping " .. lhs .. " in buf " .. buf); if m.callback then m.callback() end end
 local function opened(sha) return wait(function() local t = cur(); return vim.t[t].agent_track_sha == sha and explorer() and pane.get(t) and pane.get(t).win end) end
-local function note(repo, sha)
+local function note(repo, sha) -- latest review event (+ newest comment body) from the append-only JSONL note
   local r = vim.system({ "git", "-C", repo, "notes", "--ref=subcommits/demo", "show", sha }, { text = true }):wait()
-  return r.code == 0 and vim.json.decode(r.stdout) or nil
+  if r.code ~= 0 then return nil end
+  local n = require("agent-track.git").parse_note(r.stdout)
+  return { status = n.review and n.review.status, comment = (n.comments[#n.comments] or {}).body, comments = n.comments, raw = r.stdout }
 end
 
 vim.cmd("AgentTrack attach " .. vim.fn.fnameescape(R) .. " demo")
@@ -182,8 +184,9 @@ check(api.nvim_buf_get_name(0) ~= "", "the review tab never leaves you on a [No 
 eq(#vim.tbl_filter(function(t) return vim.t[t].agent_track_tab end, api.nvim_list_tabpages()), 1, "file-only reopen still keeps one [track] tab")
 rv.open(items[1].sha, { session = "demo" }); check(opened(items[1].sha), "back on #1")
 
--- 4. <leader>tc: comment + approve, note reaches R, then advance to next pending
 local orig_input = vim.ui.input
+
+-- 4. <leader>tc: comment + approve, note reaches R, then advance to next pending
 vim.ui.input = function(_, cb) cb("LGTM; rename backoff later") end
 press(explorer().bufnr, "<leader>tc")
 local n1 = note(L, items[1].sha)
