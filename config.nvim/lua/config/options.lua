@@ -53,6 +53,8 @@ vim.g.agent_socket_dir = "/tmp/nvim-" .. vim.env.USER
 -- Floating terminal system (floatterm)
 vim.g.floatterm_global_session = "nvim-global"
 vim.g.floatterm_local_prefix = "nvim_local_"
+-- agent-track: quickfix entries from the review picker (<c-q>) are placeholder buffers named <prefix><session>/<sha>.
+vim.g.agent_track_qf_prefix = "agenttrack://"
 vim.g.terminal_width_right = 0.3
 vim.g.terminal_width_left = 0.3
 vim.g.terminal_width_bottom = 0.3

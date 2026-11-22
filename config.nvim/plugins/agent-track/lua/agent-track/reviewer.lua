@@ -27,7 +27,7 @@ local function touch_str(f) return #f == 0 and "" or string.format("  [Touch: %s
 local function format_row(it)
   return string.format("%s %d. %s %s%s", rev_badge(it), it.index or 0, it.short_sha or (it.sha and it.sha:sub(1, 7)) or "?", it.subject or "", touch_str(ordered_files(it)))
 end
-local QF_PREFIX = "agenttrack://" -- quickfix entries point at agenttrack://<session>/<sha>; reading one opens that [track] diff
+local function qf_prefix() return vim.g.agent_track_qf_prefix or "agenttrack://" end -- set in lua/config/options.lua; entries are <prefix><session>/<sha>
 local function qf_text(info) -- rows read like any other list: <sha>|<index>| <status> <subject>  [Touch: ...]
   local what = { id = info.id, items = 0 }
   local list, out = (info.quickfix == 1 and vim.fn.getqflist(what) or vim.fn.getloclist(info.winid, what)).items or {}, {}
@@ -142,8 +142,8 @@ local function ensure_setup()
       if ev.data and ev.data.session then S.session = ev.data.session end
       if S.picker and not S.picker.closed then pcall(function() S.picker:find() end) end
     end })
-  vim.api.nvim_create_autocmd("BufReadCmd", { group = S.augroup, pattern = QF_PREFIX .. "*", callback = function(ev) -- <CR>/:cc/:cnext on M.qflist() entries
-    local buf, s, sha = ev.buf, ev.match:match("^agenttrack://(.+)/(%x+)$")
+  vim.api.nvim_create_autocmd("BufReadCmd", { group = S.augroup, pattern = qf_prefix() .. "*", callback = function(ev) -- <CR>/:cc/:cnext on M.qflist() entries
+    local buf, s, sha = ev.buf, ev.match:match("^" .. vim.pesc(qf_prefix()) .. "(.+)/(%x+)$")
     for k, v in pairs({ buftype = "nofile", bufhidden = "unload", buflisted = false, swapfile = false, modifiable = false }) do vim.bo[buf][k] = v end
     vim.schedule(function()
       for _, w in ipairs(vim.fn.win_findbuf(buf)) do -- hand the jump window its previous buffer back (the placeholder unloads itself)
@@ -163,7 +163,7 @@ function M.qflist(items, opts)
   opts = opts or {}; ensure_setup()
   local s = opts.session or S.session or require("agent-track.config").resolve_session()
   local qf = vim.tbl_map(function(it)
-    return { filename = QF_PREFIX .. s .. "/" .. it.sha, lnum = it.index or 1, text = string.format("%s %s%s", rev_badge(it), it.subject or "", touch_str(ordered_files(it))) }
+    return { filename = qf_prefix() .. s .. "/" .. it.sha, lnum = it.index or 1, text = string.format("%s %s%s", rev_badge(it), it.subject or "", touch_str(ordered_files(it))) }
   end, items or {})
   local what = { title = "AgentTrack [" .. s .. "]", items = qf, context = { agent_track = { session = s } }, quickfixtextfunc = qf_text }
   if opts.win then vim.fn.setloclist(opts.win, {}, " ", what); vim.cmd("botright lopen") else vim.fn.setqflist({}, " ", what); vim.cmd("botright copen") end

@@ -88,8 +88,11 @@ api.nvim_win_set_cursor(0, { 2, 0 }); api.nvim_feedkeys(vim.keycode("<CR>"), "x"
 check(opened(items[2].sha), "<CR> on a quickfix entry opens that subcommit's [track] diff")
 eq(api.nvim_win_get_buf(home_win), home_buf, "the quickfix jump window keeps its own buffer")
 vim.cmd("cnext"); check(opened(items[3].sha), ":cnext (<leader>qj) steps to the next subcommit's diff")
-local ph = vim.fn.bufnr("agenttrack://demo/" .. items[2].sha)
+local ph = vim.fn.bufnr("agenttrack://demo/" .. items[2].sha) -- default g:agent_track_qf_prefix
 check(ph > 0 and not vim.bo[ph].buflisted and not api.nvim_buf_is_loaded(ph), "quickfix placeholder buffers stay unlisted and unloaded")
+vim.g.agent_track_qf_prefix = "review://"; rv.qflist({ items[1] }, { session = "demo" }); vim.g.agent_track_qf_prefix = nil
+eq(vim.fn.bufname(vim.fn.getqflist({ items = 0 }).items[1].bufnr), "review://demo/" .. items[1].sha, "quickfix prefix comes from g:agent_track_qf_prefix (options.lua)")
+vim.cmd("cclose")
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")

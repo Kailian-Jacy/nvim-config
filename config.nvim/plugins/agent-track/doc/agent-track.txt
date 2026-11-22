@@ -140,7 +140,8 @@ Active in both `list` and `input` Normal mode inside `:AgentTrack review`:
 Quickfix List~                                 *agent-track-quickfix*
 `<c-q>` in the picker (Snacks `qflist`/`qflist_all`/`loclist`) builds the list
 "AgentTrack [<S>]" with rows `<sha>|<index>| <status> <subject> [Touch: ...]`.
-Each entry points at a placeholder buffer `agenttrack://<S>/<sha>`: `<CR>`,
+Each entry points at a placeholder `<prefix><S>/<sha>` (`g:agent_track_qf_prefix`,
+default `agenttrack://`, set in `lua/config/options.lua`): `<CR>`,
 `:cc`, `:cnext`/`:cprev` read it, which returns the jump window to its own
 buffer and opens that subcommit in the `[track]` `:CodeDiff` tab.
 
