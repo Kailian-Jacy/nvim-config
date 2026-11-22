@@ -307,14 +307,16 @@ return {
         return added, removed
       end
       -- CodeDiff names git revisions codediff:///<root>///<rev>/<path> (lualine shows that URI, shortened to
-      -- noise like c////U/z/...), and its explorer / the agent-track pane are scratch buffers. Show
-      -- "<path> @<rev>" instead, and the file under review while the explorer or pane has focus.
+      -- noise like c////U/z/...); its inline layout renders into an unnamed scratch buffer ([No Name]), and its
+      -- explorer / the agent-track pane are scratch buffers too. Show "<path> @<rev>" instead, taking the file
+      -- under review from the CodeDiff session when the buffer itself has no usable name.
       local function codediff_filename(str)
-        local rev, path = vim.api.nvim_buf_get_name(0):match("^codediff://.-///([^/]+)/(.+)$")
+        local name = vim.api.nvim_buf_get_name(0)
+        local rev, path = name:match("^codediff://.-///([^/]+)/(.+)$")
         if path then
           return path .. " @" .. rev:sub(1, 7)
         end
-        if vim.bo.filetype == "codediff-explorer" or vim.bo.filetype == "agent-track-pane" then
+        if name == "" or vim.bo.filetype == "codediff-explorer" or vim.bo.filetype == "agent-track-pane" then
           local ok, lifecycle = pcall(require, "codediff.ui.lifecycle")
           local s = ok and lifecycle.get_session(vim.api.nvim_get_current_tabpage()) or nil
           local p = s and ((s.modified_path or "") ~= "" and s.modified_path or s.original_path) or ""
