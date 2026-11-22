@@ -133,6 +133,14 @@ Active in both `list` and `input` Normal mode inside `:AgentTrack review`:
   `x` / `c`   Prompt reason & reject / Clear status back to `"pending"`
   `s` / `S`   Sync all `approved` / Sync prefix `1..idx` up to selected
   `u` / `r`   Undo last sync / Fetch from remote & refresh picker
+  `<c-q>`     Send selected (else all) subcommits to quickfix, see below
+
+Quickfix List~                                 *agent-track-quickfix*
+`<c-q>` in the picker (Snacks `qflist`/`qflist_all`/`loclist`) builds the list
+"AgentTrack [<S>]" with rows `<sha>|<index>| <status> <subject> [Touch: ...]`.
+Each entry points at a placeholder buffer `agenttrack://<S>/<sha>`: `<CR>`,
+`:cc`, `:cnext`/`:cprev` read it, which returns the jump window to its own
+buffer and opens that subcommit in the `[track]` `:CodeDiff` tab.
 
 Subcommit Pane~                                *agent-track-pane*
 The `[track]` tab docks a list of every subcommit directly under the CodeDiff
@@ -245,7 +253,8 @@ Lua Module (`local at = require("agent-track")`)~
   `at.apply(target, { mode = "prefix"|"cherry", session })`
   `at.undo(session, opts)` / `at.clean(session, opts)`
   `require("agent-track.reviewer")`: `panel(opts)`, `open(target, opts)`,
-  `close()`, `status()`, `next/prev_subcommit()`, `next/prev_touch_file()`.
+  `close()`, `status()`, `next/prev_subcommit()`, `next/prev_touch_file()`,
+  `qflist(items, { session, win })` (|agent-track-quickfix|).
   `require("agent-track.pane")`: `show(tab, { session, root, sha, items })`,
   `refresh(tab?)`, `get(tab?)` (|agent-track-pane|).
 

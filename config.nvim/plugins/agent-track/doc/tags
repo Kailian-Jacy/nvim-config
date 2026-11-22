@@ -34,6 +34,7 @@ agent-track-keys	agent-track.txt	/*agent-track-keys*
 agent-track-open	agent-track.txt	/*agent-track-open*
 agent-track-pane	agent-track.txt	/*agent-track-pane*
 agent-track-picker-keys	agent-track.txt	/*agent-track-picker-keys*
+agent-track-quickfix	agent-track.txt	/*agent-track-quickfix*
 agent-track-reject	agent-track.txt	/*agent-track-reject*
 agent-track-review	agent-track.txt	/*agent-track-review*
 agent-track-rpc	agent-track.txt	/*agent-track-rpc*

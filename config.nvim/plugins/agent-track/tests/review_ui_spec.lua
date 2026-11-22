@@ -1,5 +1,5 @@
 -- Headless UI spec for the [track] CodeDiff review tab: subcommit pane, tree explorer,
--- Touch-Order stepping, next/prev + comment-approve keys. Needs git >= 2.38, python3, codediff.nvim.
+-- Touch-Order stepping, next/prev + comment-approve keys, picker <c-q> quickfix. Needs git >= 2.38, python3, codediff.nvim.
 --   nvim --headless -u NONE -i NONE -n -l config.nvim/plugins/agent-track/tests/review_ui_spec.lua
 -- Env: AGENT_TRACK_CODEDIFF=<codediff.nvim checkout> (default: lazy.nvim install dir).
 local api = vim.api
@@ -66,6 +66,27 @@ local ar = at.attach(R, { session = "demo" })
 check(ar.ok, "attach local agent repo: " .. tostring(ar.error))
 local items = at.list("demo").items
 eq(#items, 3, "three subcommits fetched into L")
+
+-- 0. review picker <c-q> (its qflist action) -> quickfix list whose <CR> / :cnext open subcommit diffs.
+--    Snacks is stubbed: the spec captures the picker opts and runs the action <c-q> resolves to (a real snacks
+--    picker can segfault *headless* nvim intermittently; the real keypress was verified under a UI).
+local home_win, home_buf = api.nvim_get_current_win(), api.nvim_get_current_buf()
+local real_snacks, popts = rawget(_G, "Snacks"), nil
+_G.Snacks = { picker = { pick = function(o) popts = o; return { closed = true } end } }
+rv.panel({ session = "demo" }); _G.Snacks = real_snacks
+check(popts and popts.actions and type(popts.actions.qflist) == "function", "review picker overrides the snacks qflist action (<c-q>)")
+local rows, closed = {}, false; for i, it in ipairs(items) do rows[i] = { idx = i, _sc = it } end
+popts.actions.qflist({ main = home_win, selected = function() return {} end, items = function() return rows end, close = function() closed = true end })
+check(closed, "<c-q> closes the picker")
+local q = vim.fn.getqflist({ title = 0, items = 0, qfbufnr = 0 })
+eq(q.title, "AgentTrack [demo]", "<c-q> in the review picker builds the agent-track quickfix list"); eq(#q.items, 3, "one quickfix entry per subcommit")
+eq(api.nvim_buf_get_lines(q.qfbufnr, 1, 2, false)[1]:sub(1, 11), items[2].short_sha .. "|2| ", "quickfix rows read <sha>|<index>| ...")
+api.nvim_win_set_cursor(0, { 2, 0 }); api.nvim_feedkeys(vim.keycode("<CR>"), "x", false)
+check(opened(items[2].sha), "<CR> on a quickfix entry opens that subcommit's [track] diff")
+eq(api.nvim_win_get_buf(home_win), home_buf, "the quickfix jump window keeps its own buffer")
+vim.cmd("cnext"); check(opened(items[3].sha), ":cnext (<leader>qj) steps to the next subcommit's diff")
+local ph = vim.fn.bufnr("agenttrack://demo/" .. items[2].sha)
+check(ph > 0 and not vim.bo[ph].buflisted and not api.nvim_buf_is_loaded(ph), "quickfix placeholder buffers stay unlisted and unloaded")
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")

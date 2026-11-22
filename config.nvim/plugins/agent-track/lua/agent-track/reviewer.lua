@@ -28,6 +28,15 @@ local function format_row(it)
   return string.format("%s %s%s %d. %s %s%s", it.synced and "●" or "○", rev_badge(it), it.would_conflict and " ⚡" or "",
     it.index or 0, it.short_sha or (it.sha and it.sha:sub(1, 7)) or "?", it.subject or "", touch_str(ordered_files(it)))
 end
+local QF_PREFIX = "agenttrack://" -- quickfix entries point at agenttrack://<session>/<sha>; reading one opens that [track] diff
+local function qf_text(info) -- rows read like any other list: <sha>|<index>| <status> <subject>  [Touch: ...]
+  local what = { id = info.id, items = 0 }
+  local list, out = (info.quickfix == 1 and vim.fn.getqflist(what) or vim.fn.getloclist(info.winid, what)).items or {}, {}
+  for i = info.start_idx, info.end_idx do
+    local e = list[i] or {}; out[#out + 1] = string.format("%s|%d| %s", (vim.fn.bufname(e.bufnr or 0):match("/(%x+)$") or ""):sub(1, 7), e.lnum or 0, e.text or "")
+  end
+  return out
+end
 local function summary_title(res)
   local items, syn, app, pend, rej, wconf = res.items or {}, 0, 0, 0, 0, 0
   for _, it in ipairs(items) do
@@ -134,6 +143,32 @@ local function ensure_setup()
       if ev.data and ev.data.session then S.session = ev.data.session end
       if S.picker and not S.picker.closed then pcall(function() S.picker:find() end) end
     end })
+  vim.api.nvim_create_autocmd("BufReadCmd", { group = S.augroup, pattern = QF_PREFIX .. "*", callback = function(ev) -- <CR>/:cc/:cnext on M.qflist() entries
+    local buf, s, sha = ev.buf, ev.match:match("^agenttrack://(.+)/(%x+)$")
+    for k, v in pairs({ buftype = "nofile", bufhidden = "unload", buflisted = false, swapfile = false, modifiable = false }) do vim.bo[buf][k] = v end
+    vim.schedule(function()
+      for _, w in ipairs(vim.fn.win_findbuf(buf)) do -- hand the jump window its previous buffer back (the placeholder unloads itself)
+        vim.api.nvim_win_call(w, function()
+          local alt = vim.fn.bufnr("#")
+          if alt > 0 and alt ~= buf and vim.api.nvim_buf_is_valid(alt) then vim.cmd("silent! buffer " .. alt)
+          elseif #vim.api.nvim_tabpage_list_wins(0) > 1 then vim.cmd("silent! close") else vim.cmd("silent! enew") end
+        end)
+      end
+      if sha then M.open(sha, { session = s }) end
+    end)
+  end })
+end
+--- Send subcommits to the quickfix list (or `opts.win`'s location list). <CR>, :cc and :cnext/:cprev on an
+--- entry open that subcommit in the [track] CodeDiff tab. The picker's <c-q> (qflist/qflist_all/loclist) lands here.
+function M.qflist(items, opts)
+  opts = opts or {}; ensure_setup()
+  local s = opts.session or S.session or require("agent-track.config").resolve_session()
+  local qf = vim.tbl_map(function(it)
+    return { filename = QF_PREFIX .. s .. "/" .. it.sha, lnum = it.index or 1, text = string.format("%s %s%s %s%s", it.synced and "●" or "○", rev_badge(it), it.would_conflict and " ⚡" or "", it.subject or "", touch_str(ordered_files(it))) }
+  end, items or {})
+  local what = { title = "AgentTrack [" .. s .. "]", items = qf, context = { agent_track = { session = s } }, quickfixtextfunc = qf_text }
+  if opts.win then vim.fn.setloclist(opts.win, {}, " ", what); vim.cmd("botright lopen") else vim.fn.setqflist({}, " ", what); vim.cmd("botright copen") end
+  return { ok = true, count = #qf }
 end
 local function open_view(it, idx, total, touch_idx, file_only)
   ensure_setup()
@@ -220,6 +255,11 @@ function M.panel(opts)
       end
       keys[k] = { "sc_" .. op, mode = "n" }
     end
+    local function to_qf(p, all, loc) -- overrides Snacks' qflist/qflist_all/loclist for this picker (<c-q>)
+      local sel = all and {} or p:selected(); local list, win = #sel > 0 and sel or p:items(), loc and p.main or nil
+      p:close(); M.qflist(vim.tbl_map(function(x) return x._sc end, list), { session = opts.session or S.session, win = win })
+    end
+    actions.qflist, actions.qflist_all, actions.loclist = function(p) to_qf(p) end, function(p) to_qf(p, true) end, function(p) to_qf(p, false, true) end
     S.picker = (type(_G.Snacks.picker.pick) == "function" and _G.Snacks.picker.pick or _G.Snacks.picker)({
       title = prompt, focus = "list", on_close = function() S.picker = nil end, actions = actions, win = { input = { keys = keys }, list = { keys = keys } },
       confirm = function(p, item) p:close(); if item and item._sc then M.open(item._sc.sha, { session = opts.session or S.session }) end end,
@@ -235,7 +275,7 @@ function M.panel(opts)
       end,
       preview = function(ctx)
         local it = ctx.item and ctx.item._sc; if not it then return ctx.preview:set_lines({ "No subcommits" }) end
-        local out = { string.format("Subcommit #%d  %s  [%s]", it.index or 0, it.sha, it.review_status or "pending"), "Keys: <CR> diff  a/A approve  C approve+comment  x reject  c clear  s/S sync  u undo  r fetch" }
+        local out = { string.format("Subcommit #%d  %s  [%s]", it.index or 0, it.sha, it.review_status or "pending"), "Keys: <CR> diff  a/A approve  C approve+comment  x reject  c clear  s/S sync  u undo  r fetch  <c-q> quickfix" }
         if (it.comment or "") ~= "" then out[#out + 1] = "Comment: " .. it.comment end
         if vim.trim(it.body or "") ~= "" then out[#out + 1] = "\n" .. vim.trim(it.body) end
         out[#out + 1] = "\nTouch-Order:"; for i, f in ipairs(ordered_files(it)) do out[#out + 1] = string.format("  %d. %s", i, f) end

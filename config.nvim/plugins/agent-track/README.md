@@ -140,6 +140,7 @@ require("agent-track").setup({
 | | `a` / `C` / `A` | Approve / Approve with a comment (prompt) / Prefix-approve `1..idx` |
 | | `x` / `c` | Reject (prompt reason) / Clear to pending |
 | | `s` / `S` / `u` / `r` | Sync approved / Sync prefix up to selected / Undo last sync / Fetch & refresh |
+| | `<c-q>` | Send the (selected or all) subcommits to quickfix: `<CR>`, `:cc`, `:cnext`/`:cprev` there open that subcommit's `[track]` diff |
 | **`[track]` Diff Tab** | `<leader>tj` / `<leader>tk` (also `]c` / `[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
 | | `]f` / `[f` | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
 | | `<leader>ta` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
