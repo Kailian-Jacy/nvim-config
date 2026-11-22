@@ -43,6 +43,7 @@ All session state lives under `<ref_prefix>/<session>/` (default `refs/subcommit
 **Subcommit Commit Trailers**
 - `Subcommit-Id: sc-YYYYMMDDHHMMSS-xxxx` — stable logical identity across history rewrites.
 - `Touch-Order: path/a.lua, path/b.lua` — causal reading sequence stepped by `]f` / `[f`.
+- Approvals can carry a comment (`<leader>tc`); the agent reads it in `agent_track.py inbox` as a non-blocking follow-up.
 
 **Effective Review Status Precedence (`list()`)**
 1. Direct note on `<sha>` (`review_via = "note"`).
@@ -91,12 +92,14 @@ require("agent-track").setup({
   reviewer = {
     tab_prefix = "[track]",
     reuse_tab = true,
-    keymaps = {
-      next_subcommit = "]c",
-      prev_subcommit = "[c",
+    pane = { enabled = true, max_height = 10 }, -- subcommit list docked under the CodeDiff explorer
+    keymaps = {                                  -- each value: one lhs or a list of lhs
+      next_subcommit = { "<leader>tj", "]c" },
+      prev_subcommit = { "<leader>tk", "[c" },
       next_touch_file = "]f",
       prev_touch_file = "[f",
       approve = "<leader>ta",
+      approve_comment = "<leader>tc",
       approve_prefix = "<leader>tA",
       reject = "<leader>tx",
       sync = "<leader>ts",
@@ -134,12 +137,36 @@ require("agent-track").setup({
 | Context | Key | Action |
 | :--- | :--- | :--- |
 | **Picker (`<leader>atr`)** | `<CR>` | Open selected subcommit in `[track]` `:CodeDiff <parent> <sha>` tab |
-| | `a` / `A` / `x` / `c` | Approve / Prefix-approve `1..idx` / Reject (prompt reason) / Clear to pending |
+| | `a` / `C` / `A` | Approve / Approve with a comment (prompt) / Prefix-approve `1..idx` |
+| | `x` / `c` | Reject (prompt reason) / Clear to pending |
 | | `s` / `S` / `u` / `r` | Sync approved / Sync prefix up to selected / Undo last sync / Fetch & refresh |
-| **`[track]` Diff Tab** | `]c` / `[c` | Next / Previous chronological subcommit (reuses single `[track]` tab) |
-| | `]f` / `[f` | Next / Previous file in causal `Touch-Order` (`:CodeDiff file <parent> <sha> <path>`) |
-| | `<leader>ta` / `<leader>tA` | Approve & advance to next pending / Prefix-approve `1..k` |
-| | `<leader>tx` / `<leader>ts` / `<leader>tp` | Reject with comment / Sync / Open review panel |
+| **`[track]` Diff Tab** | `<leader>tj` / `<leader>tk` (also `]c` / `[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
+| | `]f` / `[f` | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
+| | `<leader>ta` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
+| | `<leader>tA` / `<leader>tx` | Prefix-approve `1..k` / Reject with comment |
+| | `<leader>ts` / `<leader>tp` | Sync / Open review panel |
+| **Subcommit pane** | `<CR>` / `o` | Open the subcommit under the cursor |
+| | `a` / `C` / `x` | Approve / Approve with a comment / Reject the row under the cursor |
+| | `R` | Re-list (also automatic on `AgentTrack{Updated,Reviewed,Synced}`) |
+
+### Subcommit Pane
+
+The `[track]` tab docks a compact list of every subcommit in the session directly under the CodeDiff file explorer (same column and width, explorer-style header and selection colors), so the whole chain stays visible while reading one slice:
+
+```text
+ Changes (3)                            <- codediff explorer (directory tree by default)
+└ config.nvim/plugins/agent-track/lua/
+  ├ config.lua                       M
+  ├ pane.lua                         A
+  └ reviewer.lua                     M
+────────────────────────────────────────
+ Subcommits (8)                   ✓2 ·6   <- agent-track pane
+ ○ 1 feat(codediff): show the explor… ✓
+ ○ 2 feat(agent-track): add <leader>… ✓
+ ○ 3 feat(agent-track): dock a sub… ⚡·   <- open subcommit (selection color)
+```
+
+Rows mirror the explorer rows above them: sync glyph (`●`/`○`) and index on the left (plus short SHA when the column is ≥ 56 wide), the subject truncated to the column, and the review badge (`✓`/`✓*`/`✗`/`~`/`·`, `⚡` = would conflict) right-aligned like codediff's `M`/`A`/`D`. The pane hides and returns with the explorer (`toggle_explorer`), keeps a manual resize, stays closed once you `:q` it in that tab, and falls back to a left column when no explorer exists. It is purely additive: it finds the explorer by its `codediff-explorer` filetype, follows `WinNew`/`WinClosed`, and never patches codediff. Disable with `reviewer.pane.enabled = false`; restyle via `AgentTrackPane{Header,Current,Dim}` (default links: `CodeDiffExplorerTreeGroup`, `CodeDiffExplorerSelected`, `Comment`).
 
 ---
 
