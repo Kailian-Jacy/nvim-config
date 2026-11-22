@@ -59,7 +59,7 @@ All session state lives under `<ref_prefix>/<session>/` (default `refs/subcommit
 
 1. **`.git/index` & `HEAD` Invariance**: `apply()` and `undo()` copy `.git/index` to a temporary `GIT_INDEX_FILE`, stage modified tracked files + only untracked paths touched by `diff-tree(base, target)`, run `git merge-tree --write-tree -z` in memory, push pre-sync `L` onto `refs/subcommits/<S>/undo`, and materialize only changed files via `git checkout-index -f` + `silent! checktime`. Staged index entries, `HEAD`, and unrelated untracked files remain byte-for-byte untouched.
 2. **Non-Prefix Cherry Sync (`:AgentTrack sync approved`)**: When subcommits `#1` and `#3` are approved while `#2` is rejected, `sync.lua` folds each unapplied approved `S_i` onto `synced` via `git merge-tree --write-tree --merge-base=parent(S_i) <acc_tree> <S_i>`, then 3-way merges the resulting tree into `L`.
-3. **Fail-Fast Clean Merge Guarantee**: `list()` previews overlapping local edits with a `⚡` (`would_conflict`) badge. If `apply()` detects a conflict (`not merged.clean`), it **aborts before writing anything to disk or touching `undo`**, returning `{ ok = false, conflict = true, conflicts = ... }` — never polluting `L` with `<<<<<<<` conflict markers. In this single-writer design, the human steers direction via `approve` / `reject` notes and harness prompts while keeping `L` clean.
+3. **Fail-Fast Clean Merge Guarantee**: `list(s, { preview_conflicts = true })` reports overlapping local edits as `would_conflict` (the review UI does not request it: subcommits are synced in order, not merged ahead one by one). If `apply()` detects a conflict (`not merged.clean`), it **aborts before writing anything to disk or touching `undo`**, returning `{ ok = false, conflict = true, conflicts = ... }` — never polluting `L` with `<<<<<<<` conflict markers. In this single-writer design, the human steers direction via `approve` / `reject` notes and harness prompts while keeping `L` clean.
 
 ---
 
@@ -164,12 +164,12 @@ The `[track]` tab docks a compact list of every subcommit in the session directl
   └ reviewer.lua                     M
 ────────────────────────────────────────
  Subcommits (8)                   ✓2 ·6   <- agent-track pane
- ○ 1 feat(codediff): show the explor… ✓
- ○ 2 feat(agent-track): add <leader>… ✓
- ○ 3 feat(agent-track): dock a sub… ⚡·   <- open subcommit (selection color)
+ ✓ 1 feat(codediff): show the explorer…
+ ✓ 2 feat(agent-track): add <leader>t…
+ · 3 feat(agent-track): dock a subcom…   <- open subcommit (selection color)
 ```
 
-Rows mirror the explorer rows above them: sync glyph (`●`/`○`) and index on the left (plus short SHA when the column is ≥ 56 wide), the subject truncated to the column, and the review badge (`✓`/`✓*`/`✗`/`~`/`·`, `⚡` = would conflict) right-aligned like codediff's `M`/`A`/`D`. The pane hides and returns with the explorer (`toggle_explorer`), keeps a manual resize, stays closed once you `:q` it in that tab, and falls back to a left column when no explorer exists. It is purely additive: it finds the explorer by its `codediff-explorer` filetype, follows `WinNew`/`WinClosed`, and never patches codediff. Disable with `reviewer.pane.enabled = false`; restyle via `AgentTrackPane{Header,Current,Dim}` (default links: `CodeDiffExplorerTreeGroup`, `CodeDiffExplorerSelected`, `Comment`).
+Each row is the review badge (`✓` approved, `✗` rejected, `~` stale, `·` pending), the index (plus short SHA when the column is ≥ 56 wide) and the subject truncated to the column; `p` shows the full message. The pane hides and returns with the explorer (`toggle_explorer`), keeps a manual resize, stays closed once you `:q` it in that tab, and falls back to a left column when no explorer exists. It is purely additive: it finds the explorer by its `codediff-explorer` filetype, follows `WinNew`/`WinClosed`, and never patches codediff. Disable with `reviewer.pane.enabled = false`; restyle via `AgentTrackPane{Header,Current,Dim}` (default links: `CodeDiffExplorerTreeGroup`, `CodeDiffExplorerSelected`, `Comment`).
 
 ---
 

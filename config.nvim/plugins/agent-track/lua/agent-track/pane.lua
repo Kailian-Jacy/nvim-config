@@ -43,15 +43,11 @@ local function render(tab)
   for _, k in ipairs({ "approved", "rejected", "pending" }) do if n[k] > 0 then stats[#stats + 1] = BADGE[k] .. n[k] end end
   local right = table.concat(stats, " ")
   row({ { title, "AgentTrackPaneHeader" }, { string.rep(" ", math.max(1, width - dw(title) - dw(right) - 1)) }, { right, "AgentTrackPaneDim" } })
-  for _, it in ipairs(items) do -- like the explorer rows above: glyph + name on the left, status at the right edge
-    local b = (it.review_status == "approved" and it.review_via == "prefix") and "✓*" or (BADGE[it.review_status] or "·")
-    local l = { { " " }, { it.synced and "●" or "○", it.synced and "AgentTrackSynced" or "AgentTrackPending" }, { string.format(" %" .. iw .. "d ", it.index or 0), "AgentTrackPaneDim" } }
+  for _, it in ipairs(items) do -- review badge (✓ ✗ ~ ·) + index + subject, like a file row in the explorer above
+    local l = { { " " }, { BADGE[it.review_status] or "·", HL[it.review_status] or "AgentTrackPending" }, { string.format(" %" .. iw .. "d ", it.index or 0), "AgentTrackPaneDim" } }
     if width >= 56 then l[#l + 1] = { (it.short_sha or (it.sha or ""):sub(1, 7)) .. " ", "AgentTrackPaneDim" } end
-    local r = { { b, HL[it.review_status] or "AgentTrackPending" }, { " " } }
-    if it.would_conflict then table.insert(r, 1, { "⚡", "AgentTrackConflict" }) end
-    local subj = trunc(it.subject or "", width - cells(l) - cells(r) - 1)
-    l[#l + 1] = { subj }; l[#l + 1] = { string.rep(" ", math.max(1, width - cells(l) - cells(r))) }
-    row(vim.list_extend(l, r))
+    l[#l + 1] = { trunc(it.subject or "", width - cells(l) - 1) }
+    row(l)
   end
   vim.bo[p.buf].modifiable = true; vim.api.nvim_buf_set_lines(p.buf, 0, -1, false, lines); vim.bo[p.buf].modifiable = false
   vim.api.nvim_buf_clear_namespace(p.buf, NS, 0, -1)
@@ -67,8 +63,6 @@ end
 local function relist(p)
   local ok, res = pcall(function() return track().list(p.session, { cwd = p.root }) end)
   if not (ok and type(res) == "table" and res.ok) then return end
-  local warn = {}; for _, it in ipairs(p.items or {}) do warn[it.sha] = it.would_conflict end -- ⚡ is only computed by the reviewer's full fetch
-  for _, it in ipairs(res.items or {}) do if not it.synced and warn[it.sha] then it.would_conflict = true end end
   p.items = res.items or {}
 end
 function M.refresh(tab)
@@ -92,7 +86,7 @@ local function new_buf(tab)
   end) end
   local open = act(function(it, p) require("agent-track.reviewer").open(it.sha, { session = p.session }) end)
   local function message(it) -- p: the full message (subject, why/body, trailers, review comment) in a float
-    local out = { string.format("#%d %s  %s%s", it.index or 0, it.short_sha or (it.sha or ""):sub(1, 7), it.review_status or "pending", it.would_conflict and "  ⚡ would conflict on sync" or ""), "", it.subject or "" }
+    local out = { string.format("#%d %s  %s", it.index or 0, it.short_sha or (it.sha or ""):sub(1, 7), it.review_status or "pending"), "", it.subject or "" }
     local body = vim.trim(it.body or "")
     if body ~= "" then out[#out + 1] = ""; vim.list_extend(out, vim.split(body, "\n", { plain = true })) end
     if (it.comment or "") ~= "" then vim.list_extend(out, { "", "Review: " .. it.comment }) end

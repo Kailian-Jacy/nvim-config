@@ -26,7 +26,7 @@ previously approved commits `"stale"` if `git patch-id --stable` changes) and
 
 `.git/index` Invariance & `walk-commit` Synergy~
 `apply()` and `undo()` snapshot `L` via a temporary `GIT_INDEX_FILE`, run
-in-memory `git merge-tree --write-tree`, abort cleanly (`⚡` `would_conflict`)
+in-memory `git merge-tree --write-tree`, abort cleanly (`would_conflict`)
 before touching disk on any overlap, and materialize changed paths via
 `git checkout-index -f` + `:checktime`. `HEAD` and `.git/index` stay untouched
 until finalized into clean Git commits via `walk-commit`.
@@ -70,7 +70,7 @@ completes subcommands, discovered session names, and `sync` targets.
 :AgentTrack review [session]         *:AgentTrack-review* *agent-track-review*
 :AgentTrack list [session]                                 *:AgentTrack-list*
     Open the `Snacks.picker` subcommit review panel (`vim.ui.select` fallback)
-    with sync (`●`/`○`), review (`✓`/`✓*`/`✗`/`~`/`·`), and `⚡` badges.
+    with review badges (`✓`/`✓*`/`✗`/`~`/`·`).
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in
@@ -149,12 +149,11 @@ The `[track]` tab docks a list of every subcommit directly under the CodeDiff
 file explorer (same column, explorer-style header and selection colors):
 >text
    Subcommits (8)                   ✓2 ·6
-   ○ 1 feat(codediff): show the explor… ✓
-   ○ 3 feat(agent-track): dock a sub… ⚡·  (open subcommit: selection color)
+   ✓ 1 feat(codediff): show the explorer…
+   · 3 feat(agent-track): dock a subcom…  (open subcommit: selection color)
 <
-Rows: sync `●`/`○` and index (short SHA when >= 56 columns wide), subject,
-and the review badge right-aligned like codediff's `M`/`A`/`D` (`⚡` = would
-conflict).
+Rows: review badge (`✓` approved, `✗` rejected, `~` stale, `·` pending),
+index (short SHA when >= 56 columns wide), and the truncated subject.
 It hides/returns with the explorer, keeps manual resizes, stays closed after
 `:q` in that tab, and uses a left column when there is no explorer. Keys:
   `<CR>` / `o`    Open the subcommit under the cursor

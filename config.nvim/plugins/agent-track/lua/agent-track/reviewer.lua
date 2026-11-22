@@ -25,8 +25,7 @@ local function ordered_files(it)
 end
 local function touch_str(f) return #f == 0 and "" or string.format("  [Touch: %s%s]", table.concat(vim.list_slice(f, 1, 3), ", "), #f > 3 and (" +" .. (#f - 3)) or "") end
 local function format_row(it)
-  return string.format("%s %s%s %d. %s %s%s", it.synced and "●" or "○", rev_badge(it), it.would_conflict and " ⚡" or "",
-    it.index or 0, it.short_sha or (it.sha and it.sha:sub(1, 7)) or "?", it.subject or "", touch_str(ordered_files(it)))
+  return string.format("%s %d. %s %s%s", rev_badge(it), it.index or 0, it.short_sha or (it.sha and it.sha:sub(1, 7)) or "?", it.subject or "", touch_str(ordered_files(it)))
 end
 local QF_PREFIX = "agenttrack://" -- quickfix entries point at agenttrack://<session>/<sha>; reading one opens that [track] diff
 local function qf_text(info) -- rows read like any other list: <sha>|<index>| <status> <subject>  [Touch: ...]
@@ -38,16 +37,16 @@ local function qf_text(info) -- rows read like any other list: <sha>|<index>| <s
   return out
 end
 local function summary_title(res)
-  local items, syn, app, pend, rej, wconf = res.items or {}, 0, 0, 0, 0, 0
+  local items, syn, app, pend, rej = res.items or {}, 0, 0, 0, 0
   for _, it in ipairs(items) do
     syn, app, rej = syn + (it.synced and 1 or 0), app + (it.review_status == "approved" and 1 or 0), rej + (it.review_status == "rejected" and 1 or 0)
-    pend, wconf = pend + ((it.review_status == "pending" or it.review_status == "stale") and 1 or 0), wconf + (it.would_conflict and 1 or 0)
+    pend = pend + ((it.review_status == "pending" or it.review_status == "stale") and 1 or 0)
   end
   local rem = res.remote and (" <- " .. vim.fn.fnamemodify(res.remote, ":t")) or ""
-  return string.format("AgentTrack [%s%s] synced %d/%d | approved %d | pending %d | rejected %d | conflicts %d", res.session or "default", rem, syn, #items, app, pend, rej, wconf)
+  return string.format("AgentTrack [%s%s] synced %d/%d | approved %d | pending %d | rejected %d", res.session or "default", rem, syn, #items, app, pend, rej)
 end
 local function fetch_list(session)
-  local res = track().list(session or S.session, { preview_conflicts = true }) or { ok = false, items = {} }
+  local res = track().list(session or S.session) or { ok = false, items = {} }
   if res.session then S.session = res.session end
   if res.root then S.root = res.root end
   S.items = res.items
@@ -164,7 +163,7 @@ function M.qflist(items, opts)
   opts = opts or {}; ensure_setup()
   local s = opts.session or S.session or require("agent-track.config").resolve_session()
   local qf = vim.tbl_map(function(it)
-    return { filename = QF_PREFIX .. s .. "/" .. it.sha, lnum = it.index or 1, text = string.format("%s %s%s %s%s", it.synced and "●" or "○", rev_badge(it), it.would_conflict and " ⚡" or "", it.subject or "", touch_str(ordered_files(it))) }
+    return { filename = QF_PREFIX .. s .. "/" .. it.sha, lnum = it.index or 1, text = string.format("%s %s%s", rev_badge(it), it.subject or "", touch_str(ordered_files(it))) }
   end, items or {})
   local what = { title = "AgentTrack [" .. s .. "]", items = qf, context = { agent_track = { session = s } }, quickfixtextfunc = qf_text }
   if opts.win then vim.fn.setloclist(opts.win, {}, " ", what); vim.cmd("botright lopen") else vim.fn.setqflist({}, " ", what); vim.cmd("botright copen") end
@@ -175,8 +174,8 @@ local function open_view(it, idx, total, touch_idx, file_only)
   local rcfg, files = get_cfg(), ordered_files(it)
   touch_idx = #files > 0 and (((touch_idx - 1) % #files) + 1) or 0
   local cur_file, short = files[touch_idx], it.short_sha or it.sha:sub(1, 7)
-  local header = string.format("[%d/%d] %s %s%s %s: %s | Touch [%d/%d]: %s", idx, total,
-    it.synced and "●" or "○", rev_badge(it), it.would_conflict and " ⚡" or "", short, it.subject or "", touch_idx, #files, cur_file or "-")
+  local header = string.format("[%d/%d] %s %s: %s | Touch [%d/%d]: %s", idx, total,
+    rev_badge(it), short, it.subject or "", touch_idx, #files, cur_file or "-")
   S.sha, S.index, S.touch_idx = it.sha, idx, math.max(1, touch_idx)
   local function tag_tab(tab)
     if not tab or not vim.api.nvim_tabpage_is_valid(tab) then return end
@@ -270,8 +269,7 @@ function M.panel(opts)
         for i, it in ipairs(res.items or {}) do out[i] = { idx = i, text = format_row(it), _sc = it } end; return out
       end,
       format = function(item) local it = item._sc; return {
-        { it.synced and "● " or "○ ", it.synced and "AgentTrackSynced" or "AgentTrackPending" }, { rev_badge(it) .. " ", HL[it.review_status] or "AgentTrackPending" },
-        { it.would_conflict and "⚡ " or "", "AgentTrackConflict" }, { tostring(it.index or item.idx) .. ". ", "Number" },
+        { rev_badge(it) .. " ", HL[it.review_status] or "AgentTrackPending" }, { tostring(it.index or item.idx) .. ". ", "Number" },
         { (it.short_sha or it.sha:sub(1, 7)) .. " ", "Identifier" }, { it.subject or "" }, { touch_str(ordered_files(it)), "Directory" } }
       end,
       preview = function(ctx)
