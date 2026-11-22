@@ -328,6 +328,9 @@ return {
         layout = "side-by-side",
         original_position = "left", -- old/original on the left, like diffview
       },
+      explorer = {
+        view_mode = "tree", -- left file panel as a directory tree (`i` toggles the flat list)
+      },
       keymaps = {
         view = {
           toggle_explorer = "<leader>b", -- toggle the file panel
