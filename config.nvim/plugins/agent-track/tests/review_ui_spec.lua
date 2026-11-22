@@ -123,6 +123,13 @@ check(wait(function() return explorer().current_file_path == "src/ui/view.lua" e
 eq(cur(), tab, "]f keeps the same tab (tree + pane stay visible)")
 check(pane.get(tab).win ~= nil, "pane survives ]f")
 press(explorer().bufnr, "<leader>tk"); check(opened(items[1].sha), "<leader>tk goes back to #1")
+-- a file-only open that cannot select in place (another subcommit's tab) reopens the explorer at that file; it used to
+-- run `:CodeDiff file <rev> <rev> <path>` (a codediff usage error) after closing the tab, leaving a [No Name] buffer
+rv.open(items[2].sha, { session = "demo", file_only = true, touch_idx = 2 })
+check(opened(items[2].sha) and wait(function() return explorer().current_file_path == "src/ui/view.lua" end), "file-only open of another subcommit lands on its Touch-Order file")
+check(api.nvim_buf_get_name(0) ~= "", "the review tab never leaves you on a [No Name] buffer")
+eq(#vim.tbl_filter(function(t) return vim.t[t].agent_track_tab end, api.nvim_list_tabpages()), 1, "file-only reopen still keeps one [track] tab")
+rv.open(items[1].sha, { session = "demo" }); check(opened(items[1].sha), "back on #1")
 
 -- 4. <leader>tc: comment + approve, note reaches R, then advance to next pending
 local orig_input = vim.ui.input

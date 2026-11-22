@@ -199,13 +199,14 @@ local function open_view(it, idx, total, touch_idx, file_only)
     for _, t in ipairs(vim.api.nvim_list_tabpages()) do before[t] = true end
     local function finish(tab)
       if rcfg.reuse_tab then close_prev_tab(tab) end; S.tab, S.in_place = tab, false; tag_tab(tab)
-      if not file_only and cur_file then vim.schedule(function() select_in_explorer(tab, cur_file) end) end -- start at Touch-Order #k, not the alphabetical first file
+      if cur_file then vim.schedule(function() select_in_explorer(tab, cur_file) end) end -- start at Touch-Order #k, not the alphabetical first file
     end
     vim.api.nvim_create_autocmd("User", { group = grp, pattern = "CodeDiffOpen", once = true, callback = function(ev)
       if ev.data and ev.data.tabpage and vim.api.nvim_tabpage_is_valid(ev.data.tabpage) then opened = true; finish(ev.data.tabpage) end
     end })
-    local abs_file = cur_file and ((S.root and S.root ~= "") and (S.root:gsub("/+$", "") .. "/" .. cur_file) or cur_file) or nil
-    local ok, err = pcall(vim.cmd, (file_only and abs_file) and ("CodeDiff file " .. parent .. " " .. it.sha .. " " .. vim.fn.fnameescape(abs_file)) or ("CodeDiff " .. parent .. " " .. it.sha))
+    -- Always the explorer form: `:CodeDiff file <rev> <rev> <path>` is a usage error in codediff (nothing opens, and the
+    -- [track] tab closed above left you on a [No Name] buffer). A file-only request reopens the explorer at that file.
+    local ok, err = pcall(vim.cmd, "CodeDiff " .. parent .. " " .. it.sha)
     if not ok then pcall(vim.api.nvim_del_augroup_by_id, grp); return { ok = false, error = tostring(err) } end
     local cur = vim.api.nvim_get_current_tabpage()
     if not opened and not before[cur] then finish(cur) elseif not opened and not package.loaded["codediff"] then S.tab, S.in_place = cur, true; tag_tab(cur) end
