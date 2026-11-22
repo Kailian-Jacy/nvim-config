@@ -99,11 +99,21 @@ local ov = at.overview()
 eq(#ov.sessions, 1, "overview lists the one session"); eq(ov.sessions[1].session, "demo", "overview session name")
 eq(ov.sessions[1].total, 3, "overview counts subcommits"); eq(ov.sessions[1].pending, 3, "overview counts pending")
 local picked; local real_select = vim.ui.select
-vim.ui.select = function(list, o, cb) picked = vim.tbl_map(o.format_item, list); cb(nil) end
-local real_uis = api.nvim_list_uis; api.nvim_list_uis = function() return { {} } end
-vim.cmd("AgentTrack list"); api.nvim_list_uis, vim.ui.select = real_uis, real_select
-check(vim.fn.execute("messages"):find("demo%s+✓0%s+✗0%s+·3%s+%(3%)") ~= nil, ":AgentTrack list prints accept/reject/pending per session")
-check(picked and #picked == 1 and picked[1]:find("demo", 1, true) ~= nil, ":AgentTrack list opens a session picker")
+vim.ui.select = function(list) picked = list end
+vim.cmd("messages clear"); vim.cmd("AgentTrack list --raw"); vim.ui.select = real_select
+check(vim.fn.execute("messages"):find("demo%s+✓0%s+✗0%s+·3%s+%(3%)") ~= nil, ":AgentTrack list --raw prints accept/reject/pending per session")
+check(picked == nil, ":AgentTrack list --raw opens no picker")
+local real_snacks, popts = rawget(_G, "Snacks"), nil
+_G.Snacks = { picker = { pick = function(o) popts = o; return {} end } }
+vim.cmd("messages clear"); vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
+check(popts and #popts.items == 1 and popts.items[1].text == "demo", ":AgentTrack list opens a Snacks picker of sessions")
+local row = popts and table.concat(vim.tbl_map(function(c) return c[1] end, popts.format(popts.items[1])), "")
+eq(row, "* demo  ✓0 ✗0 ·3", "picker rows are minimal: active mark, name, ✓/✗/· counts")
+check(not vim.fn.execute("messages"):find("agent-track sessions", 1, true), "the picker form does not also print the table")
+local closed, panel_for, real_panel = false, nil, rv.panel
+rv.panel = function(o) panel_for = o and o.session end
+popts.confirm({ close = function() closed = true end }, popts.items[1]); rv.panel = real_panel
+check(closed and panel_for == "demo", "<CR> in the session picker closes it and opens that session's review panel")
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")

@@ -76,11 +76,12 @@ completes subcommands, discovered session names, and `sync` targets.
     attached remote (the agent repo given to `attach`, not `origin`) and
     report new sessions and changed counts. `list` itself reads local refs.
 
-:AgentTrack list                                           *:AgentTrack-list*
-    Print every session (`refs/subcommits/*/agent`) with `✓` approved,
-    `✗` rejected and `·` pending counts (`*` = active), then pick one with
-    `vim.ui.select` to make it active and open its review deck. Local refs
-    only; run `:AgentTrack update` first to see the remote's latest.
+:AgentTrack list [--raw]                                   *:AgentTrack-list*
+    Minimal `Snacks.picker` (`vim.ui.select` fallback) of every session
+    (`refs/subcommits/*/agent`): `*` active, name, `✓` approved, `✗` rejected,
+    `·` pending. `<CR>` makes it active and opens its review deck. `--raw`
+    prints the same table to |:messages| instead. Local refs only; run
+    `:AgentTrack update` first to see the remote's latest.
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in

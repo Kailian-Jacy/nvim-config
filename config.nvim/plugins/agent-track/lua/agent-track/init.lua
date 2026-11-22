@@ -119,17 +119,32 @@ end
 local function overview_line(x)
   return string.format("%s%-24s ✓%-3d ✗%-3d ·%-3d (%d)", x.active and "*" or " ", x.session, x.approved, x.rejected, x.pending, x.total)
 end
---- :AgentTrack list — print every session's accept/reject/pending, then a picker; <CR> opens its review panel.
+--- :AgentTrack list [--raw] — every session's accept/reject/pending. Default: a minimal Snacks picker
+--- (vim.ui.select fallback); <CR> makes the session active and opens its review panel. --raw: print to :messages.
 function M.list_sessions(opts)
+  opts = opts or {}
   local r = M.overview(opts)
   if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
   if #r.sessions == 0 then return vim.notify("agent-track: no subcommit sessions in this repo", vim.log.levels.INFO) end
-  local lines = vim.tbl_map(overview_line, r.sessions)
-  vim.api.nvim_echo({ { "agent-track sessions (✓ approved  ✗ rejected  · pending)\n" .. table.concat(lines, "\n") } }, true, {})
-  if #vim.api.nvim_list_uis() == 0 then return r end
-  vim.ui.select(r.sessions, { prompt = "AgentTrack sessions", format_item = overview_line }, function(x)
-    if x then M.session(x.session); require("agent-track.reviewer").panel({ session = x.session }) end
-  end)
+  if opts.raw then
+    vim.api.nvim_echo({ { "agent-track sessions (✓ approved  ✗ rejected  · pending)\n" .. table.concat(vim.tbl_map(overview_line, r.sessions), "\n") } }, true, {})
+    return r
+  end
+  local function pick(x) if x then M.session(x.session); require("agent-track.reviewer").panel({ session = x.session }) end end
+  local Snacks = rawget(_G, "Snacks")
+  if type(Snacks) == "table" and Snacks.picker then
+    local items = vim.tbl_map(function(x) return { text = x.session, _s = x } end, r.sessions)
+    ;(type(Snacks.picker.pick) == "function" and Snacks.picker.pick or Snacks.picker)({
+      title = "AgentTrack sessions", items = items, layout = { preset = "select" }, preview = false,
+      format = function(item) local x = item._s; return {
+        { x.active and "* " or "  ", "Special" }, { x.session .. "  " },
+        { "✓" .. x.approved .. " ", "AgentTrackApproved" }, { "✗" .. x.rejected .. " ", "AgentTrackRejected" }, { "·" .. x.pending, "AgentTrackPending" } }
+      end,
+      confirm = function(p, item) p:close(); pick(item and item._s) end,
+    })
+    return r
+  end
+  if #vim.api.nvim_list_uis() > 0 then vim.ui.select(r.sessions, { prompt = "AgentTrack sessions", format_item = overview_line }, pick) end
   return r
 end
 --- :AgentTrack update — one synchronous fetch of every session's subcommits and review notes from the attached
@@ -388,7 +403,7 @@ local CMD = {
     local st = M.status(f[2]); if not st.ok then return vim.notify("agent-track: " .. tostring(st.error), vim.log.levels.WARN) end; local c = st.counts
     vim.notify(string.format("agent-track [%s] remote=%s synced=%d/%d ✓%d ·%d ✗%d watch=%s", st.session, st.remote or "-", c.synced, c.total, c.approved, c.pending + c.stale, c.rejected, st.watcher.active and st.watcher.mode or "off"))
   end,
-  list = function() M.list_sessions() end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
+  list = function(f) M.list_sessions({ raw = vim.tbl_contains(f, "--raw") }) end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
   update = function()
     local r = M.update(); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
     local lines = { "agent-track: updated from " .. r.remote .. (#r.changes == 0 and " (no changes)" or "") }
@@ -414,6 +429,7 @@ local function register_commands()
       local opts = {}
       if arg_idx <= 2 then opts = SUB
       elseif arg_idx == 3 and p[2] == "sync" then opts = { "approved", "all" }
+      elseif arg_idx == 3 and p[2] == "list" then opts = { "--raw" }
       elseif (arg_idx == 3 and SESS_SUB[p[2]]) or (arg_idx == 4 and p[2] == "attach") then
         local info = git.root_info(); opts = info and (discover_sessions(info.root)) or {}
       end
