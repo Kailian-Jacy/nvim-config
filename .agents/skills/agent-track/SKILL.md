@@ -46,6 +46,8 @@ $AT inbox [--session default] [--json]
   - Either emit a corrective follow-up `subcommit`, amend the tip (`$AT subcommit --amend -m "..."`), or rewrite the chain (`--parent <sha>`) preserving `--id <sc-...>`:
     - Unchanged patches (`git patch-id --stable` match) automatically **retain** `approved` / `rejected` across rewrites.
     - Modified patches on a previously `approved` `Subcommit-Id` automatically transition to `stale` so the human re-verifies only what changed.
+- **Approved with a comment** (`<leader>tc` in Neovim): `status` is `approved` and `comment` holds a non-blocking suggestion; fold it into later slices or mention it in the hand-off, and don't block on it.
+- **Reviewing an existing MR/PR instead of live work?** Use the `agent-track-mr` skill: it replays the MR as session `mr-<N>` and prints the `:AgentTrack attach ssh://<host>/<repo> mr-<N>` command.
 
 ### Step 4 — Finalize Clean Branch Commits (`walk-commit` Synergy)
 Because shadow mode never touched `refs/heads/<branch>` or `.git/index`:
