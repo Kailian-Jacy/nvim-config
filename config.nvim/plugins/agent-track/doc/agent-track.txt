@@ -79,10 +79,18 @@ completes subcommands, discovered session names, and `sync` targets.
 :AgentTrack list [--raw]                                   *:AgentTrack-list*
     Minimal `Snacks.picker` (`vim.ui.select` fallback) of every session
     (`refs/subcommits/*/agent`): `*` active, name, `✓` approved, `✗` rejected,
-    `·` pending. `<CR>` opens its review deck. `--raw` prints the same table
-    to |:messages| instead. Read-only and idempotent: local refs only (run
-    `:AgentTrack update` to fetch), never switches the active session or
-    touches the statusline (use `:AgentTrack session <name>` to switch).
+    `·` pending. Listing is read-only and idempotent (local refs). While the
+    picker is open a background `git ls-remote` adds sessions that exist only
+    on the attached remote, marked `(remote)` (nothing is fetched). `<CR>`
+    connects the session (|agent-track-connect|) and opens its review deck.
+    `--raw` prints the local table to |:messages| instead.
+
+                                                      *agent-track-connect*
+    Connecting makes a session active and follows only it: a watcher on its
+    `refs/subcommits/<S>/agent` and its notes ref (ssh stream or local fs
+    events) fetches just that session, so new subcommits and the other side's
+    comments arrive live and other sessions never switch you away. One session
+    is connected at a time. Remote names such as `hg` resolve to their URL.
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in

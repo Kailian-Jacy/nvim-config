@@ -106,17 +106,14 @@ vim.cmd("messages clear"); vim.cmd("AgentTrack list --raw"); vim.ui.select = rea
 check(vim.fn.execute("messages"):find("demo%s+✓0%s+✗0%s+·3%s+%(3%)") ~= nil, ":AgentTrack list --raw prints accept/reject/pending per session")
 check(picked == nil, ":AgentTrack list --raw opens no picker")
 local real_snacks, popts = rawget(_G, "Snacks"), nil
-_G.Snacks = { picker = { pick = function(o) popts = o; return {} end } }
-vim.cmd("messages clear"); vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
-check(popts and #popts.items == 1 and popts.items[1].text == "demo", ":AgentTrack list opens a Snacks picker of sessions")
-local row = popts and table.concat(vim.tbl_map(function(c) return c[1] end, popts.format(popts.items[1])), "")
+local function stub_pick() _G.Snacks = { picker = { pick = function(o) popts = o; return { find = function() end } end } } end
+local function rows() return popts and popts.finder() or {} end
+stub_pick(); vim.cmd("messages clear"); vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
+check(popts and #rows() == 1 and rows()[1].text == "demo", ":AgentTrack list opens a Snacks picker of sessions")
+local row = popts and table.concat(vim.tbl_map(function(c) return c[1] end, popts.format(rows()[1])), "")
 eq(row, "* demo  ✓0 ✗0 ·3", "picker rows are minimal: active mark, name, ✓/✗/· counts")
 check(not vim.fn.execute("messages"):find("agent-track sessions", 1, true), "the picker form does not also print the table")
-local closed, panel_for, real_panel = false, nil, rv.panel
-rv.panel = function(o) panel_for = o and o.session end
-popts.confirm({ close = function() closed = true end }, popts.items[1]); rv.panel = real_panel
-check(closed and panel_for == "demo", "<CR> in the session picker closes it and opens that session's review panel")
--- list / list --raw / <CR> in the picker are read-only and idempotent (fetching new refs is :AgentTrack update)
+-- listing (list / list --raw / an open picker) is read-only and idempotent; fetching is :AgentTrack update
 sh({ "git", "update-ref", "refs/subcommits/other/agent", items[1].sha }, L); sh({ "git", "update-ref", "refs/subcommits/other/base", items[1].parent }, L)
 local function repo_state()
   return table.concat({ sh({ "git", "for-each-ref", "--format=%(objectname) %(refname)" }, L), sh({ "git", "config", "--local", "--list" }, L),
@@ -125,13 +122,26 @@ local function repo_state()
 end
 local st0, quiet = repo_state(), api.nvim_echo; api.nvim_echo = function() end
 vim.cmd("AgentTrack list --raw"); vim.cmd("AgentTrack list --raw"); api.nvim_echo = quiet
-_G.Snacks = { picker = { pick = function(o) popts = o; return {} end } }; vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
-local other = vim.iter(popts.items):find(function(x) return x.text == "other" end)
-real_panel = rv.panel; rv.panel = function(o) panel_for = o and o.session; return real_panel(o) end
-popts.confirm({ close = function() end }, other); rv.panel = real_panel; pcall(function() rv.close() end)
-eq(panel_for, "other", "<CR> on another session opens its review panel")
-eq(repo_state(), st0, "list, list --raw and <CR> change no refs, config, state, statusline or active session")
-sh({ "git", "update-ref", "-d", "refs/subcommits/other/agent" }, L); sh({ "git", "update-ref", "-d", "refs/subcommits/other/base" }, L)
+stub_pick(); vim.cmd("AgentTrack list"); _G.Snacks = real_snacks; vim.wait(300)
+eq(repo_state(), st0, "list, list --raw and an open picker change no refs, config, state, statusline or active session")
+-- a session that exists only on R shows up in the open picker after the background ls-remote
+sh({ "git", "update-ref", "refs/subcommits/onlyremote/agent", items[1].sha }, R); sh({ "git", "update-ref", "refs/subcommits/onlyremote/base", items[1].parent }, R)
+stub_pick(); vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
+check(wait(function() return vim.iter(rows()):any(function(x) return x.text == "onlyremote" and x._s.remote_only end) end), "remote-only sessions are added to the open picker asynchronously")
+eq(table.concat(vim.tbl_map(function(c) return c[1] end, popts.format(vim.iter(rows()):find(function(x) return x.text == "onlyremote" end))), ""), "  onlyremote  (remote)", "remote-only rows are marked (remote)")
+check(sh({ "git", "for-each-ref", "refs/subcommits/onlyremote" }, L) == "", "discovering a remote session fetches nothing")
+-- <CR> connects: the session becomes active and is followed (watcher), then its review panel opens
+local panel_for, real_panel = nil, rv.panel
+rv.panel = function(o) panel_for = o and o.session end
+popts.confirm({ close = function() end }, vim.iter(rows()):find(function(x) return x.text == "onlyremote" end)); rv.panel = real_panel
+eq(panel_for, "onlyremote", "<CR> opens the picked session's review panel")
+eq(require("agent-track.config").resolve_session(), "onlyremote", "<CR> connects: the picked session becomes active")
+check(require("agent-track.watch").status("onlyremote").active, "<CR> connects: the picked session is watched")
+check(sh({ "git", "for-each-ref", "refs/subcommits/onlyremote/agent" }, L) ~= "", "connecting a remote-only session fetches it")
+at.connect("demo"); eq(require("agent-track.config").resolve_session(), "demo", "reconnect demo")
+check(not require("agent-track.watch").status("onlyremote").active, "only one session is connected (watched) at a time")
+for _, r in ipairs({ "other", "onlyremote" }) do for _, k in ipairs({ "agent", "base" }) do pcall(sh, { "git", "update-ref", "-d", "refs/subcommits/" .. r .. "/" .. k }, L) end end
+for _, k in ipairs({ "agent", "base" }) do pcall(sh, { "git", "update-ref", "-d", "refs/subcommits/onlyremote/" .. k }, R) end
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")

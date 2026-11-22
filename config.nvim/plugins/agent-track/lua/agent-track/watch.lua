@@ -28,12 +28,14 @@ function M.build_tail_argv(remote, session, cfg)
   if type(custom) == "string" and custom ~= "" then return git.resolve_bin({ "sh", "-c", custom }) end
   local parsed = M.parse_ssh_remote(remote); if not parsed then return nil end
   local sq = parsed.path:gsub("'", "'\\''")
-  local rp = (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", ""):gsub("'", "'\\''")
-  local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", ""):gsub("'", "'\\''")
+  -- watch only the connected session: its agent ref and its notes ref (other sessions' activity is ignored)
+  local ses = config.resolve_session(session):gsub("'", "'\\''")
+  local rp = ((cfg.ref_prefix or "refs/subcommits"):gsub("/+$", "") .. "/" .. ses):gsub("'", "'\\''")
+  local np = ((cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "") .. "/" .. ses):gsub("'", "'\\''")
   local argv = vim.deepcopy(cfg.ssh_cmd or config.get().ssh_cmd)
   if parsed.port then vim.list_extend(argv, { "-p", tostring(parsed.port) }) end
   local cd_arg = parsed.path == "~" and '"$HOME"' or (parsed.path:sub(1, 2) == "~/" and ('"$HOME"\'' .. parsed.path:sub(2):gsub("'", "'\\''") .. "'") or ("'" .. sq .. "'"))
-  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && q() { git for-each-ref --format='%%(refname)=%%(objectname)' '%s/*/agent' 'refs/notes/%s/*' 2>/dev/null; }; prev=$(q) && while :; do sleep 2; cur=$(q); if [ \"$cur\" != \"$prev\" ]; then printf 'changed\\n'; prev=\"$cur\"; fi; done", cd_arg, rp, np) }))
+  return git.resolve_bin(vim.list_extend(argv, { parsed.host, string.format("cd %s && q() { git for-each-ref --format='%%(refname)=%%(objectname)' '%s/agent' 'refs/notes/%s' 2>/dev/null; }; prev=$(q) && while :; do sleep 2; cur=$(q); if [ \"$cur\" != \"$prev\" ]; then printf 'changed\\n'; prev=\"$cur\"; fi; done", cd_arg, rp, np) }))
 end
 
 function M.detach(session)
@@ -43,7 +45,7 @@ function M.detach(session)
     local w = watchers[k]
     if w then
       had, w.stopped, watchers[k] = true, true, nil
-      for _, tk in ipairs({ "fse", "debounce_timer", "poll_timer", "reconnect_timer" }) do close_h(w[tk]) end
+      for _, tk in ipairs({ "fse", "fse_notes", "debounce_timer", "poll_timer", "reconnect_timer" }) do close_h(w[tk]) end
       if w.proc then pcall(function() w.proc:kill(9) end) end
     end
   end
@@ -51,7 +53,16 @@ function M.detach(session)
 end
 function M.detach_all() M.detach(nil) end
 
-function M.attach(session, remote, on_change)
+--- A configured git remote name (e.g. `hg`) -> its URL, so the mode check and ssh/local watching see the real
+--- location instead of treating the bare name as a local path (which silently watched nothing).
+function M.resolve_url(remote, root)
+  if type(remote) ~= "string" or remote == "" or remote:find("[/:]") then return remote end
+  local r = git.run(root, { "remote", "get-url", remote }, { ident = false })
+  local url = r.ok and vim.trim(r.stdout) or ""
+  return url ~= "" and url or remote
+end
+function M.attach(session, remote, on_change, root)
+  remote = M.resolve_url(remote, root)
   local cfg, s = config.get(), config.resolve_session(session)
   local wcfg = cfg.watch or {}; M.detach(s)
   for oses, ow in pairs(watchers) do if ow.remote == remote then M.detach(oses) end end
@@ -65,7 +76,7 @@ function M.attach(session, remote, on_change)
   local function trigger() if not w.stopped and not w.debounce_timer:is_closing() then w.debounce_timer:stop(); w.debounce_timer:start(debounce_ms, 0, vim.schedule_wrap(function() if not w.stopped then on_change() end end)) end end
   if mode == "local" then
     local exp = vim.fn.expand(remote); local rinfo = git.root_info(exp)
-    local target_dir = (rinfo and rinfo.common_dir or (exp .. "/.git")) .. "/logs/" .. (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", "")
+    local target_dir = (rinfo and rinfo.common_dir or (exp .. "/.git")) .. "/logs/" .. (cfg.ref_prefix or "refs/subcommits"):gsub("/+$", "") .. "/" .. s -- this session only
     local function arm(force)
       local dir = not w.stopped and deepest_dir(target_dir) or nil; if not dir or (not force and w.watched_dir == dir) then return end
       close_h(w.fse); w.fse, w.watched_dir = vim.uv.new_fs_event(), dir
@@ -73,6 +84,12 @@ function M.attach(session, remote, on_change)
       if w.fse:start(dir, { recursive = true }, cb) == nil then w.fse:stop(); w.fse:start(dir, {}, cb) end
     end
     arm(true)
+    -- review notes (comments from the other side) log under logs/refs/notes/<np>/<S>, outside the subcommit dir
+    local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "")
+    local notes_dir = (rinfo and rinfo.common_dir or (exp .. "/.git")) .. "/logs/refs/notes/" .. np
+    if vim.fn.isdirectory(notes_dir) == 0 then vim.fn.mkdir(notes_dir, "p") end
+    w.fse_notes = vim.uv.new_fs_event()
+    w.fse_notes:start(notes_dir, {}, vim.schedule_wrap(function(err, fname) if not w.stopped and not err and (fname == nil or fname == s) then trigger() end end))
   elseif mode == "ssh" then
     local function start_stream()
       local argv = not w.stopped and M.build_tail_argv(remote, s, cfg) or nil; if not argv then return end

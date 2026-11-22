@@ -125,33 +125,74 @@ local function overview_line(x)
 end
 --- :AgentTrack list [--raw] — every session's accept/reject/pending. Default: a minimal Snacks picker
 --- (vim.ui.select fallback); <CR> makes the session active and opens its review panel. --raw: print to :messages.
+--- Sessions that exist on the attached remote but not locally (read-only `git ls-remote`, async). cb(names, remote)
+function M.remote_only_sessions(opts, cb)
+  local _, _, info = ctx_of(nil, opts or {}); if not info then return false end
+  local remote = (opts or {}).remote or repo_remote(info.root, config.resolve_session()); if not remote or remote == "" then return false end
+  local rp = ref_prefix(); local localset = {}
+  for _, n in ipairs((discover_sessions(info.root))) do localset[n] = true end
+  git.run_async(info.root, { "ls-remote", remote, rp .. "/*/agent" }, { ident = false }, function(r)
+    local out = {}
+    for ref in (r.ok and r.stdout or ""):gmatch("%x+%s+(%S+)") do
+      local n = ref:match("^" .. vim.pesc(rp) .. "/([^/]+)/agent$"); if n and not localset[n] then out[#out + 1] = n end
+    end
+    vim.schedule(function() cb(out, remote) end)
+  end)
+  return true
+end
 function M.list_sessions(opts)
   opts = opts or {}
   local r = M.overview(opts)
   if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
-  if #r.sessions == 0 then return vim.notify("agent-track: no subcommit sessions in this repo", vim.log.levels.INFO) end
+  if #r.sessions == 0 and opts.raw then return vim.notify("agent-track: no subcommit sessions in this repo", vim.log.levels.INFO) end
   if opts.raw then
     vim.api.nvim_echo({ { "agent-track sessions (✓ approved  ✗ rejected  · pending)\n" .. table.concat(vim.tbl_map(overview_line, r.sessions), "\n") } }, true, {})
     return r
   end
-  -- Read-only: <CR> only opens that session's review panel to look at; the active session, its refs/state and
-  -- the statusline are left alone (switch explicitly with :AgentTrack session <name>). Fetching is :AgentTrack update.
-  local function pick(x) if x then require("agent-track.reviewer").panel({ session = x.session }) end end
+  -- Listing is read-only and idempotent (local refs; :AgentTrack update fetches). <CR> connects the picked session:
+  -- it becomes active and is followed live (M.connect), then its review panel opens.
+  local function pick(x) if x then M.connect(x.session); require("agent-track.reviewer").panel({ session = x.session }) end end
   local Snacks = rawget(_G, "Snacks")
   if type(Snacks) == "table" and Snacks.picker then
-    local items = vim.tbl_map(function(x) return { text = x.session, _s = x } end, r.sessions)
-    ;(type(Snacks.picker.pick) == "function" and Snacks.picker.pick or Snacks.picker)({
-      title = "AgentTrack sessions", items = items, layout = { preset = "select" }, preview = false,
-      format = function(item) local x = item._s; return {
-        { x.active and "* " or "  ", "Special" }, { x.session .. "  " },
-        { "✓" .. x.approved .. " ", "AgentTrackApproved" }, { "✗" .. x.rejected .. " ", "AgentTrackRejected" }, { "·" .. x.pending, "AgentTrackPending" } }
+    local rows = vim.deepcopy(r.sessions)
+    local picker = (type(Snacks.picker.pick) == "function" and Snacks.picker.pick or Snacks.picker)({
+      title = "AgentTrack sessions", layout = { preset = "select" }, preview = false,
+      finder = function() return vim.tbl_map(function(x) return { text = x.session, _s = x } end, rows) end,
+      format = function(item) local x = item._s
+        if x.remote_only then return { { "  " }, { x.session .. "  " }, { "(remote)", "AgentTrackPending" } } end
+        return { { x.active and "* " or "  ", "Special" }, { x.session .. "  " },
+          { "✓" .. x.approved .. " ", "AgentTrackApproved" }, { "✗" .. x.rejected .. " ", "AgentTrackRejected" }, { "·" .. x.pending, "AgentTrackPending" } }
       end,
       confirm = function(p, item) p:close(); pick(item and item._s) end,
     })
+    -- add sessions that only exist on the remote once a background ls-remote answers; connecting one fetches it
+    M.remote_only_sessions(opts, function(names)
+      if #names == 0 then return end
+      for _, n in ipairs(names) do rows[#rows + 1] = { session = n, remote_only = true } end
+      if picker and not picker.closed and picker.find then pcall(function() picker:find() end) end
+    end)
     return r
   end
   if #vim.api.nvim_list_uis() > 0 then vim.ui.select(r.sessions, { prompt = "AgentTrack sessions", format_item = overview_line }, pick) end
   return r
+end
+--- Connect: make `session` active and follow only it — a session-scoped watcher + fetch (its agent/base refs and
+--- notes), so changes in other sessions neither fetch nor switch you away. No-op watcher when nothing is attached.
+function M.connect(session, opts)
+  opts = opts or {}
+  local _, _, info, err = ctx_of(session, opts); if not info then return { ok = false, error = err } end
+  local remote = opts.remote or repo_remote(info.root, session)
+  config.set_active_session(session)
+  if remote and remote ~= "" then
+    local st = git.read_state(info.root, session); if st.remote ~= remote then st.remote = remote; git.write_state(info.root, session, st) end
+    watch.detach_all() -- one connected session at a time
+    if opts.watch ~= false then
+      watch.attach(session, remote, function() M.fetch(session, { async = true, silent = true, only_session = true, cwd = info.root }) end, info.root)
+    end
+    if opts.fetch ~= false then M.fetch(session, { silent = true, only_session = true, cwd = info.root, remote = remote }) end
+  end
+  local lres = M.list(session, { cwd = info.root }) -- active now: refreshes the statusline
+  return { ok = true, session = session, remote = remote, counts = lres.counts, watcher = watch.status(session) }
 end
 --- :AgentTrack update — one synchronous fetch of every session's subcommits and review notes from the attached
 --- remote (the agent repo given to :AgentTrack attach, not `origin`), then report what changed per session.
@@ -230,7 +271,7 @@ function M.init_session(remote_or_opts, maybe_opts)
   local state = git.read_state(info.root, s); if opts.reset then state.applied_ids = {} end
   if eff_remote and eff_remote ~= "" then state.remote = eff_remote end; git.write_state(info.root, s, state)
   if eff_remote and eff_remote ~= "" and opts.watch ~= false then
-    watch.attach(s, eff_remote, function() M.fetch(opts.only_session and s or nil, { async = true, silent = true, only_session = opts.only_session, cwd = info.root }) end)
+    watch.attach(s, eff_remote, function() M.fetch(opts.only_session and s or nil, { async = true, silent = true, only_session = opts.only_session, cwd = info.root }) end, info.root)
   end
   local lres = M.list(s, { cwd = info.root })
   local agent_sha = git.rev_parse(info.root, config.ref(s, "agent"))
@@ -248,7 +289,7 @@ function M.fetch(session, opts)
   local cfg, rp = config.get(), ref_prefix()
   local np = (cfg.notes_prefix or "subcommits"):gsub("^refs/notes/", ""):gsub("/+$", "")
   local _, old_heads = discover_sessions(info.root); local old_s_head = old_heads[s]
-  local fargs = o.only_session and { "fetch", remote, "+" .. config.ref(s, "agent") .. "*:" .. config.ref(s, "agent") .. "*", "+" .. config.ref(s, "base") .. "*:" .. config.ref(s, "base") .. "*", "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }
+  local fargs = o.only_session and { "fetch", remote, "+" .. config.ref(s, "agent") .. "*:" .. config.ref(s, "agent") .. "*", "+" .. config.ref(s, "base") .. "*:" .. config.ref(s, "base") .. "*", "+" .. config.notes_ref(s) .. "*:" .. git.REMOTE_NOTES .. config.notes_arg(s) .. "*" } -- '*': fine if R has no notes yet
     or { "fetch", remote, "+" .. rp .. "/*/agent:" .. rp .. "/*/agent", "+" .. rp .. "/*/base:" .. rp .. "/*/base", "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }
   local function done(r)
     if r.ok then git.merge_remote_notes(info.root, np) end -- union remote note lines into ours (append-only on both sides)
