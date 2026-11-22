@@ -59,18 +59,27 @@ end, { desc = "Esc wrapper: no highlight with esc." })
 vim.keymap.set({ "n", "v" }, "<leader>ps", '"+p', { desc = "paste from the clipboard." })
 
 -- Window maximize.
-vim.keymap.set({ "n", "v" }, "<leader>wm", function()
-  local cmd
+-- Toggle: save the exact layout (winrestcmd) and maximize; the next press restores it. A plain <c-w>= cannot
+-- restore windows with winfixwidth/winfixheight (CodeDiff's file tree, the agent-track subcommit pane), so a
+-- zoom from those left the tab stuck. If windows were opened/closed meanwhile, fall back to <c-w>=.
+local function toggle_maximize()
   if vim.t.window_maximized then
-    cmd = "<c-w>="
-    vim.t.window_maximized = false
+    local saved, n = vim.t.window_restore_cmd, vim.t.window_restore_count
+    if saved and n == #vim.tbl_filter(function(w) return vim.api.nvim_win_get_config(w).relative == "" end, vim.api.nvim_tabpage_list_wins(0)) then
+      vim.cmd(saved); vim.cmd(saved) -- twice: the first pass can be limited by winfix* neighbours
+    else
+      vim.cmd("wincmd =")
+    end
+    vim.t.window_maximized, vim.t.window_restore_cmd, vim.t.window_restore_count = false, nil, nil
   else
+    vim.t.window_restore_cmd = vim.fn.winrestcmd()
+    vim.t.window_restore_count = #vim.tbl_filter(function(w) return vim.api.nvim_win_get_config(w).relative == "" end, vim.api.nvim_tabpage_list_wins(0))
     vim.t.window_maximized = true
-    cmd = "<c-w>_<c-w>|"
+    vim.cmd("wincmd _ | wincmd |")
   end
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
-  require("lualine").refresh()
-end)
+  pcall(function() require("lualine").refresh() end)
+end
+vim.keymap.set({ "n", "v" }, "<leader>wm", toggle_maximize)
 
 -- local Util = require("lazyvim.util")
 -- local lazyterm = function()
@@ -1032,15 +1041,4 @@ vim.keymap.set("i", "<D-R>", function()
 end, { desc = "Rename file" })
 
 -- <D-o> maximize toggle in terminal mode (feedkeys/<leader> doesn't work in t mode)
-vim.keymap.set("t", "<D-o>", function()
-  local cmd
-  if vim.t.window_maximized then
-    cmd = "<c-w>="
-    vim.t.window_maximized = false
-  else
-    vim.t.window_maximized = true
-    cmd = "<c-w>_<c-w>|"
-  end
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
-  pcall(function() require("lualine").refresh() end)
-end, { desc = "Toggle maximize window (terminal mode)" })
+vim.keymap.set("t", "<D-o>", toggle_maximize, { desc = "Toggle maximize window (terminal mode)" })
