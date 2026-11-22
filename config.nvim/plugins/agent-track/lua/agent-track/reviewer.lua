@@ -8,6 +8,7 @@ local DEF_KEYS = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "
   approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" }
 local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
 local function track() return require("agent-track") end
+local function pane() return require("agent-track.pane") end
 local function get_cfg()
   local ok, t = pcall(track); local c = ok and t.get_config and t.get_config() or {}; local r = c.reviewer or {}
   return { tab_prefix = r.tab_prefix or "[track]", reuse_tab = r.reuse_tab ~= false, keymaps = vim.tbl_extend("force", DEF_KEYS, r.keymaps or {}) }, c
@@ -40,6 +41,7 @@ local function fetch_list(session)
   local res = track().list(session or S.session, { preview_conflicts = true }) or { ok = false, items = {} }
   if res.session then S.session = res.session end
   if res.root then S.root = res.root end
+  S.items = res.items
   return res
 end
 local function resolve_item(items, target)
@@ -130,6 +132,8 @@ local function open_view(it, idx, total, touch_idx, file_only)
     local tname = rcfg.tab_prefix .. short
     vim.t[tab].agent_track_tab, vim.t[tab].agent_track_header, vim.t[tab].agent_track_tabname, vim.t[tab].agent_track_sha, vim.t[tab].agent_track_touch_file = true, header, tname, it.sha, cur_file
     vim.fn.settabvar(vim.api.nvim_tabpage_get_number(tab), "tabname", tname)
+    local okp, perr = pcall(function() pane().show(tab, { session = S.session, root = S.root, sha = it.sha, items = S.items }) end)
+    if not okp then vim.notify("agent-track pane: " .. tostring(perr), vim.log.levels.WARN) end
     for _, w in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do install_buf_keymaps(vim.api.nvim_win_get_buf(w)) end
     vim.schedule(function() if vim.api.nvim_tabpage_is_valid(tab) then vim.fn.settabvar(vim.api.nvim_tabpage_get_number(tab), "tabname", tname); vim.cmd("redrawtabline") end end)
     vim.cmd("redrawtabline"); vim.api.nvim_echo({ { header, "Title" } }, false, {})
