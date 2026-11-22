@@ -104,7 +104,7 @@ end
 function M.overview(opts)
   opts = opts or {}
   local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err, sessions = {} } end
-  local active, keep_sl, out = config.resolve_session(), sl_cache, {}
+  local active, out = config.resolve_session(), {}
   local names, heads = discover_sessions(info.root)
   for _, s in ipairs(names) do
     local r = M.list(s, { cwd = info.root })
@@ -113,7 +113,6 @@ function M.overview(opts)
       out[#out + 1] = { session = s, active = s == active, total = c.total, approved = c.approved, rejected = c.rejected, pending = c.pending + c.stale, agent = heads[s], remote = r.remote }
     end
   end
-  sl_cache = keep_sl -- list() rewrites the statusline per session; keep the active one's text
   return { ok = true, active = active, root = info.root, sessions = out }
 end
 local function overview_line(x)
@@ -130,7 +129,9 @@ function M.list_sessions(opts)
     vim.api.nvim_echo({ { "agent-track sessions (✓ approved  ✗ rejected  · pending)\n" .. table.concat(vim.tbl_map(overview_line, r.sessions), "\n") } }, true, {})
     return r
   end
-  local function pick(x) if x then M.session(x.session); require("agent-track.reviewer").panel({ session = x.session }) end end
+  -- Read-only: <CR> only opens that session's review panel to look at; the active session, its refs/state and
+  -- the statusline are left alone (switch explicitly with :AgentTrack session <name>). Fetching is :AgentTrack update.
+  local function pick(x) if x then require("agent-track.reviewer").panel({ session = x.session }) end end
   local Snacks = rawget(_G, "Snacks")
   if type(Snacks) == "table" and Snacks.picker then
     local items = vim.tbl_map(function(x) return { text = x.session, _s = x } end, r.sessions)
@@ -311,7 +312,8 @@ function M.list(session, opts)
   end
   if o.preview_conflicts and #items > 0 then local pmap = sync.preview_conflicts(info, base, synced, items); for _, it in ipairs(items) do it.would_conflict = pmap[it.sha] == true end end
   local out = { ok = true, root = info.root, session = s, remote = state.remote or repo_remote(info.root, s), base = base, synced = synced, approved_prefix = approved_prefix, items = items, counts = counts }
-  update_statusline(out); return out
+  if s == config.resolve_session() then update_statusline(out) end -- the statusline tracks the active session only
+  return out
 end
 
 function M.review(sha_or_idx, status, opts)

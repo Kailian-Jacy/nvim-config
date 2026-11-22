@@ -126,7 +126,7 @@ require("agent-track").setup({
 | `:AgentTrack fetch [session]` | `<leader>atf` | Wildcard-fetch latest `agent`, `base`, and `notes` refs (auto-switches if active session is empty) |
 | `:AgentTrack review [session]` | `<leader>atr` | Open `Snacks.picker` subcommit review deck (`vim.ui.select` fallback) |
 | `:AgentTrack update` | — | Fetch every session's subcommits and review notes from the attached remote (the agent repo, not `origin`) and report what changed |
-| `:AgentTrack list [--raw]` | — | Minimal `Snacks.picker` of every session (`* name ✓n ✗n ·n`); `<CR>` activates it and opens its review deck. `--raw` prints the table to `:messages` instead |
+| `:AgentTrack list [--raw]` | — | Minimal `Snacks.picker` of every session (`* name ✓n ✗n ·n`); `<CR>` opens its review deck. `--raw` prints the table to `:messages` instead. Read-only and idempotent: reads local refs only (fetch with `:AgentTrack update`), never switches the active session (`:AgentTrack session <name>`) |
 | `:AgentTrack open [idx\|sha\|id]` | `<leader>ato` | Open subcommit in single reused `[track]` `:CodeDiff` tab |
 | `:AgentTrack approve [idx\|sha] [--prefix]` | — | Approve subcommit (or `1..k` watermark with `--prefix`) & push notes |
 | `:AgentTrack reject <idx\|sha> <reason>` | — | Reject subcommit with comment & push notes to `R` |

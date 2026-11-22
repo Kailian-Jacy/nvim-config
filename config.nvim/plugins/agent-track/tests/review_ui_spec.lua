@@ -114,6 +114,22 @@ local closed, panel_for, real_panel = false, nil, rv.panel
 rv.panel = function(o) panel_for = o and o.session end
 popts.confirm({ close = function() closed = true end }, popts.items[1]); rv.panel = real_panel
 check(closed and panel_for == "demo", "<CR> in the session picker closes it and opens that session's review panel")
+-- list / list --raw / <CR> in the picker are read-only and idempotent (fetching new refs is :AgentTrack update)
+sh({ "git", "update-ref", "refs/subcommits/other/agent", items[1].sha }, L); sh({ "git", "update-ref", "refs/subcommits/other/base", items[1].parent }, L)
+local function repo_state()
+  return table.concat({ sh({ "git", "for-each-ref", "--format=%(objectname) %(refname)" }, L), sh({ "git", "config", "--local", "--list" }, L),
+    sh({ "sh", "-c", "find .git -maxdepth 3 -type f -path '*agent-track*' -exec md5sum {} + 2>/dev/null | sort" }, L),
+    at.statusline(), require("agent-track.config").resolve_session() }, "\n")
+end
+local st0, quiet = repo_state(), api.nvim_echo; api.nvim_echo = function() end
+vim.cmd("AgentTrack list --raw"); vim.cmd("AgentTrack list --raw"); api.nvim_echo = quiet
+_G.Snacks = { picker = { pick = function(o) popts = o; return {} end } }; vim.cmd("AgentTrack list"); _G.Snacks = real_snacks
+local other = vim.iter(popts.items):find(function(x) return x.text == "other" end)
+real_panel = rv.panel; rv.panel = function(o) panel_for = o and o.session; return real_panel(o) end
+popts.confirm({ close = function() end }, other); rv.panel = real_panel; pcall(function() rv.close() end)
+eq(panel_for, "other", "<CR> on another session opens its review panel")
+eq(repo_state(), st0, "list, list --raw and <CR> change no refs, config, state, statusline or active session")
+sh({ "git", "update-ref", "-d", "refs/subcommits/other/agent" }, L); sh({ "git", "update-ref", "-d", "refs/subcommits/other/base" }, L)
 
 -- 1. explorer opens as a directory tree; pane docks directly under it in the same column
 eq(require("codediff.config").options.explorer.view_mode, "tree", "git.lua makes the CodeDiff explorer a tree by default")

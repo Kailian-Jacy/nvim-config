@@ -79,9 +79,10 @@ completes subcommands, discovered session names, and `sync` targets.
 :AgentTrack list [--raw]                                   *:AgentTrack-list*
     Minimal `Snacks.picker` (`vim.ui.select` fallback) of every session
     (`refs/subcommits/*/agent`): `*` active, name, `✓` approved, `✗` rejected,
-    `·` pending. `<CR>` makes it active and opens its review deck. `--raw`
-    prints the same table to |:messages| instead. Local refs only; run
-    `:AgentTrack update` first to see the remote's latest.
+    `·` pending. `<CR>` opens its review deck. `--raw` prints the same table
+    to |:messages| instead. Read-only and idempotent: local refs only (run
+    `:AgentTrack update` to fetch), never switches the active session or
+    touches the statusline (use `:AgentTrack session <name>` to switch).
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in
