@@ -132,6 +132,26 @@ function M.list_sessions(opts)
   end)
   return r
 end
+--- :AgentTrack update — one synchronous fetch of every session's subcommits and review notes from the attached
+--- remote (the agent repo given to :AgentTrack attach, not `origin`), then report what changed per session.
+function M.update(opts)
+  opts = opts or {}
+  local _, o, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
+  local active = config.resolve_session(); local remote = o.remote or repo_remote(info.root, active)
+  if not remote or remote == "" then return { ok = false, error = "no remote attached (use :AgentTrack attach <remote> [session])" } end
+  local function snap() local t = {}; for _, x in ipairs(M.overview({ cwd = info.root }).sessions or {}) do t[x.session] = x end; return t end
+  local before = snap()
+  local r = M.fetch(active, { cwd = info.root, remote = remote, silent = true }) -- sync (no async), wildcard over all sessions
+  if not r.ok then return { ok = false, error = r.error or ("fetch failed from " .. remote) } end
+  local after, changes = snap(), {}
+  for s, x in pairs(after) do
+    local b = before[s]
+    if not b then changes[#changes + 1] = { session = s, kind = "new", now = x }
+    elseif b.agent ~= x.agent or b.approved ~= x.approved or b.rejected ~= x.rejected or b.pending ~= x.pending then changes[#changes + 1] = { session = s, kind = "changed", was = b, now = x } end
+  end
+  table.sort(changes, function(a, b) return a.session < b.session end)
+  return { ok = true, remote = remote, changes = changes, sessions = after }
+end
 function M.session(name, opts)
   local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
   if not name or name == "" then return M.sessions(opts) end
@@ -369,6 +389,15 @@ local CMD = {
     vim.notify(string.format("agent-track [%s] remote=%s synced=%d/%d ✓%d ·%d ✗%d watch=%s", st.session, st.remote or "-", c.synced, c.total, c.approved, c.pending + c.stale, c.rejected, st.watcher.active and st.watcher.mode or "off"))
   end,
   list = function() M.list_sessions() end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
+  update = function()
+    local r = M.update(); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
+    local lines = { "agent-track: updated from " .. r.remote .. (#r.changes == 0 and " (no changes)" or "") }
+    for _, c in ipairs(r.changes) do
+      lines[#lines + 1] = c.kind == "new" and string.format("  + %s  ✓%d ✗%d ·%d (%d)", c.session, c.now.approved, c.now.rejected, c.now.pending, c.now.total)
+        or string.format("  ~ %s  ✓%d→%d ✗%d→%d ·%d→%d (%d→%d)", c.session, c.was.approved, c.now.approved, c.was.rejected, c.now.rejected, c.was.pending, c.now.pending, c.was.total, c.now.total)
+    end
+    vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
+  end,
   review = function(f) require("agent-track.reviewer").panel({ session = f[2] }) end,
   approve = function(f) M.review(f[2] ~= "--prefix" and f[2] or nil, "approved", { prefix = (f[2] == "--prefix" or f[3] == "--prefix") }) end,
   reject = function(f) M.review(f[2], "rejected", { comment = table.concat(vim.list_slice(f, 3), " ") }) end,

@@ -194,7 +194,10 @@ check(pane.get(tab).win == nil and pane.get(tab).user_closed, "user-closed pane 
 
 -- 7. a new subcommit streamed from R appears in the pane of the next opened tab
 write("src/ui/view.lua", "return { render = function() return 'v3' end }\n"); subcommit("ui: tidy view", "src/ui/view.lua")
-at.fetch("demo", { async = false }); rv.open(4, { session = "demo" })
+local upd = at.update() -- :AgentTrack update pulls every session from the attached remote and reports the diff
+check(upd.ok and #upd.changes == 1 and upd.changes[1].session == "demo" and upd.changes[1].now.total == 4, ":AgentTrack update reports the new subcommit in demo")
+eq(#at.update().changes, 0, "a second :AgentTrack update reports no changes")
+rv.open(4, { session = "demo" })
 check(wait(function() local p = pane.get(); return p and p.win and api.nvim_buf_get_lines(p.buf, 0, 1, false)[1]:find("%(4%)") end), "pane lists the streamed 4th subcommit")
 eq(api.nvim_win_get_height(pane.get().win), 5, "pane is 5 rows tall at most by default (header + 4)")
 write("README.md", "# demo\n\nmore\n"); subcommit("docs: more", "README.md"); at.fetch("demo", { async = false }); rv.open(5, { session = "demo" })

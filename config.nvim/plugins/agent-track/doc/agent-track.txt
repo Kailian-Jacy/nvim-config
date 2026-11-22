@@ -71,10 +71,16 @@ completes subcommands, discovered session names, and `sync` targets.
     Open the `Snacks.picker` subcommit review panel (`vim.ui.select` fallback)
     with review badges (`✓`/`✓*`/`✗`/`~`/`·`).
 
+:AgentTrack update                                       *:AgentTrack-update*
+    Synchronously fetch every session's subcommits and review notes from the
+    attached remote (the agent repo given to `attach`, not `origin`) and
+    report new sessions and changed counts. `list` itself reads local refs.
+
 :AgentTrack list                                           *:AgentTrack-list*
     Print every session (`refs/subcommits/*/agent`) with `✓` approved,
     `✗` rejected and `·` pending counts (`*` = active), then pick one with
-    `vim.ui.select` to make it active and open its review deck.
+    `vim.ui.select` to make it active and open its review deck. Local refs
+    only; run `:AgentTrack update` first to see the remote's latest.
 
 :AgentTrack open [idx|sha|id]            *:AgentTrack-open* *agent-track-open*
     Open target subcommit (default: first `pending`/`stale`, else latest) in

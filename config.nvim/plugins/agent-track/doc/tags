@@ -13,6 +13,7 @@
 :AgentTrack-status	agent-track.txt	/*:AgentTrack-status*
 :AgentTrack-sync	agent-track.txt	/*:AgentTrack-sync*
 :AgentTrack-undo	agent-track.txt	/*:AgentTrack-undo*
+:AgentTrack-update	agent-track.txt	/*:AgentTrack-update*
 AgentTrackReviewed	agent-track.txt	/*AgentTrackReviewed*
 AgentTrackSynced	agent-track.txt	/*AgentTrackSynced*
 AgentTrackUpdated	agent-track.txt	/*AgentTrackUpdated*
