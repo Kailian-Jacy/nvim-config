@@ -72,9 +72,12 @@ completes subcommands, discovered session names, and `sync` targets.
     with review badges (`✓`/`✓*`/`✗`/`~`/`·`).
 
 :AgentTrack update                                       *:AgentTrack-update*
-    Synchronously fetch every session's subcommits and review notes from the
-    attached remote (the agent repo given to `attach`, not `origin`) and
-    report new sessions and changed counts. `list` itself reads local refs.
+    Synchronously fetch every session's subcommits and review notes from
+    every remote this repo knows: the active session's, each session's
+    recorded remote, and `git config agent-track.remote` (deduplicated). An
+    unreachable remote (e.g. a stale `/tmp` attach) is reported with `!` and
+    skipped; the rest still update. Reports new sessions (`+`) and changed
+    counts (`~`); never switches the active session.
 
 :AgentTrack list [--raw]                                   *:AgentTrack-list*
     Minimal `Snacks.picker` (`vim.ui.select` fallback) of every session

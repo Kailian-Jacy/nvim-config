@@ -196,15 +196,30 @@ function M.connect(session, opts)
 end
 --- :AgentTrack update — one synchronous fetch of every session's subcommits and review notes from the attached
 --- remote (the agent repo given to :AgentTrack attach, not `origin`), then report what changed per session.
+--- Every remote this repo knows for agent-track, deduplicated: the active session's first, then each session's recorded
+--- remote (state ref), then git config agent-track.remote.
+function M.known_remotes(root)
+  local out, seen = {}, {}
+  local function add(r) if type(r) == "string" and r ~= "" and not seen[r] then seen[r], out[#out + 1] = true, r end end
+  add(git.read_state(root, config.resolve_session()).remote)
+  local rp = ref_prefix(); local sr = git.run(root, { "for-each-ref", "--format=%(refname)", rp .. "/*/state" }, { ident = false })
+  for ref in (sr.ok and sr.stdout or ""):gmatch("[^\n]+") do local n = ref:match("^" .. vim.pesc(rp) .. "/([^/]+)/state$"); if n then add(git.read_state(root, n).remote) end end
+  local cr = git.run(root, { "config", "--get", "agent-track.remote" }, { ident = false }); add(cr.ok and vim.trim(cr.stdout) or nil)
+  return out
+end
 function M.update(opts)
   opts = opts or {}
   local _, o, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
-  local active = config.resolve_session(); local remote = o.remote or repo_remote(info.root, active)
-  if not remote or remote == "" then return { ok = false, error = "no remote attached (use :AgentTrack attach <remote> [session])" } end
+  local remotes = o.remote and { o.remote } or M.known_remotes(info.root)
+  if #remotes == 0 then return { ok = false, error = "no remote attached (use :AgentTrack attach <remote> [session])" } end
   local function snap() local t = {}; for _, x in ipairs(M.overview({ cwd = info.root }).sessions or {}) do t[x.session] = x end; return t end
-  local before = snap()
-  local r = M.fetch(active, { cwd = info.root, remote = remote, silent = true }) -- sync (no async), wildcard over all sessions
-  if not r.ok then return { ok = false, error = r.error or ("fetch failed from " .. remote) } end
+  local before, active, ok_remotes, failed = snap(), config.resolve_session(), {}, {}
+  for _, remote in ipairs(remotes) do -- fetch from every known remote; one unreachable remote does not stop the rest
+    local r = M.fetch(active, { cwd = info.root, remote = remote, silent = true }) -- sync, wildcard over all sessions; explicit session: never switches
+    if r.ok then ok_remotes[#ok_remotes + 1] = remote else failed[#failed + 1] = { remote = remote, error = vim.trim(r.error or "fetch failed") } end
+  end
+  config.set_active_session(active)
+  if #ok_remotes == 0 then return { ok = false, error = "fetch failed from every remote", failed = failed } end
   local after, changes = snap(), {}
   for s, x in pairs(after) do
     local b = before[s]
@@ -212,7 +227,7 @@ function M.update(opts)
     elseif b.agent ~= x.agent or b.approved ~= x.approved or b.rejected ~= x.rejected or b.pending ~= x.pending then changes[#changes + 1] = { session = s, kind = "changed", was = b, now = x } end
   end
   table.sort(changes, function(a, b) return a.session < b.session end)
-  return { ok = true, remote = remote, changes = changes, sessions = after }
+  return { ok = true, remote = ok_remotes[1], remotes = ok_remotes, failed = failed, changes = changes, sessions = after }
 end
 function M.session(name, opts)
   local _, _, info, err = ctx_of(nil, opts); if not info then return { ok = false, error = err } end
@@ -293,9 +308,9 @@ function M.fetch(session, opts)
     or { "fetch", remote, "+" .. rp .. "/*/agent:" .. rp .. "/*/agent", "+" .. rp .. "/*/base:" .. rp .. "/*/base", "+refs/notes/" .. np .. "/*:" .. git.REMOTE_NOTES .. np .. "/*" }
   local function done(r)
     if r.ok then git.merge_remote_notes(info.root, np) end -- union remote note lines into ours (append-only on both sides)
-    if not r.ok and not o.silent then
+    if not r.ok then -- a failed fetch is always an error; `silent` only suppresses the notification
       local ferr = vim.trim(r.stderr ~= "" and r.stderr or ("git fetch failed from " .. remote))
-      vim.notify("agent-track: " .. ferr, vim.log.levels.ERROR)
+      if not o.silent then vim.notify("agent-track: " .. ferr, vim.log.levels.ERROR) end
       return { ok = false, error = ferr }
     end
     local sessions, new_heads = discover_sessions(info.root)
@@ -476,13 +491,16 @@ local CMD = {
   end,
   list = function(f) M.list_sessions({ raw = vim.tbl_contains(f, "--raw") }) end, open = function(f) require("agent-track.reviewer").open(f[2]) end,
   update = function()
-    local r = M.update(); if not r.ok then return vim.notify("agent-track: " .. tostring(r.error), vim.log.levels.WARN) end
-    local lines = { "agent-track: updated from " .. r.remote .. (#r.changes == 0 and " (no changes)" or "") }
+    local r = M.update()
+    local fails = vim.tbl_map(function(f) return "  ! " .. f.remote .. ": " .. (f.error:gsub("\n.*", "")) end, r.failed or {})
+    if not r.ok then return vim.notify(table.concat(vim.list_extend({ "agent-track: " .. tostring(r.error) }, fails), "\n"), vim.log.levels.WARN) end
+    local lines = { "agent-track: updated from " .. table.concat(r.remotes, ", ") .. (#r.changes == 0 and " (no changes)" or "") }
     for _, c in ipairs(r.changes) do
       lines[#lines + 1] = c.kind == "new" and string.format("  + %s  ✓%d ✗%d ·%d (%d)", c.session, c.now.approved, c.now.rejected, c.now.pending, c.now.total)
         or string.format("  ~ %s  ✓%d→%d ✗%d→%d ·%d→%d (%d→%d)", c.session, c.was.approved, c.now.approved, c.was.rejected, c.now.rejected, c.was.pending, c.now.pending, c.was.total, c.now.total)
     end
-    vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
+    vim.list_extend(lines, fails)
+    vim.notify(table.concat(lines, "\n"), #fails > 0 and vim.log.levels.WARN or vim.log.levels.INFO)
   end,
   review = function(f) require("agent-track.reviewer").panel({ session = f[2] }) end,
   approve = function(f) M.review(f[2] ~= "--prefix" and f[2] or nil, "approved", { prefix = (f[2] == "--prefix" or f[3] == "--prefix") }) end,

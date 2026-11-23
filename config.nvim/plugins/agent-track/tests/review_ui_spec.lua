@@ -272,5 +272,20 @@ eq(api.nvim_win_get_height(pane.get().win), 5, "pane stays at max_height = 5 wit
 eq(api.nvim_win_get_cursor(pane.get().win)[1], 6, "the open subcommit's row is kept in view (row 6 = #5)")
 
 at.detach("demo")
+-- update fetches from every known remote; a dead one (e.g. a stale /tmp attach) is reported, not fatal
+local gitm = require("agent-track.git"); local st_demo = gitm.read_state(L, "demo")
+local dead = vim.fn.tempname() .. "/gone"
+gitm.write_state(L, "deadsess", { remote = dead }); sh({ "git", "update-ref", "refs/subcommits/deadsess/agent", items[1].sha }, L)
+local kr = at.known_remotes(L)
+check(vim.tbl_contains(kr, R) and vim.tbl_contains(kr, dead) and kr[1] == st_demo.remote, "known remotes: the active session's first, then every session's")
+local before_total = #at.list("demo").items
+write("src/core/retry.lua", "return { attempts = 3, again = true }\n"); subcommit("core: retry again", "src/core/retry.lua")
+local upd2 = at.update()
+check(upd2.ok and vim.tbl_contains(upd2.remotes, R), "update succeeds through the reachable remote")
+check(#upd2.failed == 1 and upd2.failed[1].remote == dead, "the dead remote is reported as failed")
+check(vim.iter(upd2.changes):any(function(c) return c.session == "demo" and c.now.total == before_total + 1 end), "update still pulls the new subcommit when another remote is dead")
+eq(require("agent-track.config").resolve_session(), "demo", "update never switches the active session")
+for _, k in ipairs({ "agent", "state" }) do sh({ "git", "update-ref", "-d", "refs/subcommits/deadsess/" .. k }, L) end
+
 io.write(string.format("review_ui_spec: %d passed, %d failed\n", passed, failed))
 vim.fn.delete(tmp, "rf"); os.exit(failed > 0 and 1 or 0)
