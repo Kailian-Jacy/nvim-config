@@ -99,8 +99,10 @@ require("agent-track").setup({
     keymaps = {                                  -- each value: one lhs or a list of lhs
       next_subcommit = { "<D-j>", "<leader>tj", "]c" },
       prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
-      next_touch_file = { "J", "]f" },
-      prev_touch_file = { "K", "[f" },
+      next_file = "J",                         -- tree order, same as codediff next_file (<leader>qj)
+      prev_file = "K",
+      next_touch_file = "]f",                   -- causal Touch-Order
+      prev_touch_file = "[f",
       approve = { "A", "<leader>ta" },
       approve_comment = "<leader>tc",
       approve_prefix = "<leader>tA",
@@ -150,10 +152,11 @@ require("agent-track").setup({
 | | `s` / `S` / `u` / `r` | Sync approved / Sync prefix up to selected / Undo last sync / Fetch & refresh |
 | | `<c-q>` | Send the (selected or all) subcommits to quickfix: `<CR>`, `:cc`, `:cnext`/`:cprev` there open that subcommit's `[track]` diff |
 | **`[track]` Diff Tab** (read-only, so single letters; `<leader>t*` stay as aliases) | `<D-j>` / `<D-k>` (also `<leader>tj`/`tk`, `]c`/`[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
-| | `J` / `K` (also `]f` / `[f`) | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
+| | `J` / `K` | Next / Previous file in tree order (the same as codediff `next_file`, e.g. `<leader>qj`/`qk`) |
+| | `]f` / `[f` | Next / Previous file in causal `Touch-Order` (the tab opens at `Touch-Order` #1) |
 | | `A` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
 | | `R` / `<leader>tA` | Reject (optional reason), then open the next pending subcommit / Prefix-approve `1..k` |
-| | `m` | Comment on the cursor line, or (visual) the selected lines; appended, does not change the review status |
+| | `m` | Comment on the cursor line, or (visual) the selected lines; outside a diff window a subcommit-level comment; appended, does not change the review status |
 | | `b` / `c` | Toggle the file tree / the subcommit pane |
 | | `<leader>ts` / `<leader>tp` | Sync / Open review panel |
 | **Subcommit pane** | `<CR>` / `o` | Open the subcommit under the cursor |

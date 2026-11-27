@@ -140,17 +140,19 @@ Installed in Normal mode on non-floating buffers inside the `[track]` tab
 defaults are single letters; the `<leader>t*` keys remain as aliases:
   LHS                 Action (option) ~
   `<D-j>` / `<D-k>`   Next / prev subcommit, also `<leader>tj`/`tk`, `]c`/`[c`
-  `J` / `K`           Next / prev `Touch-Order` file, also `]f` / `[f`
+  `J` / `K`           Next / prev file in tree order (as codediff `next_file`)
+  `]f` / `[f`         Next / prev file in `Touch-Order`
   `A`                 Approve & open next pending/stale, also `<leader>ta`
   `R`                 Reject (optional reason) & open next, also `<leader>tx`
-  `m`                 Comment on line / Visual selection, also `<leader>tq`
+  `m`                 Comment on line / Visual selection (outside a diff
+                      window: subcommit-level), also `<leader>tq`
   `b` / `c`           Toggle the file tree / the subcommit pane
   `<leader>tc`        Prompt comment, approve & open next (`approve_comment`)
   `<leader>tA`        Prefix-approve `1..current` (`approve_prefix`)
   `<leader>ts`        Sync `approved`, else `1..current` (`sync`)
   `<leader>tp`        Open `Snacks.picker` review panel (`panel`)
-Options: `next_subcommit`, `prev_subcommit`, `next_touch_file`,
-`prev_touch_file`, `approve`, `reject`, `comment`, `toggle_explorer`,
+Options: `next_subcommit`, `prev_subcommit`, `next_file`, `prev_file`,
+`next_touch_file`, `prev_touch_file`, `approve`, `reject`, `comment`, `toggle_explorer`,
 `toggle_pane`. They shadow `b` (word back), `c`, `J`, `K` and codediff's
 explorer `R`/`K` inside the `[track]` tab only.
 A subcommit opens at its `Touch-Order` #1 file; `]f`/`[f` stay in the same tab.
@@ -273,7 +275,8 @@ Internal Lifecycle Autocmds~
       keymaps = { -- each value: one lhs or a list of lhs
         next_subcommit = { "<D-j>", "<leader>tj", "]c" },
         prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
-        next_touch_file = { "J", "]f" }, prev_touch_file = { "K", "[f" },
+        next_file = "J", prev_file = "K",
+        next_touch_file = "]f", prev_touch_file = "[f",
         approve = { "A", "<leader>ta" }, approve_comment = "<leader>tc",
         approve_prefix = "<leader>tA", reject = { "R", "<leader>tx" },
         comment = { "m", "<leader>tq" }, sync = "<leader>ts",

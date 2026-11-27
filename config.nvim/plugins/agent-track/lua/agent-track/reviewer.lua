@@ -7,7 +7,7 @@ local DEF_HL = { AgentTrackComment = "DiagnosticVirtualTextInfo", AgentTrackAppr
 -- The review tab is read-only, so single letters are free: A accept, R reject, m comment, J/K file, <D-j>/<D-k> subcommit,
 -- b file tree, c subcommit pane. The <leader>t* keys stay as aliases.
 local DEF_KEYS = { next_subcommit = { "<D-j>", "<leader>tj", "]c" }, prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
-  next_touch_file = { "J", "]f" }, prev_touch_file = { "K", "[f" },
+  next_file = "J", prev_file = "K", next_touch_file = "]f", prev_touch_file = "[f",
   approve = { "A", "<leader>ta" }, approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = { "R", "<leader>tx" },
   sync = "<leader>ts", panel = "<leader>tp", comment = { "m", "<leader>tq" }, toggle_explorer = "b", toggle_pane = "c" }
 local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
@@ -101,6 +101,9 @@ local function install_buf_keymaps(buf)
   end
   local acts = {
     next_subcommit = M.next_subcommit, prev_subcommit = M.prev_subcommit, next_touch_file = M.next_touch_file, prev_touch_file = M.prev_touch_file,
+    -- J/K: codediff's own file navigation, i.e. the explorer order of <leader>qj/qk (]f/[f follow Touch-Order)
+    next_file = function() pcall(function() require("codediff.ui.view.navigation").next_file() end) end,
+    prev_file = function() pcall(function() require("codediff.ui.view.navigation").prev_file() end) end,
     approve = function() run_op("approve", S.sha, S.session, advance) end, approve_comment = function() run_op("approve_comment", S.sha, S.session, advance) end,
     approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, advance) end,
     panel = function() M.panel({ session = S.session }) end,
@@ -159,6 +162,27 @@ local function ensure_setup()
       install_buf_keymaps(ev.buf)
     end
   end })
+  -- codediff swaps a new buffer into the diff window on every file switch, often while the explorer has focus (no
+  -- BufEnter there): install on BufWinEnter for any window of a [track] tab, after codediff's own keymap setup.
+  vim.api.nvim_create_autocmd("BufWinEnter", { group = S.augroup, callback = function(ev)
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(ev.buf) then return end
+      for _, w in ipairs(vim.fn.win_findbuf(ev.buf)) do
+        if vim.t[vim.api.nvim_win_get_tabpage(w)].agent_track_tab and vim.api.nvim_win_get_config(w).relative == "" then install_buf_keymaps(ev.buf); return end
+      end
+    end)
+  end })
+  -- ft-scoped plugin keys (e.g. lazy.nvim `ft = "rust"` maps for J) are installed on FileType, which fires when a review
+  -- buffer gets its filetype and would shadow the review keys; re-install after every other FileType handler ran.
+  vim.api.nvim_create_autocmd("FileType", { group = S.augroup, callback = function(ev)
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(ev.buf) then return end
+      for _, w in ipairs(vim.fn.win_findbuf(ev.buf)) do
+        local tab = vim.api.nvim_win_get_tabpage(w)
+        if vim.t[tab].agent_track_tab and vim.api.nvim_win_get_config(w).relative == "" then install_buf_keymaps(ev.buf); return end
+      end
+    end)
+  end })
   vim.api.nvim_create_autocmd("User", { group = S.augroup, pattern = { "AgentTrackUpdated", "AgentTrackSynced", "AgentTrackReviewed" },
     callback = function(ev)
       if ev.data and ev.data.session then S.session = ev.data.session end
@@ -166,7 +190,15 @@ local function ensure_setup()
       if S.tab and vim.api.nvim_tabpage_is_valid(S.tab) then fetch_list(S.session); render_comments(S.tab) end
     end })
   vim.api.nvim_create_autocmd("User", { group = S.augroup, pattern = "CodeDiffFileSelect", callback = function()
-    local tab = vim.api.nvim_get_current_tabpage(); if vim.t[tab].agent_track_tab then vim.defer_fn(function() render_comments(tab) end, 50) end
+    local tab = vim.api.nvim_get_current_tabpage(); if not vim.t[tab].agent_track_tab then return end
+    vim.defer_fn(function()
+      render_comments(tab)
+      local okl, lc = pcall(require, "codediff.ui.lifecycle"); local ex = okl and lc.get_explorer(tab) or nil
+      local it = vim.iter(S.items or {}):find(function(x) return x.sha == vim.t[tab].agent_track_sha end)
+      if ex and it and ex.current_file_path then
+        for i, f in ipairs(ordered_files(it)) do if f == ex.current_file_path then S.touch_idx = i; vim.t[tab].agent_track_touch_file = f end end
+      end
+    end, 50)
   end })
   vim.api.nvim_create_autocmd("BufReadCmd", { group = S.augroup, pattern = qf_prefix() .. "*", callback = function(ev) -- <CR>/:cc/:cnext on M.qflist() entries
     local buf, s, sha = ev.buf, ev.match:match("^" .. vim.pesc(qf_prefix()) .. "(.+)/(%x+)$")
@@ -258,9 +290,10 @@ function M.comment_here(visual)
   end
   local sha = vim.t.agent_track_sha
   if not sha then return vim.notify("agent-track: open a subcommit first", vim.log.levels.WARN) end
-  local loc = require("agent-track.comments").anchor(range)
-  if not loc then return vim.notify("agent-track: put the cursor in a diff window (inline/new side or side-by-side old side)", vim.log.levels.WARN) end
-  local where = loc.path .. ":" .. loc.line .. (loc.end_line and ("-" .. loc.end_line) or "") .. (loc.side == "old" and " (old)" or "")
+  local it = vim.iter(S.items or {}):find(function(x) return x.sha == sha end)
+  local loc = require("agent-track.comments").anchor(range, { new = sha, old = it and it.parent })
+  -- outside a diff window (file tree, pane): a subcommit-level comment instead of refusing
+  local where = loc and (loc.path .. ":" .. loc.line .. (loc.end_line and ("-" .. loc.end_line) or "") .. (loc.side == "old" and " (old)" or "")) or "(subcommit)"
   ask("Comment " .. where .. ": ", function(body)
     if body == nil or vim.trim(body) == "" then return end
     check(track().comment(sha, body, loc, { session = S.session }))

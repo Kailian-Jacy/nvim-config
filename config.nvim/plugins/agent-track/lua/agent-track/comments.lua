@@ -10,22 +10,29 @@ local function lifecycle() local ok, lc = pcall(require, "codediff.ui.lifecycle"
 --- Where is `win` in the current CodeDiff session: { path, side = "new"|"old" } or nil.
 --- Inline layout shows the new side in one window (deleted old lines are virtual and not addressable);
 --- side-by-side has the old side in original_win and the new side in modified_win.
-function M.locate(win)
+function M.locate(win, revs)
   local lc = lifecycle(); local s = lc and lc.get_session(vim.api.nvim_win_get_tabpage(win)) or nil
   if not s then return nil end
-  if win == s.original_win and s.layout ~= "inline" then
-    local p = (s.original_path or "") ~= "" and s.original_path or s.modified_path
-    return (p and p ~= "") and { path = p, side = "old" } or nil
-  elseif win == s.modified_win then
-    local p = (s.modified_path or "") ~= "" and s.modified_path or s.original_path
-    return (p and p ~= "") and { path = p, side = "new" } or nil
+  local buf = vim.api.nvim_win_get_buf(win)
+  local newp = (s.modified_path or "") ~= "" and s.modified_path or s.original_path
+  local oldp = (s.original_path or "") ~= "" and s.original_path or s.modified_path
+  -- match by buffer (window ids go stale while codediff re-renders or toggles layout), then by window
+  local is_old = s.layout ~= "inline" and (buf == s.original_bufnr or win == s.original_win) and buf ~= s.modified_bufnr
+  local is_new = buf == s.modified_bufnr or win == s.modified_win
+  if is_old and oldp and oldp ~= "" then return { path = oldp, side = "old" } end
+  if is_new and newp and newp ~= "" then return { path = newp, side = "new" } end
+  -- codediff:///<root>///<rev>/<path>: decide the side from the revision (revs = { new = sha, old = parent })
+  local rev, path = vim.api.nvim_buf_get_name(buf):match("^codediff://.-///([^/]+)/(.+)$")
+  if path and revs then
+    if revs.new and revs.new:sub(1, #rev) == rev then return { path = path, side = "new" } end
+    if revs.old and revs.old:sub(1, #rev) == rev then return { path = path, side = "old" } end
   end
   return nil
 end
 
 --- Selection or cursor line in the current window as a comment anchor.
-function M.anchor(range)
-  local win = vim.api.nvim_get_current_win(); local loc = M.locate(win)
+function M.anchor(range, revs)
+  local win = vim.api.nvim_get_current_win(); local loc = M.locate(win, revs)
   if not loc then return nil end
   local l1, l2 = range and range[1] or vim.api.nvim_win_get_cursor(win)[1], range and range[2] or nil
   if l2 and l2 < l1 then l1, l2 = l2, l1 end

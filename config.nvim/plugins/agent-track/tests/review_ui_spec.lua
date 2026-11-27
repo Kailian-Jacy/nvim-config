@@ -64,6 +64,8 @@ local function note(repo, sha) -- latest review event (+ newest comment body) fr
   return { status = n.review and n.review.status, comment = (n.comments[#n.comments] or {}).body, comments = n.comments, raw = r.stdout }
 end
 
+-- an ft-scoped plugin map registered at startup, like lazy.nvim `{ "J", ..., ft = "rust" }` (here: lua files)
+vim.api.nvim_create_autocmd("FileType", { pattern = "lua", callback = function(ev) vim.keymap.set("n", "J", "<cmd>echo 'ft J'<cr>", { buffer = ev.buf, desc = "ft-scoped J" }) end })
 vim.cmd("AgentTrack attach " .. vim.fn.fnameescape(R) .. " demo")
 local ar = { ok = at.list("demo").ok }
 check(ar.ok, "attach local agent repo")
@@ -171,6 +173,9 @@ for _, b in ipairs({ ex.bufnr, P.buf }) do for _, lhs in ipairs({ "<leader>tj", 
   check(map(b, lhs).buffer == 1, "mapping " .. lhs .. " on " .. vim.bo[b].filetype)
 end end
 -- single-letter review keys (the tab is read-only): present on diff + explorer, pane keeps row-based A/R/m
+do local mb = api.nvim_win_get_buf(lc.get_session(cur()).modified_win); vim.wait(100)
+  eq(vim.bo[mb].filetype, "lua", "review buffer has a filetype (so ft-scoped maps fire)")
+  check((map(mb, "J").desc or ""):find("AgentTrack", 1, true) ~= nil, "review J wins over an ft-scoped J (FileType re-install)") end
 local dbuf = api.nvim_win_get_buf(lc.get_session(cur()).modified_win)
 for _, b in ipairs({ dbuf, ex.bufnr }) do for _, lhs in ipairs({ "A", "R", "m", "J", "K", "b", "c", "<D-j>", "<D-k>" }) do
   local m = map(b, lhs); check(m.buffer == 1 and (m.desc or ""):find("AgentTrack", 1, true), "single-letter " .. lhs .. " on " .. (vim.bo[b].filetype ~= "" and vim.bo[b].filetype or "diff"))
@@ -300,6 +305,33 @@ check(#upd2.failed == 1 and upd2.failed[1].remote == dead, "the dead remote is r
 check(vim.iter(upd2.changes):any(function(c) return c.session == "demo" and c.now.total == before_total + 1 end), "update still pulls the new subcommit when another remote is dead")
 eq(require("agent-track.config").resolve_session(), "demo", "update never switches the active session")
 for _, k in ipairs({ "agent", "state" }) do sh({ "git", "update-ref", "-d", "refs/subcommits/deadsess/" .. k }, L) end
+
+
+-- J/K follow codediff's file order (= <leader>qj/qk, the tree), ]f/[f follow Touch-Order; review keys reach every buffer
+vim.fn.mkdir(R .. "/nav", "p")
+write("nav/a.lua", "return 'a'\n"); write("nav/m.lua", "return 'm'\n"); write("nav/z.lua", "return 'z'\n")
+subcommit("nav: three files", "nav/a.lua,nav/m.lua,nav/z.lua", "nav/z.lua,nav/m.lua,nav/a.lua") -- Touch-Order reverses the tree
+at.fetch("demo", { silent = true }); local navs = at.list("demo").items; local nav = navs[#navs]
+rv.open(nav.sha, { session = "demo" }); check(opened(nav.sha), "open the 3-file subcommit")
+local function curf() return explorer().current_file_path end
+check(wait(function() return curf() == "nav/z.lua" end), "opens at Touch-Order #1 (nav/z.lua)")
+local function key(lhs) local w = lc.get_session(cur()).modified_win; api.nvim_set_current_win(w); press(api.nvim_win_get_buf(w), lhs) end
+local seq_j = {}; for _ = 1, 2 do local before = curf(); key("J"); wait(function() return curf() ~= before end); seq_j[#seq_j + 1] = curf() end
+rv.open(nav.sha, { session = "demo" }); wait(function() return curf() == "nav/z.lua" end)
+local seq_q = {}; for _ = 1, 2 do local before = curf(); require("codediff.ui.view.navigation").next_file(); wait(function() return curf() ~= before end); seq_q[#seq_q + 1] = curf() end
+eq(vim.inspect(seq_j), vim.inspect(seq_q), "J visits files in the same order as <leader>qj (codediff next_file)")
+check(seq_j[1] ~= "nav/m.lua", "J does not follow Touch-Order")
+key("K"); check(wait(function() return curf() == seq_q[1] end), "K steps back like <leader>qk")
+rv.open(nav.sha, { session = "demo" }); wait(function() return curf() == "nav/z.lua" end)
+key("]f"); check(wait(function() return curf() == "nav/m.lua" end), "]f still follows Touch-Order (z -> m)")
+-- switch the file from the tree (explorer focused): the new diff buffer gets the review keys right away
+api.nvim_set_current_win(explorer().winid); require("codediff.ui.view.navigation").next_file(); vim.wait(300)
+local nb = api.nvim_win_get_buf(lc.get_session(cur()).modified_win)
+check(wait(function() return (map(nb, "J").desc or ""):find("AgentTrack", 1, true) ~= nil end), "a buffer swapped in while the tree has focus gets J/K (BufWinEnter)")
+-- m outside a diff window: a subcommit-level comment instead of a warning
+vim.ui.input = function(_, cb) cb("whole slice ok?") end
+api.nvim_set_current_win(explorer().winid); press(explorer().bufnr, "m")
+local nn = note(L, nav.sha); check(nn and #nn.comments == 1 and nn.comments[1].path == nil and nn.comments[1].body == "whole slice ok?", "m in the file tree writes a subcommit-level comment")
 
 io.write(string.format("review_ui_spec: %d passed, %d failed\n", passed, failed))
 vim.fn.delete(tmp, "rf"); os.exit(failed > 0 and 1 or 0)

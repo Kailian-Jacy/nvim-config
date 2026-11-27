@@ -13,7 +13,9 @@ return {
       },
       {
         "J",
-        "<cmd>RustLsp joinLines<CR>",
+        function() -- rustaceanvim's join; plain J where it is not attached (e.g. read-only diff/revision buffers)
+          if vim.fn.exists(":RustLsp") == 2 then vim.cmd("RustLsp joinLines") else vim.cmd("normal! " .. vim.v.count1 .. "J") end
+        end,
         mode = "n",
         ft = "rust",
         desc = "Rust: Join lines"
