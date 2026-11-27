@@ -43,7 +43,7 @@ All session state lives under `<ref_prefix>/<session>/` (default `refs/subcommit
 **Subcommit Commit Trailers**
 - `Subcommit-Id: sc-YYYYMMDDHHMMSS-xxxx` — stable logical identity across history rewrites.
 - `Touch-Order: path/a.lua, path/b.lua` — causal reading sequence stepped by `]f` / `[f`.
-- Line comments: `<leader>tq` on a line or a visual selection appends `{"t":"comment","path","side","line","end_line","body"}` to the subcommit's note. Any number per subcommit, independent of approve/reject; shown as end-of-line virtual text, a `💬n` count in the pane and in the `p` float; the agent reads them in `agent_track.py inbox` as `path:line`.
+- Line comments: `m` (`<leader>tq`) on a line or a visual selection appends `{"t":"comment","path","side","line","end_line","body"}` to the subcommit's note. Any number per subcommit, independent of approve/reject; shown as end-of-line virtual text, a `💬n` count in the pane and in the `p` float; the agent reads them in `agent_track.py inbox` as `path:line`.
 - Notes are append-only JSONL (`{"t":"review",...}` latest wins, `{"t":"comment",...}`); fetch merges both sides' lines (`cat_sort_uniq`) and notes are pushed without force. Legacy single-object notes still read.
 - Approvals can carry a comment (`<leader>tc`); a reject reason (`<leader>tx`) is optional.
 
@@ -97,17 +97,19 @@ require("agent-track").setup({
     open_on_attach = true,                       -- :AgentTrack attach opens the first pending subcommit
     pane = { enabled = true, position = "bottom", max_height = 5 }, -- full-width bottom list; "explorer" = under the file tree
     keymaps = {                                  -- each value: one lhs or a list of lhs
-      next_subcommit = { "<leader>tj", "]c" },
-      prev_subcommit = { "<leader>tk", "[c" },
-      next_touch_file = "]f",
-      prev_touch_file = "[f",
-      approve = "<leader>ta",
+      next_subcommit = { "<D-j>", "<leader>tj", "]c" },
+      prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
+      next_touch_file = { "J", "]f" },
+      prev_touch_file = { "K", "[f" },
+      approve = { "A", "<leader>ta" },
       approve_comment = "<leader>tc",
       approve_prefix = "<leader>tA",
-      reject = "<leader>tx",
+      reject = { "R", "<leader>tx" },
       sync = "<leader>ts",
       panel = "<leader>tp",
-      comment = "<leader>tq",                   -- normal: cursor line; visual: selected lines
+      comment = { "m", "<leader>tq" },          -- normal: cursor line; visual: selected lines
+      toggle_explorer = "b",                    -- file tree
+      toggle_pane = "c",                        -- subcommit pane
     },
   },
   statusline = { enabled = true, format = nil },
@@ -147,16 +149,17 @@ require("agent-track").setup({
 | | `x` / `c` | Reject (prompt reason) / Clear to pending |
 | | `s` / `S` / `u` / `r` | Sync approved / Sync prefix up to selected / Undo last sync / Fetch & refresh |
 | | `<c-q>` | Send the (selected or all) subcommits to quickfix: `<CR>`, `:cc`, `:cnext`/`:cprev` there open that subcommit's `[track]` diff |
-| **`[track]` Diff Tab** | `<leader>tj` / `<leader>tk` (also `]c` / `[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
-| | `]f` / `[f` | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
-| | `<leader>ta` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
-| | `<leader>tA` / `<leader>tx` | Prefix-approve `1..k` / Reject (optional reason), then open the next pending subcommit |
-| | `<leader>tq` | Comment on the cursor line, or (visual) the selected lines; appended, does not change the review status |
+| **`[track]` Diff Tab** (read-only, so single letters; `<leader>t*` stay as aliases) | `<D-j>` / `<D-k>` (also `<leader>tj`/`tk`, `]c`/`[c`) | Next / Previous chronological subcommit (reuses single `[track]` tab) |
+| | `J` / `K` (also `]f` / `[f`) | Next / Previous file in causal `Touch-Order`, selected inside the explorer tree (the tab opens at `Touch-Order` #1) |
+| | `A` / `<leader>tc` | Approve / Approve with a comment (prompt) — both advance to the next pending subcommit |
+| | `R` / `<leader>tA` | Reject (optional reason), then open the next pending subcommit / Prefix-approve `1..k` |
+| | `m` | Comment on the cursor line, or (visual) the selected lines; appended, does not change the review status |
+| | `b` / `c` | Toggle the file tree / the subcommit pane |
 | | `<leader>ts` / `<leader>tp` | Sync / Open review panel |
 | **Subcommit pane** | `<CR>` / `o` | Open the subcommit under the cursor |
-| | `a` / `C` / `x` | Approve / Approve with a comment / Reject the row under the cursor |
+| | `A`/`a` / `C` / `R`/`x` / `m` | Approve / Approve with a comment / Reject / Comment on the row under the cursor |
 | | `p` | Float with the full message (subject, why/body, trailers, review comment); closes on cursor move |
-| | `R` | Re-list (also automatic on `AgentTrack{Updated,Reviewed,Synced}`) |
+| | `r` | Re-list (also automatic on `AgentTrack{Updated,Reviewed,Synced}`) |
 
 ### Subcommit Pane
 

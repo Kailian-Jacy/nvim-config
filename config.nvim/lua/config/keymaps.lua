@@ -804,6 +804,9 @@ local cmd_mappings = {
     back_to_insert = true,
   },
   { cmdKeymap = "<D-O>", leaderKeymap = "<leader>fo", modes = { "n", "v" }, description = "Visited files" },
+  -- AgentTrack: review panel of the active session / session picker (also inside the [track] review tab).
+  { cmdKeymap = "<D-u>", leaderKeymap = "<leader>atr", modes = { "n" }, description = "AgentTrack review panel" },
+  { cmdKeymap = "<D-U>", leaderKeymap = "<leader>atl", modes = { "n" }, description = "AgentTrack sessions" },
   -- Command related.
   { cmdKeymap = "<D-p>", leaderKeymap = "<leader>pp", modes = { "n", "v" }, description = "List history command" },
   {

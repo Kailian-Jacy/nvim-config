@@ -4,9 +4,12 @@ local BUILTIN_SELECT, BUILTIN_INPUT = vim.ui.select, vim.ui.input
 local BADGE = { approved = "✓", rejected = "✗", stale = "~", pending = "·" }
 local HL = { approved = "AgentTrackApproved", rejected = "AgentTrackRejected", stale = "AgentTrackStale", pending = "AgentTrackPending" }
 local DEF_HL = { AgentTrackComment = "DiagnosticVirtualTextInfo", AgentTrackApproved = "DiagnosticOk", AgentTrackRejected = "DiagnosticError", AgentTrackStale = "DiagnosticWarn", AgentTrackPending = "Comment", AgentTrackSynced = "DiagnosticOk", AgentTrackConflict = "DiagnosticError" }
-local DEF_KEYS = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
-  approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp",
-  comment = "<leader>tq" }
+-- The review tab is read-only, so single letters are free: A accept, R reject, m comment, J/K file, <D-j>/<D-k> subcommit,
+-- b file tree, c subcommit pane. The <leader>t* keys stay as aliases.
+local DEF_KEYS = { next_subcommit = { "<D-j>", "<leader>tj", "]c" }, prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
+  next_touch_file = { "J", "]f" }, prev_touch_file = { "K", "[f" },
+  approve = { "A", "<leader>ta" }, approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = { "R", "<leader>tx" },
+  sync = "<leader>ts", panel = "<leader>tp", comment = { "m", "<leader>tq" }, toggle_explorer = "b", toggle_pane = "c" }
 local S = { session = nil, root = nil, tab = nil, sha = nil, index = 0, touch_idx = 1 }
 local function track() return require("agent-track") end
 local function pane() return require("agent-track.pane") end
@@ -102,16 +105,24 @@ local function install_buf_keymaps(buf)
     approve_prefix = function() run_op("approve_prefix", S.sha, S.session, refresh) end, reject = function() run_op("reject", S.sha, S.session, advance) end,
     panel = function() M.panel({ session = S.session }) end,
     comment = function() M.comment_here() end,
+    toggle_explorer = function()
+      local okl, lc = pcall(require, "codediff.ui.lifecycle"); local ex = okl and lc.get_explorer(vim.api.nvim_get_current_tabpage()) or nil
+      if ex then require("codediff.ui.explorer").toggle_visibility(ex) end
+    end,
+    toggle_pane = function() pane().toggle(vim.api.nvim_get_current_tabpage()) end,
     sync = function()
       local app = vim.iter(fetch_list(S.session).items or {}):any(function(x) return x.review_status == "approved" end)
       run_op(app and "sync" or "sync_prefix", S.sha, S.session, refresh)
     end,
   }
+  -- in the pane, the single-letter A/R/m act on the row under its cursor (pane.lua); their <leader> aliases stay
+  local is_pane = vim.bo[buf].filetype == "agent-track-pane"
+  local ROW = { approve = true, reject = true, comment = true }
   for name, fn in pairs(acts) do -- each keymap option is one lhs or a list of lhs
     for _, lhs in ipairs(type(km[name]) == "table" and km[name] or { km[name] }) do
-      if type(lhs) == "string" and lhs ~= "" then
-        vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true, desc = "AgentTrack: " .. (name:gsub("_", " ")) })
-        if name == "comment" then vim.keymap.set("x", lhs, function() M.comment_here(true) end, { buffer = buf, silent = true, desc = "AgentTrack: comment on selected lines" }) end
+      if type(lhs) == "string" and lhs ~= "" and not (is_pane and ROW[name] and #lhs == 1) then
+        vim.keymap.set("n", lhs, fn, { buffer = buf, silent = true, nowait = true, desc = "AgentTrack: " .. (name:gsub("_", " ")) })
+        if name == "comment" then vim.keymap.set("x", lhs, function() M.comment_here(true) end, { buffer = buf, silent = true, nowait = true, desc = "AgentTrack: comment on selected lines" }) end
       end
     end
   end

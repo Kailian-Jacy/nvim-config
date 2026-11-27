@@ -98,8 +98,15 @@ local function new_buf(tab)
     end
     vim.lsp.util.open_floating_preview(out, "gitcommit", { border = "rounded", max_width = 100, wrap = true, focus_id = "agent_track_message" })
   end
-  local maps = { ["<CR>"] = open, o = open, ["<2-LeftMouse>"] = open, p = act(message), a = review("approved"), C = review("approved", "Approve comment: "),
-    x = review("rejected", "Reject reason: "), R = function() M.refresh(tab) end }
+  local comment = act(function(it, p) -- m on a row: a subcommit-level comment (no file/line)
+    vim.ui.input({ prompt = "Comment #" .. (it.index or "?") .. ": " }, function(body)
+      if body and vim.trim(body) ~= "" then track().comment(it.sha, body, nil, { session = p.session, cwd = p.root }) end
+    end)
+  end)
+  -- rows act on the subcommit under the cursor: A/a approve, C approve+comment, R/x reject, m comment, r refresh
+  local maps = { ["<CR>"] = open, o = open, ["<2-LeftMouse>"] = open, p = act(message), a = review("approved"), A = review("approved"),
+    C = review("approved", "Approve comment: "), x = review("rejected", "Reject reason (optional): "), R = review("rejected", "Reject reason (optional): "),
+    m = comment, r = function() M.refresh(tab) end }
   for lhs, fn in pairs(maps) do vim.keymap.set("n", lhs, fn, { buffer = b, silent = true, nowait = true, desc = "AgentTrack pane" }) end
   return b
 end
@@ -162,6 +169,12 @@ function M.show(tab, ctx)
   if #p.items == 0 then return end
   if valid(p.win) then render(tab) elseif not p.user_closed then open_win(tab) end
   return p.win
+end
+--- c in the review tab: hide / show the pane (a hidden pane stays hidden until toggled back).
+function M.toggle(tab)
+  tab = tab or vim.api.nvim_get_current_tabpage(); local p = P[tab]; if not p then return false end
+  if valid(p.win) then p.closing = true; pcall(vim.api.nvim_win_close, p.win, true); p.closing, p.win, p.user_closed = false, nil, true; return false end
+  p.user_closed = false; open_win(tab); return valid(p.win)
 end
 function M.get(tab)
   local p = P[tab or vim.api.nvim_get_current_tabpage()]

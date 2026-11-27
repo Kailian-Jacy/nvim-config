@@ -16,8 +16,10 @@ local DEFAULTS = {
   reviewer = {
     tab_prefix = "[track]", reuse_tab = true, open_on_attach = true, -- :AgentTrack attach opens the first pending subcommit
     pane = { enabled = true, position = "bottom", max_height = 5 }, -- subcommit list: full-width bottom ("explorer": under the file tree)
-    keymaps = { next_subcommit = { "<leader>tj", "]c" }, prev_subcommit = { "<leader>tk", "[c" }, next_touch_file = "]f", prev_touch_file = "[f",
-      approve = "<leader>ta", approve_comment = "<leader>tc", approve_prefix = "<leader>tA", reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp" },
+    keymaps = { next_subcommit = { "<D-j>", "<leader>tj", "]c" }, prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
+      next_touch_file = { "J", "]f" }, prev_touch_file = { "K", "[f" }, approve = { "A", "<leader>ta" }, approve_comment = "<leader>tc",
+      approve_prefix = "<leader>tA", reject = { "R", "<leader>tx" }, sync = "<leader>ts", panel = "<leader>tp",
+      comment = { "m", "<leader>tq" }, toggle_explorer = "b", toggle_pane = "c" },
   },
   statusline = { enabled = true, format = nil }, hooks = { on_updated = nil, on_synced = nil, on_reviewed = nil },
 }

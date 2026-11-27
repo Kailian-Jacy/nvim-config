@@ -170,13 +170,27 @@ eq(#vim.tbl_filter(function(t) return vim.t[t].agent_track_tab end, api.nvim_lis
 for _, b in ipairs({ ex.bufnr, P.buf }) do for _, lhs in ipairs({ "<leader>tj", "<leader>tk", "]c", "[c", "<leader>tc", "<leader>ta" }) do
   check(map(b, lhs).buffer == 1, "mapping " .. lhs .. " on " .. vim.bo[b].filetype)
 end end
+-- single-letter review keys (the tab is read-only): present on diff + explorer, pane keeps row-based A/R/m
+local dbuf = api.nvim_win_get_buf(lc.get_session(cur()).modified_win)
+for _, b in ipairs({ dbuf, ex.bufnr }) do for _, lhs in ipairs({ "A", "R", "m", "J", "K", "b", "c", "<D-j>", "<D-k>" }) do
+  local m = map(b, lhs); check(m.buffer == 1 and (m.desc or ""):find("AgentTrack", 1, true), "single-letter " .. lhs .. " on " .. (vim.bo[b].filetype ~= "" and vim.bo[b].filetype or "diff"))
+end end
+for _, lhs in ipairs({ "A", "R", "m", "r" }) do check((map(P.buf, lhs).desc or "") == "AgentTrack pane", "pane row key " .. lhs) end
+press(dbuf, "<D-j>"); check(opened(items[2].sha), "<D-j> opens the next subcommit")
+press(api.nvim_win_get_buf(lc.get_session(cur()).modified_win), "<D-k>"); check(opened(items[1].sha), "<D-k> goes back")
+local tab_b = cur(); press(explorer().bufnr, "b"); check(wait(function() return explorer().is_hidden end), "b hides the file tree")
+press(api.nvim_win_get_buf(lc.get_session(tab_b).modified_win), "b"); check(wait(function() return not explorer().is_hidden end), "b shows it again")
+press(api.nvim_win_get_buf(lc.get_session(tab_b).modified_win), "c"); check(wait(function() return pane.get(tab_b).win == nil end), "c hides the subcommit pane")
+press(api.nvim_win_get_buf(lc.get_session(tab_b).modified_win), "c"); check(wait(function() return pane.get(tab_b).win ~= nil end), "c shows it again")
 press(ex.bufnr, "<leader>tj"); check(opened(items[2].sha), "<leader>tj opens subcommit #2")
 eq(#vim.tbl_filter(function(t) return vim.t[t].agent_track_tab end, api.nvim_list_tabpages()), 1, "still one [track] tab after jumping")
 
 -- 3. Touch-Order: #2 starts at tests/basic_spec.lua (not the alphabetical first), ]f stays in the same tab
 check(wait(function() return explorer().current_file_path == "tests/basic_spec.lua" end), "explorer starts at Touch-Order #1")
-tab = cur(); rv.next_touch_file()
-check(wait(function() return explorer().current_file_path == "src/ui/view.lua" end), "]f selects Touch-Order #2 inside the explorer")
+tab = cur(); press(api.nvim_win_get_buf(lc.get_session(cur()).modified_win), "J")
+check(wait(function() return explorer().current_file_path == "src/ui/view.lua" end), "J selects Touch-Order #2 inside the explorer")
+press(api.nvim_win_get_buf(lc.get_session(cur()).modified_win), "K"); check(wait(function() return explorer().current_file_path == "tests/basic_spec.lua" end), "K goes back to Touch-Order #1")
+rv.next_touch_file(); check(wait(function() return explorer().current_file_path == "src/ui/view.lua" end), "]f selects Touch-Order #2 inside the explorer")
 eq(cur(), tab, "]f keeps the same tab (tree + pane stay visible)")
 check(pane.get(tab).win ~= nil, "pane survives ]f")
 local function diff_ft(side) local s = lc.get_session(cur()); local w = s and s[side .. "_win"]; return (w and api.nvim_win_is_valid(w)) and vim.bo[api.nvim_win_get_buf(w)].filetype or nil end
@@ -234,9 +248,9 @@ local inbox = vim.json.decode(sh({ "python3", AT, "--no-nvim", "-C", R, "inbox",
 eq(inbox.items[1].comment, "LGTM; rename backoff later", "agent inbox shows the approval comment")
 check(api.nvim_buf_get_lines(pane.get().buf, 1, 2, false)[1]:find("✓", 1, true) ~= nil, "pane marks #1 approved")
 vim.ui.input = function(_, cb) cb("split the test change out") end
-press(explorer().bufnr, "<leader>tx")
-eq((note(L, items[2].sha) or {}).status, "rejected", "<leader>tx rejects the open subcommit")
-check(opened(items[3].sha), "<leader>tx advances to the next pending subcommit")
+press(api.nvim_win_get_buf(lc.get_session(cur()).modified_win), "R")
+eq((note(L, items[2].sha) or {}).status, "rejected", "R rejects the open subcommit")
+check(opened(items[3].sha), "R advances to the next pending subcommit")
 
 -- 5. pane-local keys act on the row under the cursor
 P = pane.get(); api.nvim_set_current_win(P.win); api.nvim_win_set_cursor(P.win, { 2, 0 }); press(P.buf, "p")

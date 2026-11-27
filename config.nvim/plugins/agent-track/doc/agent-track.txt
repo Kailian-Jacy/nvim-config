@@ -136,22 +136,27 @@ Global Keymaps (`lua/plugins/agent-track.lua`)~
 
 `[track]` `:CodeDiff` Tab Buffer-Local Keys~           *agent-track-diff-keys*
 Installed in Normal mode on non-floating buffers inside the `[track]` tab
-(each option takes one lhs or a list of lhs):
-  LHS            Action (option) ~
-  `<leader>tj`   Next subcommit, also `]c` (`next_subcommit`)
-  `<leader>tk`   Prev subcommit, also `[c` (`prev_subcommit`)
-  `]f` / `[f`    Next / prev `Touch-Order` file, in the tree (`*_touch_file`)
-  `<leader>ta`   Approve & open next pending/stale (`approve`)
-  `<leader>tc`   Prompt comment, approve & open next (`approve_comment`)
-  `<leader>tA`   Prefix-approve `1..current` (`approve_prefix`)
-  `<leader>tx`   Reject (optional reason) & open next (`reject`)
-  `<leader>tq`   Comment on line / visual selection (`comment`)
-  `<leader>ts`   Sync `approved`, else `1..current` (`sync`)
-  `<leader>tp`   Open `Snacks.picker` review panel (`panel`)
+(each option takes one lhs or a list of lhs). The tab is read-only, so the
+defaults are single letters; the `<leader>t*` keys remain as aliases:
+  LHS                 Action (option) ~
+  `<D-j>` / `<D-k>`   Next / prev subcommit, also `<leader>tj`/`tk`, `]c`/`[c`
+  `J` / `K`           Next / prev `Touch-Order` file, also `]f` / `[f`
+  `A`                 Approve & open next pending/stale, also `<leader>ta`
+  `R`                 Reject (optional reason) & open next, also `<leader>tx`
+  `m`                 Comment on line / Visual selection, also `<leader>tq`
+  `b` / `c`           Toggle the file tree / the subcommit pane
+  `<leader>tc`        Prompt comment, approve & open next (`approve_comment`)
+  `<leader>tA`        Prefix-approve `1..current` (`approve_prefix`)
+  `<leader>ts`        Sync `approved`, else `1..current` (`sync`)
+  `<leader>tp`        Open `Snacks.picker` review panel (`panel`)
+Options: `next_subcommit`, `prev_subcommit`, `next_touch_file`,
+`prev_touch_file`, `approve`, `reject`, `comment`, `toggle_explorer`,
+`toggle_pane`. They shadow `b` (word back), `c`, `J`, `K` and codediff's
+explorer `R`/`K` inside the `[track]` tab only.
 A subcommit opens at its `Touch-Order` #1 file; `]f`/`[f` stay in the same tab.
 
 Line Comments~                                   *agent-track-comments*
-`<leader>tq` in a diff window comments the cursor line, or in Visual mode the
+`m` (`<leader>tq`) in a diff window comments the cursor line, or in Visual the
 selected lines. Inline (and the right side of side-by-side) is the subcommit's
 `new` side; the left side of side-by-side is its parent (`old`). Each comment is
 appended to the note as one JSON line, so a subcommit can carry any number,
@@ -197,8 +202,10 @@ stays closed after `:q` in that tab. `position = "explorer"` docks it under
 the file tree instead (hides/returns with the explorer). Keys:
   `<CR>` / `o`    Open the subcommit under the cursor
   `p`             Float with the full message, body and review comment
-  `a` / `C` / `x` Approve / Approve with comment / Reject the row under cursor
-  `R`             Re-list (automatic on `AgentTrack{Updated,Reviewed,Synced}`)
+  `A`/`a`, `R`/`x` Approve / Reject the row under the cursor
+  `C`             Approve the row with a comment
+  `m`             Subcommit-level comment on the row
+  `r`             Re-list (automatic on `AgentTrack{Updated,Reviewed,Synced}`)
 Options: `reviewer.pane = { enabled, position = "bottom", max_height = 5 }`.
 Highlights:
 `AgentTrackPane{Header,Current,Dim}` (links: `CodeDiffExplorerTreeGroup`,
@@ -264,13 +271,13 @@ Internal Lifecycle Autocmds~
       tab_prefix = "[track]", reuse_tab = true, open_on_attach = true,
       pane = { enabled = true, position = "bottom", max_height = 5 },
       keymaps = { -- each value: one lhs or a list of lhs
-        next_subcommit = { "<leader>tj", "]c" },
-        prev_subcommit = { "<leader>tk", "[c" },
-        next_touch_file = "]f", prev_touch_file = "[f",
-        approve = "<leader>ta", approve_comment = "<leader>tc",
-        approve_prefix = "<leader>tA",
-        reject = "<leader>tx", sync = "<leader>ts", panel = "<leader>tp",
-        comment = "<leader>tq",
+        next_subcommit = { "<D-j>", "<leader>tj", "]c" },
+        prev_subcommit = { "<D-k>", "<leader>tk", "[c" },
+        next_touch_file = { "J", "]f" }, prev_touch_file = { "K", "[f" },
+        approve = { "A", "<leader>ta" }, approve_comment = "<leader>tc",
+        approve_prefix = "<leader>tA", reject = { "R", "<leader>tx" },
+        comment = { "m", "<leader>tq" }, sync = "<leader>ts",
+        panel = "<leader>tp", toggle_explorer = "b", toggle_pane = "c",
       },
     },
     statusline = { enabled = true, format = nil },

@@ -9,6 +9,7 @@ return {
     opts = {},
     keys = {
       { "<leader>atr", function() require("agent-track.reviewer").panel() end, desc = "AgentTrack: Review panel" },
+      { "<leader>atl", "<cmd>AgentTrack list<cr>", desc = "AgentTrack: Sessions" },
       { "<leader>ato", function() require("agent-track.reviewer").open() end, desc = "AgentTrack: Open diff" },
       { "<leader>ats", "<cmd>AgentTrack sync approved<cr>", desc = "AgentTrack: Sync approved" },
       { "<leader>atu", "<cmd>AgentTrack undo<cr>", desc = "AgentTrack: Undo sync" },
