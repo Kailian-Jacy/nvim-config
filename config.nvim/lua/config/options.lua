@@ -30,9 +30,6 @@ local default_modules_config = {
   copilot = {
     enabled = vim.fn.executable("node") == 1,
   },
-  bookmarks = {
-    enabled = vim.g._resource_executable_sqlite,
-  },
   svn = {
     enabled = vim.fn.executable("svn") == 1,
   },
