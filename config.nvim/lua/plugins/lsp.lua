@@ -503,8 +503,26 @@ return {
       },
     },
     config = function()
+      -- CodeDiff shows revisions in nofile/nowrite buffers (inline scratch, codediff:// virtual files), which aerial's
+      -- default "special" buftype rule ignores, so gj/gk did nothing in diffs. Accept exactly those buffers (treesitter
+      -- backend; LSP never attaches there) and keep ignoring every other special buffer.
+      local function codediff_buf(bufnr)
+        if vim.api.nvim_buf_get_name(bufnr):match("^codediff://") then return true end
+        local ok, lc = pcall(require, "codediff.ui.lifecycle")
+        for _, tab in ipairs(ok and vim.api.nvim_list_tabpages() or {}) do
+          local s = lc.get_session(tab)
+          if s and (s.original_bufnr == bufnr or s.modified_bufnr == bufnr) then return true end
+        end
+        return false
+      end
       require("aerial").setup({
         backends = { "lsp", "treesitter", "markdown", "asciidoc", "man" },
+        ignore = {
+          buftypes = function(bufnr, buftype)
+            if buftype == "" or buftype == "help" or vim.bo[bufnr].filetype == "man" then return false end
+            return not codediff_buf(bufnr)
+          end,
+        },
       })
     end,
   },
